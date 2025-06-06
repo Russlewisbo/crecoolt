@@ -1,0 +1,4 @@
+- source: project
+  netlify:
+    - id: 9e036f81-1dd7-4432-90ca-20d138cbad6e
+      url: https://stately-begonia-756bb8.netlify.app
