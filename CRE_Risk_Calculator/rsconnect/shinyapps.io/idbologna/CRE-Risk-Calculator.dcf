@@ -1,0 +1,10 @@
+name: CRE-Risk-Calculator
+title: CRE Risk After Liver Transplant
+username: idbologna
+account: idbologna
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 15405003
+bundleId: 10887050
+url: https://idbologna.shinyapps.io/CRE-Risk-Calculator/
+version: 1
