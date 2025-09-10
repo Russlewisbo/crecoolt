@@ -1,0 +1,10 @@
+name: CRE-Calculator
+title:
+username: idbologna
+account: idbologna
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 15407188
+bundleId: 10887800
+url: https://idbologna.shinyapps.io/CRE-Calculator/
+version: 1
