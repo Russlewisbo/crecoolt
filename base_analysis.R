@@ -6,7 +6,7 @@ library (riskRegression)
 library(lava)
 
 
-CRE3 <- read.csv("~/Desktop/crecoolt/data/CRE3.csv")
+CRE3 <- read.csv("CRE3.csv")
 View(CRE3)
 
 fgr1<-FGR(Hist(time, status)~ atg + reint + mv + arf + kpc + crepre_60 + multipre + crepost_60+ multipost, data=CRE3, cause=1)
