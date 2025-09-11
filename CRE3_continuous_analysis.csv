@@ -1,0 +1,4 @@
+"Variable","Death_0_N","Death_0_Mean","Death_0_SD","Death_0_Median","Death_1_N","Death_1_Mean","Death_1_SD","Death_1_Median","P_Value_Ttest"
+"time",761,131.11,72.36,180,79,61.06,48.27,49,2.95781863970804e-21
+"cretime",761,121.2,84.13,180,79,0,0,0,9.91207040839718e-188
+"futime",761,180,0,180,79,61.06,48.27,49,4.70921441346425e-35
