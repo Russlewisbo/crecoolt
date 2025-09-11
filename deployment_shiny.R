@@ -11,7 +11,8 @@ library(rsconnect)
 # This file is for running deployment, not to be deployed itself
 rsconnect::deployApp(
   appFiles = c("app.R", "CRE3.csv"),
-  appName = "CRE-Risk-Calculator",
+  appName = "CREPostOLTPredictionModel",
   account = "idbologna",
   forceUpdate = TRUE
 )
+
