@@ -4,6 +4,7 @@ library(survival)
 library(cmprsk)
 library (riskRegression) 
 library(lava)
+library (ggplot2)
 
 
 CRE3 <- read.csv("CRE3.csv")
@@ -42,7 +43,13 @@ boxplot(score3, time=30)
 
 #Model cross-validation
 fgr1.cv<-FGR(Hist(time, status)~ atg + reint + mv + arf + mv + kpc + crepre_60 + multipre + crepost_60+ multipost, data=CRE3, cause=1)
-score.cv2<-Score(list("Fine-Gray CV"=[fgr1.cv],(http://fgr1.cv/)),formula=Hist(time,status)~1,data=CRE3, times=seq(60, 90, 180), split.method="bootcv", B=100, plots="calibration")
+score.cv2 <- Score(list("Fine-Gray CV" = fgr1.cv), 
+                   formula = Hist(time, status) ~ 1, 
+                   data = CRE3, 
+                   times = seq(60, 90, 180), 
+                   split.method = "bootcv", 
+                   B = 100, 
+                   plots = "calibration")
 dev.new(width=5,height=4)
 plotCalibration(score.cv2,times=60, pseudo = TRUE)
 #plot predicted risk
