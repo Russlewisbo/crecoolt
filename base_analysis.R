@@ -4,7 +4,8 @@ library(survival)
 library(cmprsk)
 library(riskRegression) 
 library(lava)
-library(ggplot2)  # Added for ggplot functions
+library(ggplot2)
+library(summarytools) # Added for ggplot functions
 
 # Load data
 CRE3 <- read.csv("CRE3.csv")
