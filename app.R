@@ -74,9 +74,9 @@ ui <- fluidPage(
       
       div(class = "checkbox-container",
           checkboxInput("reint", 
-                        "Reintubation", 
+                        "Reintervention", 
                         value = FALSE),
-          em("Need for reintubation after initial extubation")
+          em("Need for surgical reintervention after initial OLT")
       ),
       
       div(class = "checkbox-container",
@@ -192,8 +192,8 @@ ui <- fluidPage(
                  
                  h4("Understanding the Risk Factors"),
                  tags$dl(
-                   tags$dt("Reintubation"),
-                   tags$dd("Requirement for reintubation after initial extubation attempt, indicating respiratory complications"),
+                   tags$dt("Reintervention"),
+                   tags$dd("Requirement for surgical reintervention after initial OLT"),
                    br(),
                    tags$dt("Mechanical Ventilation"),
                    tags$dd("Prolonged need for mechanical ventilatory support post-transplant"),
