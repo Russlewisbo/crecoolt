@@ -74,9 +74,9 @@ ui <- fluidPage(
       
       div(class = "checkbox-container",
           checkboxInput("reint", 
-                        "Reintubation", 
+                        "Reintervention", 
                         value = FALSE),
-          em("Need for reintubation after initial extubation")
+          em("Need for surgical reintervention after transplant")
       ),
       
       div(class = "checkbox-container",
@@ -192,8 +192,8 @@ ui <- fluidPage(
                  
                  h4("Understanding the Risk Factors"),
                  tags$dl(
-                   tags$dt("Reintubation"),
-                   tags$dd("Requirement for reintubation after initial extubation attempt, indicating respiratory complications"),
+                   tags$dt("Reintervention"),
+                   tags$dd("Requirement for surgical reintervention after transplant"),
                    br(),
                    tags$dt("Mechanical Ventilation"),
                    tags$dd("Prolonged need for mechanical ventilatory support post-transplant"),
@@ -516,7 +516,7 @@ server <- function(input, output, session) {
     
     cat("Risk Factor Prevalence:\n")
     cat("-------------------------------------\n")
-    cat("Reintubation:", sum(df$reint == 1), "(", round(mean(df$reint == 1) * 100, 1), "%)\n")
+    cat("Reintervention:", sum(df$reint == 1), "(", round(mean(df$reint == 1) * 100, 1), "%)\n")
     cat("Mechanical Ventilation:", sum(df$mv == 1), "(", round(mean(df$mv == 1) * 100, 1), "%)\n")
     cat("Acute Renal Failure:", sum(df$arf == 1), "(", round(mean(df$arf == 1) * 100, 1), "%)\n")
     cat("CRE Pre-transplant:", sum(df$crepre_60 == 1), "(", round(mean(df$crepre_60 == 1) * 100, 1), "%)\n")
@@ -531,7 +531,7 @@ server <- function(input, output, session) {
     
     # Calculate prevalence
     prevalence_data <- data.frame(
-      Risk_Factor = c("Reintubation", "Mechanical\nVentilation", "Acute Renal\nFailure", 
+      Risk_Factor = c("Reintervention", "Mechanical\nVentilation", "Acute Renal\nFailure", 
                       "CRE\nPre-transplant", "CRE\nPost-transplant", "MDRO\nPost-transplant"),
       Prevalence = c(mean(df$reint == 1), mean(df$mv == 1), mean(df$arf == 1),
                      mean(df$crepre_60 == 1), mean(df$crepost_60 == 1), mean(df$multipost == 1)) * 100
