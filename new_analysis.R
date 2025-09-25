@@ -175,10 +175,7 @@ head(data_extract[, c("date_of_transplant", "cre_infection_date",
 
 ## Baseline Fine-Gray Model
 
-# Install if needed
-# install.packages("cmprsk")
 
-library(cmprsk)
 
 # Outcome coding in your data:
 # 0 = censored
@@ -189,36 +186,89 @@ library(cmprsk)
 # -------------------------------------------------
 # 1. Unadjusted Fine–Gray (CRE infection as event)
 # -------------------------------------------------
-
-library(riskRegression)
 library(prodlim)
+library(riskRegression)
+library(ggplot2)
+library(dplyr)
+library(tidyr)
 
-# -------------------------------------------------
-# 1. Unadjusted Fine–Gray (CRE infection as event)
-# -------------------------------------------------
-fg_model <- FGR(
-  Hist(time_c, outcome_comp) ~ 1,   # no covariates
-  data = data_extract,
-  cause = 1                         # CRE infection
-)
+set.seed(123)   # for reproducibility
 
-summary(fg_model)
+# ----------------------------
+# 1. Prepare data
+# ----------------------------
+df_model <- data.frame(
+  time_c = as.numeric(data_extract$time_c),
+  outcome_comp = as.integer(data_extract$outcome_comp)
+) %>%
+  filter(!is.na(time_c) & time_c >= 0)
 
-# -------------------------------------------------
-# 2. Adjusted Fine–Gray (example covariates)
-# -------------------------------------------------
+# ----------------------------
+# 2. Base CIF fit
+# ----------------------------
+ci_fit <- prodlim(Hist(time_c, outcome_comp) ~ 1, data = df_model)
 
-data_extract$time_c       <- as.numeric(unlist(data_extract$time_c))
-data_extract$outcome_comp <- as.integer(unlist(data_extract$outcome_comp))
+# ----------------------------
+# 3. Times to evaluate
+# ----------------------------
+times_seq <- seq(0, 180, by = 5)
 
-fg_model_adj <- FGR(
-  Hist(time_c, outcome_comp) ~ multisite_colonization + cre_colon + score,
-  data = data_extract,
-  cause = 1
-)
+# ----------------------------
+# 4. Bootstrap CIF estimates
+# ----------------------------
+B <- 200   # number of bootstrap resamples (increase to 1000 for publication)
 
-summary(fg_model_adj)
+boot_cif <- function(data, times, cause) {
+  fit <- prodlim(Hist(time_c, outcome_comp) ~ 1, data = data)
+  predict(fit, cause = cause, times = times)
+}
 
-# sanity check
+boot_results <- lapply(1:3, function(cause) {
+  mat <- replicate(B, {
+    idx <- sample(nrow(df_model), replace = TRUE)
+    boot_data <- df_model[idx, ]
+    boot_cif(boot_data, times_seq, cause)
+  })
+  # mean and CI across bootstrap runs
+  est <- predict(ci_fit, cause = cause, times = times_seq)
+  lower <- apply(mat, 1, quantile, 0.025, na.rm = TRUE)
+  upper <- apply(mat, 1, quantile, 0.975, na.rm = TRUE)
+  data.frame(times = times_seq, CIF = est, lower = lower, upper = upper,
+             cause = factor(cause))
+})
 
-table(data_extract$outcome_comp, useNA = "ifany")
+ci_tidy <- bind_rows(boot_results) %>%
+  mutate(cause = recode(cause,
+                        "1" = "CRE infection",
+                        "2" = "Discharge",
+                        "3" = "Death"))
+
+# ----------------------------
+# 5. NEJM-style plot
+# ----------------------------
+nejm_colors <- c("CRE infection" = "#D81B60",
+                 "Discharge"     = "#1E88E5",
+                 "Death"         = "black")
+
+p_nejm <- ggplot(ci_tidy, aes(x = times, y = CIF, color = cause, fill = cause)) +
+  geom_ribbon(aes(ymin = lower, ymax = upper), alpha = 0.15, color = NA) +
+  geom_line(size = 1.2) +
+  labs(x = "Days since OLT",
+       y = "Cumulative incidence",
+       color = NULL, fill = NULL) +
+  scale_color_manual(values = nejm_colors) +
+  scale_fill_manual(values = nejm_colors) +
+  theme_bw(base_size = 14) +
+  theme(
+    panel.grid = element_blank(),
+    legend.position = "top",
+    legend.title = element_blank(),
+    legend.text = element_text(size = 12),
+    axis.title = element_text(size = 14, face = "bold"),
+    axis.text = element_text(size = 12),
+    axis.ticks.length = unit(0.2, "cm")
+  )
+
+print(p_nejm)
+
+
