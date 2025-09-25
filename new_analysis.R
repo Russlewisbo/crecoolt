@@ -1,13 +1,16 @@
-#################
+###############################
 #### CRECOLT_2025 Data analysis 
 ###############################
 
 library (dplyr)
-install.packages("janitor") 
 library (janitor)
 
 # Read the CSV file
-cre_new <- read.csv("CRECOOLT_2025.csv")
+cre_new <- read.csv("CRECOOLT_overall.csv")
+
+
+new_df <- cre_new %>% 
+  select(, column2, column3)
 
 # Rename specific variables
 cre_new <- cre_new |>
