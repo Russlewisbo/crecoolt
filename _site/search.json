@@ -1,5 +1,19 @@
 [
   {
+    "objectID": "validation.html",
+    "href": "validation.html",
+    "title": "Validation cohort",
+    "section": "",
+    "text": "Descriptive analysis of cumulative incidence of censoring, hospital discharge, CRE infection or death. A competing risk (Fine-Gray) model was fitted to outcome of death, hospital discharge, or CRE infection censored to day 180. The cumulative incidence of competing risks are shown in Figure 1.\n\nCode\n# -------------------------------------------------\n# 1. Unadjusted Fine–Gray (CRE infection as event)\n# -------------------------------------------------\nlibrary(prodlim)\nlibrary(riskRegression)\nlibrary(ggplot2)\nlibrary(dplyr)\nlibrary(tidyr)\nlibrary (here)\n\n\nlibrary(here)\n\n# Load the exported dataset\ndata_extract &lt;- read.csv(here(\"data\", \"data_extract.csv\"), stringsAsFactors = FALSE)\n\n# Quick check\n\nset.seed(123)   # for reproducibility\n\n# ----------------------------\n# 1. Prepare data\n# ----------------------------\ndf_model &lt;- data.frame(\n  time_c = as.numeric(data_extract$time_c),\n  outcome_comp = as.integer(data_extract$outcome_comp)\n) %&gt;%\n  filter(!is.na(time_c) & time_c &gt;= 0)\n\n# ----------------------------\n# 2. Base CIF fit\n# ----------------------------\nci_fit &lt;- prodlim(Hist(time_c, outcome_comp) ~ 1, data = df_model)\n\n# ----------------------------\n# 3. Times to evaluate\n# ----------------------------\ntimes_seq &lt;- seq(0, 180, by = 5)\n\n# ----------------------------\n# 4. Bootstrap CIF estimates\n# ----------------------------\nB &lt;- 200   # number of bootstrap resamples (increase to 1000 for publication)\n\nboot_cif &lt;- function(data, times, cause) {\n  fit &lt;- prodlim(Hist(time_c, outcome_comp) ~ 1, data = data)\n  predict(fit, cause = cause, times = times)\n}\n\nboot_results &lt;- lapply(1:3, function(cause) {\n  mat &lt;- replicate(B, {\n    idx &lt;- sample(nrow(df_model), replace = TRUE)\n    boot_data &lt;- df_model[idx, ]\n    boot_cif(boot_data, times_seq, cause)\n  })\n  # mean and CI across bootstrap runs\n  est &lt;- predict(ci_fit, cause = cause, times = times_seq)\n  lower &lt;- apply(mat, 1, quantile, 0.025, na.rm = TRUE)\n  upper &lt;- apply(mat, 1, quantile, 0.975, na.rm = TRUE)\n  data.frame(times = times_seq, CIF = est, lower = lower, upper = upper,\n             cause = factor(cause))\n})\n\nci_tidy &lt;- bind_rows(boot_results) %&gt;%\n  mutate(cause = recode(cause,\n                        \"1\" = \"CRE infection\",\n                        \"2\" = \"Discharge\",\n                        \"3\" = \"Death\"))\n\n# ----------------------------\n# 5. NEJM-style plot\n# ----------------------------\nnejm_colors &lt;- c(\"CRE infection\" = \"#D81B60\",\n                 \"Discharge\"     = \"#1E88E5\",\n                 \"Death\"         = \"black\")\n\np_nejm &lt;- ggplot(ci_tidy, aes(x = times, y = CIF, color = cause, fill = cause)) +\n  geom_ribbon(aes(ymin = lower, ymax = upper), alpha = 0.15, color = NA) +\n  geom_line(size = 1.2) +\n  labs(x = \"Days since OLT\",\n       y = \"Cumulative incidence\",\n       color = NULL, fill = NULL) +\n  scale_color_manual(values = nejm_colors) +\n  scale_fill_manual(values = nejm_colors) +\n  theme_bw(base_size = 14) +\n  theme(\n    panel.grid = element_blank(),\n    legend.position = \"top\",\n    legend.title = element_blank(),\n    legend.text = element_text(size = 12),\n    axis.title = element_text(size = 14, face = \"bold\"),\n    axis.text = element_text(size = 12),\n    axis.ticks.length = unit(0.2, \"cm\")\n  )\n\nprint(p_nejm)\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nFigure 1: Cumulative risk of competing outcomes in combined retrospective and prospective study cohorts\n\n\n\n\n\n\n\n\n\nNote\n\n\n\n\nCensored without event= 43\nCRE infection = 263\nDischarge =466\nDeath = 45"
+  },
+  {
+    "objectID": "index.html",
+    "href": "index.html",
+    "title": "Carbapenem-Resistant Enterobacterales Infection Risk After Liver Transplantation",
+    "section": "",
+    "text": "Welcome to the CRECCOLT 3.0 data analysis page. Topline data summary and R code can be accessed by the menu bar on top\nClick here for access to the CRECOOLT CRE BSI Risk Prediction Web Application"
+  },
+  {
     "objectID": "about.html",
     "href": "about.html",
     "title": "About",
@@ -7,9 +21,9 @@
     "text": "Coming soon!"
   },
   {
-    "objectID": "index.html",
-    "href": "index.html",
-    "title": "Carbapenem-Resistant Enterobacterales Infection Risk After Liver Transplantation",
+    "objectID": "intervention.html",
+    "href": "intervention.html",
+    "title": "Intervention impact",
     "section": "",
     "text": "Coming soon!"
   }

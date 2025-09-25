@@ -8,6 +8,9 @@ website:
       - href: index.qmd
         text: Home
       - about.qmd
+      - validation.qmd
+      - intervention.qmd
+      
 
 format:
   html:

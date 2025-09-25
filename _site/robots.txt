@@ -1,1 +1,1 @@
-Sitemap: https://stately-begonia-756bb8.netlify.app/sitemap.xml
+Sitemap: https://crecoolt.org/sitemap.xml

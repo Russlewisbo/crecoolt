@@ -172,6 +172,7 @@ head(data_extract[, c("date_of_transplant", "cre_infection_date",
                       "discharge_date", "death_date",
                       "time_c", "outcome_comp")])
 
+write.csv(data_extract, file = here::here("data", "data_extract.csv"), row.names = FALSE)
 
 ## Baseline Fine-Gray Model
 
@@ -270,5 +271,8 @@ p_nejm <- ggplot(ci_tidy, aes(x = times, y = CIF, color = cause, fill = cause)) 
   )
 
 print(p_nejm)
+
+## Prepare datatable for risk model
+
 
 

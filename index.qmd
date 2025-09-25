@@ -4,4 +4,6 @@ title: "Carbapenem-Resistant Enterobacterales Infection Risk After Liver Transpl
 
 ![](kleb_agar.png){fig-align="center"}
 
-*Coming soon!*
+*Welcome to the CRECCOLT 3.0 data analysis page. Topline data summary and R code can be accessed by the menu bar on top*
+
+Click here for access to the [CRECOOLT CRE BSI Risk Prediction Web Application](https://idbologna.shinyapps.io/CREPostOLTPredictionModel/)
