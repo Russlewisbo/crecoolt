@@ -554,3 +554,155 @@ p_calib_strat <- ggplot(plot_df, aes(x = times)) +
   )
 
 print(p_calib_strat)
+
+#############################################
+## Bar plot of covariate distribution
+## Retrospective vs Prospective cohorts
+## with custom labels
+#############################################
+
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+
+# ============================================================
+# 1. Select the covariates of interest
+# ============================================================
+covariates <- c("post_olt_compli1", "post_olt_compli3", "post_olt_compli5",
+                "multisite_col", "cre_col1", "cre_col2", "mec1")
+
+df_cov <- df_model %>%
+  select(retro_group, all_of(covariates))
+
+# ============================================================
+# 2. Reshape to long format
+# ============================================================
+df_long <- df_cov %>%
+  pivot_longer(
+    cols = all_of(covariates),
+    names_to = "covariate",
+    values_to = "value"
+  )
+
+# ============================================================
+# 3. Summarize % positive per group
+# ============================================================
+df_summary <- df_long %>%
+  group_by(retro_group, covariate) %>%
+  summarise(
+    n = n(),
+    n_pos = sum(value == 1, na.rm = TRUE),
+    pct_pos = 100 * n_pos / n,
+    .groups = "drop"
+  ) %>%
+  mutate(
+    covariate_label = recode(covariate,
+                             "cre_col1"          = "Prior",
+                             "cre_col2"          = "Post",
+                             "mec1"              = "KPC",
+                             "multisite_col"     = "Multisite",
+                             "post_olt_compli1"  = "ARF",
+                             "post_olt_compli3"  = "Vent",
+                             "post_olt_compli5"  = "Reint"
+    )
+  )
+
+# ============================================================
+# 4. Bar plot (NEJM-style)
+# ============================================================
+p_cov <- ggplot(df_summary, aes(x = covariate_label, y = pct_pos, fill = retro_group)) +
+  geom_col(position = position_dodge(width = 0.8), width = 0.7) +
+  labs(x = "Covariate", y = "Percent positive (%)",
+       title = "Distribution of Covariates by Study Design") +
+  scale_fill_manual(values = c("Retrospective" = "#1E88E5", "Prospective" = "#D81B60")) +
+  theme_bw(base_size = 14) +
+  theme(
+    axis.text.x = element_text(angle = 30, hjust = 1, size = 11),
+    axis.title = element_text(size = 14, face = "bold"),
+    panel.grid.major.x = element_blank(),
+    legend.position = "top",
+    legend.title = element_blank()
+  )
+
+print(p_cov)
+
+#############################################
+## Bar plot of covariate distribution
+## Previous study (CRE3 dataset)
+#############################################
+
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+
+# ============================================================
+# 1. Load and clean CRE3 dataset
+# ============================================================
+CRE3 <- read.csv("CRE3.csv", stringsAsFactors = FALSE)
+
+CRE3_clean <- CRE3 %>%
+  mutate(
+    time        = as.numeric(time),
+    status      = as.numeric(status),
+    reint       = as.numeric(reint),
+    mv          = as.numeric(mv),
+    arf         = as.numeric(arf),
+    crepre_60   = as.numeric(crepre_60),
+    crepost_60  = as.numeric(crepost_60),
+    multipost   = as.numeric(multipost)
+  ) %>%
+  filter(!is.na(time), !is.na(status), time > 0)
+
+# ============================================================
+# 2. Select predictors and reshape to long format
+# ============================================================
+predictors <- c("reint", "mv", "arf", "crepre_60", "crepost_60", "multipost")
+
+df_long <- CRE3_clean %>%
+  select(all_of(predictors)) %>%
+  pivot_longer(
+    cols = all_of(predictors),
+    names_to = "covariate",
+    values_to = "value"
+  )
+
+# ============================================================
+# 3. Summarize % positive for each covariate
+# ============================================================
+df_summary <- df_long %>%
+  group_by(covariate) %>%
+  summarise(
+    n = n(),
+    n_pos = sum(value == 1, na.rm = TRUE),
+    pct_pos = 100 * n_pos / n,
+    .groups = "drop"
+  ) %>%
+  mutate(
+    covariate_label = recode(covariate,
+                             "reint"       = "Reint",
+                             "mv"          = "Vent",
+                             "arf"         = "ARF",
+                             "crepre_60"   = "Coln prior",
+                             "crepost_60"  = "Coln post",
+                             "multipost"   = "Multisite"
+    )
+  )
+
+# ============================================================
+# 4. Bar plot (NEJM-style)
+# ============================================================
+p_cov_CRE3 <- ggplot(df_summary, aes(x = covariate_label, y = pct_pos)) +
+  geom_col(fill = "#1E88E5", width = 0.7) +
+  labs(x = "Covariate", y = "Percent positive (%)",
+       title = "Covariate Distribution (Previous Study, CRE3)") +
+  theme_bw(base_size = 14) +
+  theme(
+    axis.text.x = element_text(angle = 30, hjust = 1, size = 11),
+    axis.title = element_text(size = 14, face = "bold"),
+    panel.grid.major.x = element_blank()
+  )
+
+print(p_cov_CRE3)
+
+
+
