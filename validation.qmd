@@ -1,6 +1,7 @@
 ---
 title: "Validation cohort"
-date: 25/09/2025
+date: "2025-09-25"     # ISO format; quoted
+date-format: "D MMMM YYYY"  # optional: 25 September 2025
 format: 
   html:
     code-fold: true
@@ -8,7 +9,7 @@ format:
 execute:
   echo: true
   warning: false
-  freeze: true
+  freeze: true         # (you can keep this on after you refresh the cache)
 bibliography: references.bib
 csl: nature.csl
 ---
@@ -590,5 +591,11 @@ print(p_cov_CRE3)
 
 ```
 
-Distribution of covariated in the original CRECOOLT 2.0 model
+Distribution of covariates in the original CRECOOLT 2.0 model
+:::
+
+::: callout-important
+## Interesting observation
+
+There is a marked difference in the pre OLT versus post OLT CRE colonization rates between the previous CRECOOLT cohort and the current study. Most of the patients in the previous study had CRE colonization *after* OLT whereas in the current cohorts CRE colonization occured *before* OLT. Yet the mode still seemed to predict the risk well
 :::
