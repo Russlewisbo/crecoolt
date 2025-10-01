@@ -1,0 +1,7 @@
+"risk_group","CRE_status","n","deaths","mortality_pct"
+"Low","CRE+",49,7,14.3
+"Low","CRE-",252,13,5.2
+"Medium","CRE+",44,14,31.8
+"Medium","CRE-",126,14,11.1
+"High","CRE+",87,39,44.8
+"High","CRE-",134,26,19.4

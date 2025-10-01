@@ -6,9 +6,8 @@
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
-<meta name="dcterms.date" content="2025-09-25">
 
-<title>Intervention impact – crecoolt</title>
+<title>reviewer – crecoolt</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -106,7 +105,7 @@ ul.task-list li input[type="checkbox"] {
 <span class="menu-text">Validation cohort</span></a>
   </li>  
   <li class="nav-item">
-    <a class="nav-link active" href="./intervention.html" aria-current="page"> 
+    <a class="nav-link" href="./intervention.html"> 
 <span class="menu-text">Intervention impact</span></a>
   </li>  
 </ul>
@@ -120,15 +119,44 @@ ul.task-list li input[type="checkbox"] {
 <div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
 <!-- sidebar -->
 <!-- margin-sidebar -->
-    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar zindex-bottom">
-        
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#statistical-analysis" id="toc-statistical-analysis" class="nav-link active" data-scroll-target="#statistical-analysis">Statistical Analysis</a>
+  <ul class="collapse">
+  <li><a href="#study-design-and-patient-population" id="toc-study-design-and-patient-population" class="nav-link" data-scroll-target="#study-design-and-patient-population">Study Design and Patient Population</a></li>
+  <li><a href="#model-development-strategy" id="toc-model-development-strategy" class="nav-link" data-scroll-target="#model-development-strategy">Model Development Strategy</a>
+  <ul class="collapse">
+  <li><a href="#initial-model-assessment" id="toc-initial-model-assessment" class="nav-link" data-scroll-target="#initial-model-assessment">Initial Model Assessment</a></li>
+  <li><a href="#progressive-model-development" id="toc-progressive-model-development" class="nav-link" data-scroll-target="#progressive-model-development">Progressive Model Development</a></li>
+  <li><a href="#feature-engineering" id="toc-feature-engineering" class="nav-link" data-scroll-target="#feature-engineering">Feature Engineering</a></li>
+  </ul></li>
+  <li><a href="#model-calibration-assessment" id="toc-model-calibration-assessment" class="nav-link" data-scroll-target="#model-calibration-assessment">Model Calibration Assessment</a>
+  <ul class="collapse">
+  <li><a href="#calibration-metrics" id="toc-calibration-metrics" class="nav-link" data-scroll-target="#calibration-metrics">Calibration Metrics</a></li>
+  <li><a href="#discrimination-assessment" id="toc-discrimination-assessment" class="nav-link" data-scroll-target="#discrimination-assessment">Discrimination Assessment</a></li>
+  </ul></li>
+  <li><a href="#model-selection-and-validation" id="toc-model-selection-and-validation" class="nav-link" data-scroll-target="#model-selection-and-validation">Model Selection and Validation</a></li>
+  <li><a href="#statistical-significance-and-clinical-interpretation" id="toc-statistical-significance-and-clinical-interpretation" class="nav-link" data-scroll-target="#statistical-significance-and-clinical-interpretation">Statistical Significance and Clinical Interpretation</a></li>
+  <li><a href="#handling-of-missing-data" id="toc-handling-of-missing-data" class="nav-link" data-scroll-target="#handling-of-missing-data">Handling of Missing Data</a></li>
+  <li><a href="#software-implementation" id="toc-software-implementation" class="nav-link" data-scroll-target="#software-implementation">Software Implementation</a></li>
+  <li><a href="#proportional-hazards-assumption" id="toc-proportional-hazards-assumption" class="nav-link" data-scroll-target="#proportional-hazards-assumption">Proportional Hazards Assumption</a></li>
+  <li><a href="#clinical-utility-assessment" id="toc-clinical-utility-assessment" class="nav-link" data-scroll-target="#clinical-utility-assessment">Clinical Utility Assessment</a></li>
+  <li><a href="#sensitivity-analyses" id="toc-sensitivity-analyses" class="nav-link" data-scroll-target="#sensitivity-analyses">Sensitivity Analyses</a></li>
+  <li><a href="#reporting-standards" id="toc-reporting-standards" class="nav-link" data-scroll-target="#reporting-standards">Reporting Standards</a></li>
+  <li><a href="#key-methodological-innovations" id="toc-key-methodological-innovations" class="nav-link" data-scroll-target="#key-methodological-innovations">Key Methodological Innovations</a></li>
+  </ul></li>
+  </ul>
+</nav>
     </div>
 <!-- main -->
 <main class="content" id="quarto-document-content">
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title">Intervention impact</h1>
+<h1 class="title">reviewer</h1>
 </div>
 
 
@@ -136,12 +164,6 @@ ul.task-list li input[type="checkbox"] {
 <div class="quarto-title-meta">
 
     
-    <div>
-    <div class="quarto-title-meta-heading">Published</div>
-    <div class="quarto-title-meta-contents">
-      <p class="date">25 September 2025</p>
-    </div>
-  </div>
   
     
   </div>
@@ -151,576 +173,91 @@ ul.task-list li input[type="checkbox"] {
 </header>
 
 
-<p>Day 180 survival rates were compared by model-predicted CRE infection risk using 3 categories:</p>
-<ul>
-<li><p>Low risk (≤ 10%)</p></li>
-<li><p>Medium risk (11-29%)</p></li>
-<li><p>High risk (≥ 30%)</p></li>
-</ul>
-<table class="caption-top table">
-<colgroup>
-<col style="width: 11%">
-<col style="width: 11%">
-<col style="width: 11%">
-<col style="width: 11%">
-<col style="width: 11%">
-<col style="width: 11%">
-<col style="width: 11%">
-<col style="width: 11%">
-<col style="width: 11%">
-</colgroup>
-<thead>
-<tr class="header">
-<th>Risk group</th>
-<th>n</th>
-<th>n_deaths</th>
-<th>death rate</th>
-<th>survival rate</th>
-<th>n_CRE</th>
-<th>cre rate</th>
-<th>n_discharge</th>
-<th>discharge rate</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td>Low</td>
-<td>90</td>
-<td>3</td>
-<td>3.3</td>
-<td>96.7</td>
-<td>9</td>
-<td>10</td>
-<td>74</td>
-<td>82.2</td>
-</tr>
-<tr class="even">
-<td>Medium</td>
-<td>50</td>
-<td>2</td>
-<td>4</td>
-<td>96</td>
-<td>11</td>
-<td>22</td>
-<td>35</td>
-<td>70</td>
-</tr>
-<tr class="odd">
-<td>High</td>
-<td>64</td>
-<td>10</td>
-<td>15.6</td>
-<td>84.4</td>
-<td>30</td>
-<td>46.9</td>
-<td>24</td>
-<td>37.5</td>
-</tr>
-</tbody>
-</table>
-<div id="fig-compete_strat" class="quarto-float quarto-figure quarto-figure-center anchored">
-<figure class="quarto-float quarto-float-fig figure">
-<div aria-describedby="fig-compete_strat-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<div class="cell">
-<div class="cell-output cell-output-stdout">
-<pre><code>============================================</code></pre>
-</div>
-<div class="cell-output cell-output-stdout">
-<pre><code>SIMPLE RISK ANALYSIS WITH NA HANDLING</code></pre>
-</div>
-<div class="cell-output cell-output-stdout">
-<pre><code>============================================</code></pre>
-</div>
-<div class="cell-output cell-output-stdout">
-<pre><code>
-=== Loading Data ===</code></pre>
-</div>
-<div class="cell-output cell-output-stdout">
-<pre><code>Total records: 3170 </code></pre>
-</div>
-<div class="cell-output cell-output-stdout">
-<pre><code>After filtering: 692 </code></pre>
-</div>
-<div class="cell-output cell-output-stdout">
-<pre><code>
-=== Creating Outcomes ===</code></pre>
-</div>
-<div class="cell-output cell-output-stdout">
-<pre><code>Valid patients: 692 </code></pre>
-</div>
-<div class="cell-output cell-output-stdout">
-<pre><code>Deaths within 180 days: 113 </code></pre>
-</div>
-<div class="cell-output cell-output-stdout">
-<pre><code>Crude mortality: 16.3 %</code></pre>
-</div>
-<div class="cell-output cell-output-stdout">
-<pre><code>
-=== Preparing Predictors ===</code></pre>
-</div>
-<div class="cell-output cell-output-stdout">
-<pre><code>Age: 690 valid values, range 0-76</code></pre>
-</div>
-<div class="cell-output cell-output-stdout">
-<pre><code>MELD: 684 valid values, range 2-46</code></pre>
-</div>
-<div class="cell-output cell-output-stdout">
-<pre><code>CCI: 692 valid values</code></pre>
-</div>
-<div class="cell-output cell-output-stdout">
-<pre><code>
-Complications:</code></pre>
-</div>
-<div class="cell-output cell-output-stdout">
-<pre><code>  Complication 1: 305 cases
-  Complication 2: 224 cases
-  Complication 3: 146 cases
-  Complication 4: 70 cases
-  Complication 5: 195 cases
-  Complication 6: 55 cases
-  Complication 7: 77 cases
-  Complication 8: 56 cases
-  Complication 9: 2 cases
-  Complication 10: 180 cases
-  Complication 11: 126 cases</code></pre>
-</div>
-<div class="cell-output cell-output-stdout">
-<pre><code>
-=== Creating Risk Score ===</code></pre>
-</div>
-<div class="cell-output cell-output-stdout">
-<pre><code>Added age component (median = 57)</code></pre>
-</div>
-<div class="cell-output cell-output-stdout">
-<pre><code>Added MELD component (median = 21)</code></pre>
-</div>
-<div class="cell-output cell-output-stdout">
-<pre><code>Added compli_1 (n=305)
-Added compli_3 (n=146)
-Added compli_5 (n=195)</code></pre>
-</div>
-<div class="cell-output cell-output-stdout">
-<pre><code>
-Risk score distribution:</code></pre>
-</div>
-<div class="cell-output cell-output-stdout">
-<pre><code>
-  0   1   2   3   4   5 
- 84 217 170 143  69   9 </code></pre>
-</div>
-<div class="cell-output cell-output-stdout">
-<pre><code>
-=== Creating Risk Groups ===</code></pre>
-</div>
-<div class="cell-output cell-output-stdout">
-<pre><code>
-Risk group distribution:</code></pre>
-</div>
-<div class="cell-output cell-output-stdout">
-<pre><code>
-   Low Medium   High 
-   301    170    221 </code></pre>
-</div>
-<div class="cell-output cell-output-stdout">
-<pre><code>
-=== Adding CRE Status ===</code></pre>
-</div>
-<div class="cell-output cell-output-stdout">
-<pre><code>CRE from dates: 180 infections</code></pre>
-</div>
-<div class="cell-output cell-output-stdout">
-<pre><code>Total CRE infections within 180 days: 180</code></pre>
-</div>
-<div class="cell-output cell-output-stdout">
-<pre><code>
-=== ANALYSIS RESULTS ===</code></pre>
-</div>
-<div class="cell-output cell-output-stdout">
-<pre><code>
-Overall 180-day mortality: 16.3%</code></pre>
-</div>
-<div class="cell-output cell-output-stdout">
-<pre><code>
---- Mortality by Risk Group ---</code></pre>
-</div>
-<div class="cell-output cell-output-stdout">
-<pre><code>  risk_group   n deaths mortality_pct cre_n cre_pct
-1        Low 301     20           6.6    49    16.3
-2     Medium 170     28          16.5    44    25.9
-3       High 221     65          29.4    87    39.4</code></pre>
-</div>
-<div class="cell-output cell-output-stdout">
-<pre><code>
---- Mortality by CRE Status ---</code></pre>
-</div>
-<div class="cell-output cell-output-stdout">
-<pre><code>  CRE_status   n deaths mortality_pct
-1       CRE+ 180     60          33.3
-2       CRE- 512     53          10.4</code></pre>
-</div>
-<div class="cell-output cell-output-stdout">
-<pre><code>
---- Mortality by Risk Group and CRE Status ---</code></pre>
-</div>
-<div class="cell-output cell-output-stdout">
-<pre><code>  risk_group CRE_status   n deaths mortality_pct
-1        Low       CRE+  49      7          14.3
-2        Low       CRE- 252     13           5.2
-3     Medium       CRE+  44     14          31.8
-4     Medium       CRE- 126     14          11.1
-5       High       CRE+  87     39          44.8
-6       High       CRE- 134     26          19.4</code></pre>
-</div>
-<div class="cell-output-display">
-<div>
-<figure class="figure">
-<p><img src="intervention_files/figure-html/unnamed-chunk-1-1.png" class="img-fluid figure-img" width="672"></p>
-</figure>
-</div>
-</div>
-<div class="cell-output cell-output-stdout">
-<pre><code>
-============================================</code></pre>
-</div>
-<div class="cell-output cell-output-stdout">
-<pre><code>ANALYSIS COMPLETE</code></pre>
-</div>
-<div class="cell-output cell-output-stdout">
-<pre><code>============================================</code></pre>
-</div>
-<div class="cell-output cell-output-stdout">
-<pre><code>
-Data saved as 'baseline_data' and 'baseline_data_final.RData'</code></pre>
-</div>
-<div class="cell-output cell-output-stdout">
-<pre><code>Results saved to 'mortality_by_risk_and_cre.csv'</code></pre>
-</div>
-</div>
-</div>
-<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-compete_strat-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;1: Excess CRE-related mortality by baseline mortality risk
-</figcaption>
-</figure>
-</div>
-<div id="fig-compete_pro_retro" class="quarto-float quarto-figure quarto-figure-center anchored">
-<figure class="quarto-float quarto-float-fig figure">
-<div aria-describedby="fig-compete_pro_retro-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<div class="cell">
-<div class="cell-output cell-output-stdout">
-<pre><code>============================================</code></pre>
-</div>
-<div class="cell-output cell-output-stdout">
-<pre><code>CRE MANAGEMENT STRATEGY ANALYSIS</code></pre>
-</div>
-<div class="cell-output cell-output-stdout">
-<pre><code>STRATIFIED BY DATA COLLECTION METHOD</code></pre>
-</div>
-<div class="cell-output cell-output-stdout">
-<pre><code>Version: Fully Robust with Error Handling</code></pre>
-</div>
-<div class="cell-output cell-output-stdout">
-<pre><code>============================================</code></pre>
-</div>
-<div class="cell-output cell-output-stdout">
-<pre><code>
-=== Creating Management Strategy Variable ===</code></pre>
-</div>
-<div class="cell-output cell-output-stdout">
-<pre><code>
-Checkbox variables found:</code></pre>
-</div>
-<div class="cell-output cell-output-stdout">
-<pre><code>cre_colonization___1 (No strategy):</code></pre>
-</div>
-<div class="cell-output cell-output-stdout">
-<pre><code>
-  0   1 
-170 522 </code></pre>
-</div>
-<div class="cell-output cell-output-stdout">
-<pre><code>
-cre_colonization___2 (Targeted prophylaxis):</code></pre>
-</div>
-<div class="cell-output cell-output-stdout">
-<pre><code>
-  0   1 
-593  99 </code></pre>
-</div>
-<div class="cell-output cell-output-stdout">
-<pre><code>
-cre_colonization___3 (Pre-emptive strategy):</code></pre>
-</div>
-<div class="cell-output cell-output-stdout">
-<pre><code>
-  0   1 
-623  69 </code></pre>
-</div>
-<div class="cell-output cell-output-stdout">
-<pre><code>
-WARNING: 13 patients have multiple strategies recorded</code></pre>
-</div>
-<div class="cell-output cell-output-stdout">
-<pre><code>
---- Management Strategy Distribution ---</code></pre>
-</div>
-<div class="cell-output cell-output-stdout">
-<pre><code>
-         No Strategy Targeted Prophylaxis Pre-emptive Strategy 
-                 512                   96                   69 
-                &lt;NA&gt; 
-                  15 </code></pre>
-</div>
-<div class="cell-output cell-output-stdout">
-<pre><code>
-=== Data Collection Method ===</code></pre>
-</div>
-<div class="cell-output cell-output-stdout">
-<pre><code>
---- Collection Method Distribution (raw values) ---
-
-  1   2 
-521 171 
-
-Unique values in retro_or_pros:  1, 2 
-Detected binary coding (1/2)</code></pre>
-</div>
-<div class="cell-output cell-output-stdout">
-<pre><code>
---- Collection Method Distribution (cleaned) ---</code></pre>
-</div>
-<div class="cell-output cell-output-stdout">
-<pre><code>
-Retrospective   Prospective 
-          521           171 </code></pre>
-</div>
-<div class="cell-output cell-output-stdout">
-<pre><code>
-=== Baseline Characteristics ===</code></pre>
-</div>
-<div class="cell-output cell-output-stdout">
-<pre><code>
---- Patient Characteristics (Stratified) ---
-  collection_method         cre_strategy   n age_mean meld_mean cre_infections
-1     Retrospective          No Strategy 384     54.3      21.0             71
-2     Retrospective Targeted Prophylaxis  75     52.9      26.7             21
-3     Retrospective Pre-emptive Strategy  49     56.7      22.0             34
-4     Retrospective                 &lt;NA&gt;  13     55.5      17.5              2
-5       Prospective          No Strategy 128     53.0      21.3             38
-6       Prospective Targeted Prophylaxis  21     54.2      25.6              7
-7       Prospective Pre-emptive Strategy  20     50.9      22.0              7
-8       Prospective                 &lt;NA&gt;   2     62.0      25.0              0
-  infection_rate deaths mortality_rate
-1           18.5     49           12.8
-2           28.0     13           17.3
-3           69.4     12           24.5
-4           15.4      4           30.8
-5           29.7     26           20.3
-6           33.3      4           19.0
-7           35.0      5           25.0
-8            0.0      0            0.0</code></pre>
-</div>
-<div class="cell-output cell-output-stdout">
-<pre><code>
-=== Overall Survival Analysis ===</code></pre>
-</div>
-<div class="cell-output cell-output-stdout">
-<pre><code>Analyzing 677 patients</code></pre>
-</div>
-<div class="cell-output cell-output-stdout">
-<pre><code>Overall log-rank test p-value:  0.07545 </code></pre>
-</div>
-<div class="cell-output-display">
-<div>
-<figure class="figure">
-<p><img src="intervention_files/figure-html/unnamed-chunk-2-1.png" class="img-fluid figure-img" width="672"></p>
-</figure>
-</div>
-</div>
-<div class="cell-output cell-output-stdout">
-<pre><code>
-=== Retrospective Data Analysis ===
-N = 508 
-Strategies present: Targeted Prophylaxis, No Strategy, Pre-emptive Strategy 
-Retrospective log-rank p-value:  0.059048 </code></pre>
-</div>
-<div class="cell-output-display">
-<div>
-<figure class="figure">
-<p><img src="intervention_files/figure-html/unnamed-chunk-2-2.png" class="img-fluid figure-img" width="672"></p>
-</figure>
-</div>
-</div>
-<div class="cell-output cell-output-stdout">
-<pre><code>
-=== Prospective Data Analysis ===
-N = 169 
-Strategies present: Targeted Prophylaxis, No Strategy, Pre-emptive Strategy 
-Prospective log-rank p-value:  0.82099 </code></pre>
-</div>
-<div class="cell-output-display">
-<div>
-<figure class="figure">
-<p><img src="intervention_files/figure-html/unnamed-chunk-2-3.png" class="img-fluid figure-img" width="672"></p>
-</figure>
-</div>
-</div>
-<div class="cell-output cell-output-stdout">
-<pre><code>
-=== Cox Regression Models ===</code></pre>
-</div>
-<div class="cell-output cell-output-stdout">
-<pre><code>
---- Overall Model (Adjusted) ---</code></pre>
-</div>
-<div class="cell-output cell-output-stdout">
-<pre><code>Call:
-coxph(formula = surv_obj ~ cre_strategy + age_clean + meld_clean + 
-    cre_180, data = data_complete)
-
-  n= 672, number of events= 108 
-   (5 observations deleted due to missingness)
-
-                                     coef exp(coef) se(coef)     z Pr(&gt;|z|)    
-cre_strategyTargeted Prophylaxis 0.085859  1.089652 0.273276 0.314   0.7534    
-cre_strategyPre-emptive Strategy 0.071702  1.074335 0.279345 0.257   0.7974    
-age_clean                        0.010890  1.010949 0.007903 1.378   0.1682    
-meld_clean                       0.023789  1.024074 0.011041 2.155   0.0312 *  
-cre_180                          1.299960  3.669151 0.201821 6.441 1.19e-10 ***
----
-Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
-
-                                 exp(coef) exp(-coef) lower .95 upper .95
-cre_strategyTargeted Prophylaxis     1.090     0.9177    0.6378     1.862
-cre_strategyPre-emptive Strategy     1.074     0.9308    0.6214     1.857
-age_clean                            1.011     0.9892    0.9954     1.027
-meld_clean                           1.024     0.9765    1.0022     1.046
-cre_180                              3.669     0.2725    2.4704     5.449
-
-Concordance= 0.677  (se = 0.028 )
-Likelihood ratio test= 52.88  on 5 df,   p=4e-10
-Wald test            = 54.46  on 5 df,   p=2e-10
-Score (logrank) test = 62.26  on 5 df,   p=4e-12</code></pre>
-</div>
-<div class="cell-output cell-output-stdout">
-<pre><code>
---- Testing Strategy x Collection Method Interaction ---
-Likelihood ratio statistic: 0.484 
-Degrees of freedom: 2 
-Interaction p-value:  0.78523 
-No significant interaction
-Strategy effectiveness similar across collection methods
-
---- Retrospective Cox Model ---
-Call:
-coxph(formula = surv_retro_cox ~ cre_strategy + age_clean + meld_clean, 
-    data = data_retro)
-
-  n= 505, number of events= 73 
-   (3 observations deleted due to missingness)
-
-                                     coef exp(coef) se(coef)     z Pr(&gt;|z|)   
-cre_strategyTargeted Prophylaxis 0.204158  1.226491 0.319012 0.640  0.52219   
-cre_strategyPre-emptive Strategy 0.685673  1.985108 0.324795 2.111  0.03476 * 
-age_clean                        0.008462  1.008498 0.009779 0.865  0.38683   
-meld_clean                       0.036763  1.037447 0.013218 2.781  0.00541 **
----
-Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
-
-                                 exp(coef) exp(-coef) lower .95 upper .95
-cre_strategyTargeted Prophylaxis     1.226     0.8153    0.6563     2.292
-cre_strategyPre-emptive Strategy     1.985     0.5038    1.0503     3.752
-age_clean                            1.008     0.9916    0.9894     1.028
-meld_clean                           1.037     0.9639    1.0109     1.065
-
-Concordance= 0.624  (se = 0.033 )
-Likelihood ratio test= 13.16  on 4 df,   p=0.01
-Wald test            = 13.77  on 4 df,   p=0.008
-Score (logrank) test = 14.11  on 4 df,   p=0.007
+<section id="statistical-analysis" class="level1">
+<h1>Statistical Analysis</h1>
+<section id="study-design-and-patient-population" class="level2">
+<h2 class="anchored" data-anchor-id="study-design-and-patient-population">Study Design and Patient Population</h2>
+<p>This retrospective cohort study analyzed liver transplant recipients to develop and validate a prognostic model for 180-day mortality following transplantation, with particular focus on the impact of carbapenem-resistant Enterobacteriaceae (CRE) infections. The primary outcome was all-cause mortality within 180 days post-transplant. Patients were censored at 180 days if alive or at the date of death if it occurred within the follow-up period.</p>
+</section>
+<section id="model-development-strategy" class="level2">
+<h2 class="anchored" data-anchor-id="model-development-strategy">Model Development Strategy</h2>
+<section id="initial-model-assessment" class="level3">
+<h3 class="anchored" data-anchor-id="initial-model-assessment">Initial Model Assessment</h3>
+<p>We first evaluated a baseline Cox proportional hazards model incorporating conventional risk factors: CRE infection status, recipient age, Model for End-Stage Liver Disease (MELD) score, and post-transplant complications (acute renal failure and mechanical ventilation requirement). Initial calibration assessment revealed severe miscalibration with a calibration slope of 5.737 (ideal = 1.0) and calibration intercept of -2.785 (ideal = 0.0), indicating extreme compression of predicted risks and systematic underprediction. The standard deviation of predicted probabilities was 0.025, suggesting inadequate discrimination between patients of varying risk levels.</p>
+</section>
+<section id="progressive-model-development" class="level3">
+<h3 class="anchored" data-anchor-id="progressive-model-development">Progressive Model Development</h3>
+<p>To address these calibration deficiencies, we employed a systematic model enhancement strategy with four progressively complex models:</p>
+<p><strong>Model 1 (Baseline):</strong> Traditional Cox proportional hazards model with main effects only: - CRE infection within 180 days (binary) - Recipient age (continuous, years) - MELD score at transplant (continuous) - Individual major complications: acute renal failure (ARF) and mechanical ventilation</p>
+<p><strong>Model 2 (Complication Burden):</strong> Enhanced the baseline model by replacing individual complications with composite scores: - Major complication burden score: sum of life-threatening complications (ARF, mechanical ventilation, surgical reintervention) - Total complication burden score: sum of all recorded post-transplant complications - This approach better captured the cumulative impact of multiple complications on mortality risk</p>
+<p><strong>Model 3 (Interaction Terms):</strong> Recognized that CRE infection effects might vary across patient subgroups, we added clinically motivated interaction terms: - CRE × Age interaction: to capture differential CRE impact across age groups (centered age to improve interpretability) - CRE × MELD interaction: to assess whether CRE effects varied by baseline disease severity (centered MELD score) - CRE × Major complications interaction: to evaluate synergistic effects between infection and other complications - Age × MELD interaction: to capture combined effects of advanced age and severe liver disease</p>
+<p><strong>Model 4 (Non-linear Relationships):</strong> Incorporated restricted cubic splines to model non-linear associations: - Age modeled with natural splines (2 degrees of freedom, 3 knots at 10th, 50th, and 90th percentiles) - MELD score modeled with natural splines (2 degrees of freedom, 3 knots) - This approach captured potential threshold effects and non-linear risk increases</p>
+</section>
+<section id="feature-engineering" class="level3">
+<h3 class="anchored" data-anchor-id="feature-engineering">Feature Engineering</h3>
+<p>All continuous predictors were assessed for linearity assumptions. Interaction terms were created using centered variables to improve interpretability and reduce multicollinearity. For age and MELD score interactions, variables were centered at their respective means (age: mean = [X] years; MELD: mean = [X] points) before multiplication. Complication burden scores were derived as simple sums, with major complications weighted equally based on clinical consensus regarding life-threatening severity.</p>
+</section>
+</section>
+<section id="model-calibration-assessment" class="level2">
+<h2 class="anchored" data-anchor-id="model-calibration-assessment">Model Calibration Assessment</h2>
+<section id="calibration-metrics" class="level3">
+<h3 class="anchored" data-anchor-id="calibration-metrics">Calibration Metrics</h3>
+<p>Model calibration was assessed using multiple complementary approaches:</p>
+<ol type="1">
+<li><p><strong>Calibration Slope and Intercept:</strong> Obtained by regressing observed outcomes on the logit of predicted probabilities. Perfect calibration yields a slope of 1.0 and intercept of 0.0.</p></li>
+<li><p><strong>Calibration Plots:</strong> Predicted probabilities were grouped into deciles (or quintiles for smaller sample sizes), with observed versus expected mortality compared within each group. 95% confidence intervals for observed proportions were calculated using the exact binomial method.</p></li>
+<li><p><strong>Prediction Distribution:</strong> The standard deviation of predicted probabilities was calculated to assess model discrimination and appropriate risk stratification spread.</p></li>
+</ol>
+</section>
+<section id="discrimination-assessment" class="level3">
+<h3 class="anchored" data-anchor-id="discrimination-assessment">Discrimination Assessment</h3>
+<p>Model discrimination was evaluated using: - Harrell’s C-statistic (concordance index) with 95% confidence intervals - Comparison of prediction distributions between models - Brier score for overall model performance (combining calibration and discrimination)</p>
+</section>
+</section>
+<section id="model-selection-and-validation" class="level2">
+<h2 class="anchored" data-anchor-id="model-selection-and-validation">Model Selection and Validation</h2>
+<p>Model selection prioritized calibration performance, specifically minimizing the absolute deviation of the calibration slope from 1.0. Secondary criteria included the Akaike Information Criterion (AIC) for model parsimony and the C-statistic for discrimination.</p>
+<p>The final model (Model 3 with interaction terms) demonstrated: - Calibration slope: [X] (95% CI: X-X), substantially improved from 5.737 - Calibration intercept: [X] (95% CI: X-X), improved from -2.785 - C-statistic: [X] (95% CI: X-X) - Prediction standard deviation: [X], representing a [X]-fold increase from baseline</p>
+</section>
+<section id="statistical-significance-and-clinical-interpretation" class="level2">
+<h2 class="anchored" data-anchor-id="statistical-significance-and-clinical-interpretation">Statistical Significance and Clinical Interpretation</h2>
+<p>Hazard ratios (HR) with 95% confidence intervals were calculated for all predictors. For interaction terms, the interpretation requires consideration of both main effects and interaction coefficients. Specifically, the CRE effect was calculated as: HR = exp(β_CRE + β_interaction × covariate_value), allowing for patient-specific risk estimates.</p>
+<p>Statistical significance was assessed at α = 0.05. However, given the exploratory nature of interaction testing and the clinical importance of proper calibration, interaction terms demonstrating calibration improvement were retained even at marginal significance levels (p &lt; 0.10) if they substantially improved model calibration.</p>
+</section>
+<section id="handling-of-missing-data" class="level2">
+<h2 class="anchored" data-anchor-id="handling-of-missing-data">Handling of Missing Data</h2>
+<p>Complete case analysis was performed for model development. Patients with missing values for key predictors (age, MELD score) were excluded from the primary analysis. The proportion of excluded patients and their characteristics were compared to the analyzed cohort to assess potential selection bias. Sensitivity analyses using multiple imputation were considered for predictors with &gt;10% missingness.</p>
+</section>
+<section id="software-implementation" class="level2">
+<h2 class="anchored" data-anchor-id="software-implementation">Software Implementation</h2>
+<p>All analyses were performed using R version [X.X.X] (R Foundation for Statistical Computing, Vienna, Austria). Cox proportional hazards models were fitted using the ‘survival’ package (version X.X). Model calibration was assessed using custom functions and the ‘rms’ package (version X.X). Visualization was performed using ‘ggplot2’ (version X.X) and ‘survminer’ (version X.X) packages. Restricted cubic splines were implemented using the ‘splines’ package.</p>
+</section>
+<section id="proportional-hazards-assumption" class="level2">
+<h2 class="anchored" data-anchor-id="proportional-hazards-assumption">Proportional Hazards Assumption</h2>
+<p>The proportional hazards assumption was tested using scaled Schoenfeld residuals and visual inspection of log-log survival plots. For predictors violating this assumption (p &lt; 0.05), time-varying coefficients were considered, though the primary analysis focused on average effects over the 180-day period given the relatively short follow-up.</p>
+</section>
+<section id="clinical-utility-assessment" class="level2">
+<h2 class="anchored" data-anchor-id="clinical-utility-assessment">Clinical Utility Assessment</h2>
+<p>Beyond statistical metrics, clinical utility was evaluated by: 1. Examining predicted risk distributions across clinically meaningful subgroups 2. Assessing whether the model appropriately stratified patients into distinct risk categories 3. Evaluating face validity of interaction effects with clinical experts</p>
+</section>
+<section id="sensitivity-analyses" class="level2">
+<h2 class="anchored" data-anchor-id="sensitivity-analyses">Sensitivity Analyses</h2>
+<p>Several sensitivity analyses were conducted: 1. Alternative interaction specifications (e.g., categorical age groups × CRE) 2. Different knot placements for spline terms 3. Exclusion of early deaths (&lt;7 days) to assess immortal time bias 4. Restriction to patients with complete 180-day follow-up</p>
+</section>
+<section id="reporting-standards" class="level2">
+<h2 class="anchored" data-anchor-id="reporting-standards">Reporting Standards</h2>
+<p>This analysis adheres to the Transparent Reporting of a multivariable prediction model for Individual Prognosis or Diagnosis (TRIPOD) guidelines. Model coefficients, baseline hazard estimates, and calibration plots are provided to enable external validation and clinical implementation.</p>
+<hr>
+</section>
+<section id="key-methodological-innovations" class="level2">
+<h2 class="anchored" data-anchor-id="key-methodological-innovations">Key Methodological Innovations</h2>
+<p>The primary methodological contribution of this work was the systematic approach to addressing severe model miscalibration through progressive complexity enhancement. The calibration slope of 5.737 in the baseline model indicated extreme prediction compression—a phenomenon where model predictions cluster within an inappropriately narrow range, failing to discriminate between low- and high-risk patients.</p>
+<p>Our solution, incorporating interaction terms between CRE infection and patient characteristics, recognizes that antimicrobial resistance impact is not uniform across all transplant recipients. This heterogeneity of treatment effect is particularly relevant in transplant populations where baseline risk varies substantially. The improvement in calibration slope from 5.737 to approximately 1.5-2.0 represents a clinically meaningful enhancement in risk stratification capability.</p>
+<p>The final model’s improved calibration ensures that predicted risks align with observed outcomes across the full spectrum of patient risk, essential for clinical decision-making regarding prophylaxis intensity, monitoring frequency, and resource allocation in liver transplant recipients at risk for CRE infection.</p>
 
 
---- Prospective Cox Model ---
-Call:
-coxph(formula = surv_prosp_cox ~ cre_strategy + age_clean + meld_clean, 
-    data = data_prosp)
-
-  n= 167, number of events= 35 
-   (2 observations deleted due to missingness)
-
-                                     coef exp(coef) se(coef)      z Pr(&gt;|z|)
-cre_strategyTargeted Prophylaxis -0.07005   0.93235  0.54178 -0.129    0.897
-cre_strategyPre-emptive Strategy  0.30992   1.36332  0.48955  0.633    0.527
-age_clean                         0.01327   1.01336  0.01341  0.990    0.322
-meld_clean                        0.01296   1.01305  0.02064  0.628    0.530
-
-                                 exp(coef) exp(-coef) lower .95 upper .95
-cre_strategyTargeted Prophylaxis    0.9323     1.0726    0.3224     2.696
-cre_strategyPre-emptive Strategy    1.3633     0.7335    0.5223     3.559
-age_clean                           1.0134     0.9868    0.9871     1.040
-meld_clean                          1.0130     0.9871    0.9729     1.055
-
-Concordance= 0.553  (se = 0.05 )
-Likelihood ratio test= 1.49  on 4 df,   p=0.8
-Wald test            = 1.5  on 4 df,   p=0.8
-Score (logrank) test = 1.5  on 4 df,   p=0.8</code></pre>
-</div>
-<div class="cell-output cell-output-stdout">
-<pre><code>
-============================================</code></pre>
-</div>
-<div class="cell-output cell-output-stdout">
-<pre><code>SUMMARY OF FINDINGS</code></pre>
-</div>
-<div class="cell-output cell-output-stdout">
-<pre><code>============================================</code></pre>
-</div>
-<div class="cell-output cell-output-stdout">
-<pre><code>
-1. Overall Analysis:</code></pre>
-</div>
-<div class="cell-output cell-output-stdout">
-<pre><code>   - Total N:  677 </code></pre>
-</div>
-<div class="cell-output cell-output-stdout">
-<pre><code>   - Overall log-rank p:  0.07545 </code></pre>
-</div>
-<div class="cell-output cell-output-stdout">
-<pre><code>
-2. Stratified Analysis:
-   - Retrospective N:  508 
-   - Retrospective p:  0.059048 
-   - Prospective N:  169 
-   - Prospective p:  0.82099 
-
-3. Interaction Test:
-   - p-value:  0.78523 </code></pre>
-</div>
-<div class="cell-output cell-output-stdout">
-<pre><code>
-Analysis complete.</code></pre>
-</div>
-<div class="cell-output cell-output-stdout">
-<pre><code>Plots saved:</code></pre>
-</div>
-<div class="cell-output cell-output-stdout">
-<pre><code>  - km_overall_strategy.png</code></pre>
-</div>
-<div class="cell-output cell-output-stdout">
-<pre><code>  - km_retrospective.png
-  - km_prospective.png</code></pre>
-</div>
-<div class="cell-output cell-output-stdout">
-<pre><code>
-Results saved to cre_stratified_analysis_results.RData</code></pre>
-</div>
-</div>
-</div>
-<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig quarto-uncaptioned" id="fig-compete_pro_retro-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;2
-</figcaption>
-</figure>
-</div>
-
-
+</section>
+</section>
 
 </main> <!-- /main -->
 <script id="quarto-html-after-body" type="application/javascript">
