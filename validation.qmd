@@ -597,5 +597,5 @@ Distribution of covariates in the original CRECOOLT 2.0 model
 ::: callout-important
 ## Interesting observation
 
-There is a marked difference in the pre OLT versus post OLT CRE colonization rates between the previous CRECOOLT cohort and the current study. Most of the patients in the previous study had CRE colonization *after* OLT whereas in the current cohorts CRE colonization occurred *before* OLT. Yet the mode still seemed to predict the risk well.
+There is a marked difference in the pre OLT versus post OLT CRE colonization rates between the previous CRECOOLT cohort and the current study. Most of the patients in the previous study had CRE colonization *after* OLT whereas in the current cohorts CRE colonization occurred *before* OLT.
 :::
