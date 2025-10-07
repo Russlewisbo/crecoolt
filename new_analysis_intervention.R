@@ -1127,5 +1127,588 @@ cat("Key findings have been saved to CSV files.\n")
 cat("Total patients analyzed:", nrow(df_model), "\n")
 cat("Plots show survival and competing outcomes stratified by CRE risk.\n")
 
+#############################################
+## FINE-GRAY COMPETING RISKS ANALYSIS
+## LIMITED TO PROSPECTIVE PATIENTS ONLY
+## Outcome: CRE Infection 
+## Exposure: CRE Management Strategy
+## Competing risks: Death without CRE, Discharge without CRE
+## Filter: retro_or_pros == 2 (Prospective patients)
+#############################################
 
+library(dplyr)
+library(cmprsk)
+library(riskRegression)
+library(prodlim)
+library(ggplot2)
+library(tidyr)
+
+cat("============================================\n")
+cat("COMPETING RISKS ANALYSIS: CRE INFECTION\n")
+cat("PROSPECTIVE PATIENTS ONLY (retro_or_pros == 2)\n")
+cat("============================================\n")
+
+# Load data
+if(!exists("baseline_data")) {
+  load("baseline_data_final.RData")
+}
+
+# Use data_extract if baseline_data doesn't have the variables we need
+if(!"cre_colonization___1" %in% names(baseline_data)) {
+  if(file.exists("data_extract.rds")) {
+    data_extract <- readRDS("data_extract.rds")
+    data_analysis <- data_extract
+    cat("Using data_extract.rds\n")
+  } else if(exists("data_extract")) {
+    data_analysis <- data_extract
+    cat("Using existing data_extract object\n")
+  } else {
+    stop("Cannot find required variables. Please ensure data_extract is loaded.")
+  }
+} else {
+  data_analysis <- baseline_data
+  cat("Using baseline_data\n")
+}
+
+# ============================================================
+# FILTER FOR PROSPECTIVE PATIENTS ONLY
+# ============================================================
+
+cat("\n=== Filtering for Prospective Patients ===\n")
+
+# Check initial sample size
+n_total <- nrow(data_analysis)
+cat("Total patients in dataset: ", n_total, "\n")
+
+# Filter for prospective patients (retro_or_pros == 2)
+data_analysis <- data_analysis %>%
+  filter(retro_or_pros == 2)
+
+n_prospective <- nrow(data_analysis)
+cat("Prospective patients (retro_or_pros == 2): ", n_prospective, "\n")
+cat("Proportion prospective: ", round(n_prospective/n_total * 100, 1), "%\n")
+
+if(n_prospective == 0) {
+  stop("No prospective patients found. Please check the retro_or_pros variable.")
+}
+
+# ============================================================
+# DIAGNOSTIC SECTION: IDENTIFY AVAILABLE VARIABLES
+# ============================================================
+
+cat("\n=== Variable Availability Check (Prospective Cohort) ===\n")
+
+# Check for key variables
+key_vars <- c(
+  "cre_colonization___1", "cre_colonization___2", "cre_colonization___3",  
+  "post_olt_compli___1", "post_olt_compli___3", "post_olt_compli___5",     
+  "multisite_colonization",                                                 
+  "cre_colon", "cre_colon___1", "cre_colon___2",                          
+  "mec_of_carbapenem_resi___1",                                            
+  "time_c", "outcome_comp",                                                
+  "cre_infection_date", "death_date", "discharge_date",                    
+  "age", "age_clean", "meld", "meld_clean"                                
+)
+
+cat("\nChecking for key variables in prospective cohort:\n")
+for(v in key_vars) {
+  if(v %in% names(data_analysis)) {
+    n_valid <- sum(!is.na(data_analysis[[v]]))
+    cat("  ✓ ", v, " (n=", n_valid, ")\n", sep="")
+  }
+}
+
+# ============================================================
+# STEP 1: CREATE VARIABLES AND PREPARE DATA
+# ============================================================
+
+cat("\n=== Preparing Data (Prospective Cohort) ===\n")
+
+# Create management strategy variable
+data_analysis$cre_management_strategy <- NA
+data_analysis$cre_management_strategy[data_analysis$cre_colonization___1 == 1] <- 1
+data_analysis$cre_management_strategy[data_analysis$cre_colonization___2 == 1] <- 2
+data_analysis$cre_management_strategy[data_analysis$cre_colonization___3 == 1] <- 3
+
+# Check for multiple strategies
+multiple_strategies <- rowSums(data_analysis[, c("cre_colonization___1", 
+                                                 "cre_colonization___2", 
+                                                 "cre_colonization___3")], na.rm = TRUE)
+n_multiple <- sum(multiple_strategies > 1, na.rm = TRUE)
+if(n_multiple > 0) {
+  cat("WARNING: ", n_multiple, " prospective patients have multiple strategies recorded\n", sep="")
+  cat("Using highest strategy number for these patients\n")
+}
+
+# Create factor with meaningful labels
+data_analysis$cre_strategy <- factor(
+  data_analysis$cre_management_strategy,
+  levels = c(1, 2, 3),
+  labels = c("No Strategy", "Targeted Prophylaxis", "Pre-emptive Strategy")
+)
+
+cat("\n--- Management Strategy Distribution (Prospective Cohort) ---\n")
+print(table(data_analysis$cre_strategy, useNA = "ifany"))
+
+# Create covariates (matching original analysis)
+df_model <- data_analysis
+available_vars <- names(data_analysis)
+
+# Post-OLT complications
+if("post_olt_compli___1" %in% available_vars) {
+  df_model$post_olt_compli1 <- ifelse(data_analysis$post_olt_compli___1 == 1, 1, 0)
+} else {
+  df_model$post_olt_compli1 <- NA
+}
+
+if("post_olt_compli___3" %in% available_vars) {
+  df_model$post_olt_compli3 <- ifelse(data_analysis$post_olt_compli___3 == 1, 1, 0)
+} else {
+  df_model$post_olt_compli3 <- NA
+}
+
+if("post_olt_compli___5" %in% available_vars) {
+  df_model$post_olt_compli5 <- ifelse(data_analysis$post_olt_compli___5 == 1, 1, 0)
+} else {
+  df_model$post_olt_compli5 <- NA
+}
+
+# Multisite colonization
+if("multisite_colonization" %in% available_vars) {
+  df_model$multisite_col <- ifelse(data_analysis$multisite_colonization == 1, 1, 0)
+} else {
+  df_model$multisite_col <- NA
+}
+
+# CRE colonization timing
+if("cre_colon" %in% available_vars) {
+  df_model$cre_col1 <- ifelse(data_analysis$cre_colon == 1, 1, 0)  # Prior
+  df_model$cre_col2 <- ifelse(data_analysis$cre_colon == 2, 1, 0)  # Post
+} else {
+  df_model$cre_col1 <- NA
+  df_model$cre_col2 <- NA
+}
+
+# Mechanism of resistance
+if("mec_of_carbapenem_resi___1" %in% available_vars) {
+  df_model$mec1 <- ifelse(data_analysis$mec_of_carbapenem_resi___1 == 1, 1, 0)
+} else {
+  df_model$mec1 <- NA
+}
+
+# Patient characteristics
+if("age_clean" %in% available_vars) {
+  df_model$age_years <- data_analysis$age_clean
+} else if("age" %in% available_vars) {
+  df_model$age_years <- data_analysis$age
+} else {
+  df_model$age_years <- NA
+}
+
+if("meld_clean" %in% available_vars) {
+  df_model$meld_score <- data_analysis$meld_clean
+} else if("meld" %in% available_vars) {
+  df_model$meld_score <- data_analysis$meld
+} else {
+  df_model$meld_score <- NA
+}
+
+# Use existing outcome_comp and time_c if available, otherwise create them
+if(!"outcome_comp" %in% names(df_model) || !"time_c" %in% names(df_model)) {
+  cat("\nCreating competing risk outcomes for prospective cohort...\n")
+  
+  # Ensure dates are in Date format
+  df_model$date_of_transplant <- as.Date(df_model$date_of_transplant)
+  df_model$cre_infection_date <- as.Date(df_model$cre_infection_date)
+  df_model$discharge_date <- as.Date(df_model$discharge_date)
+  df_model$death_date <- as.Date(df_model$death_date)
+  
+  # Define 180-day cutoff
+  df_model$day180 <- df_model$date_of_transplant + 180
+  
+  # Find earliest event
+  event_date <- pmin(df_model$cre_infection_date,
+                     df_model$discharge_date,
+                     df_model$death_date,
+                     df_model$day180,
+                     na.rm = TRUE)
+  
+  # Time to event
+  df_model$time_c <- as.numeric(event_date - df_model$date_of_transplant)
+  
+  # Initialize outcome
+  df_model$outcome_comp <- 0
+  
+  # Assign events based on earliest event type
+  df_model$outcome_comp[!is.na(df_model$cre_infection_date) &
+                          df_model$cre_infection_date <= df_model$day180 &
+                          df_model$cre_infection_date == event_date] <- 1
+  
+  df_model$outcome_comp[!is.na(df_model$discharge_date) &
+                          df_model$discharge_date <= df_model$day180 &
+                          df_model$discharge_date == event_date] <- 2
+  
+  df_model$outcome_comp[!is.na(df_model$death_date) &
+                          df_model$death_date <= df_model$day180 &
+                          df_model$death_date == event_date] <- 3
+}
+
+# Filter to complete cases for key variables
+df_model_complete <- df_model %>%
+  filter(!is.na(time_c) & time_c >= 0 & !is.na(cre_strategy))
+
+cat("\n--- Outcome Distribution (Prospective Cohort) ---\n")
+outcome_table <- table(df_model_complete$outcome_comp, useNA = "ifany")
+cat("0 = Censored: ", outcome_table[1], "\n")
+cat("1 = CRE infection: ", outcome_table[2], "\n")
+cat("2 = Discharge: ", outcome_table[3], "\n")
+cat("3 = Death: ", outcome_table[4], "\n")
+
+cat("\nTotal prospective patients with complete strategy data: ", nrow(df_model_complete), "\n")
+
+# ============================================================
+# STEP 2: CUMULATIVE INCIDENCE BY STRATEGY (UNADJUSTED)
+# ============================================================
+
+cat("\n=== Cumulative Incidence of CRE Infection by Strategy ===\n")
+cat("    (Prospective Cohort Only)\n")
+
+# Calculate cumulative incidence for each strategy
+times_seq <- seq(0, 180, by = 5)
+
+ci_by_strategy <- lapply(levels(df_model_complete$cre_strategy), function(strat) {
+  df_subset <- filter(df_model_complete, cre_strategy == strat)
+  if(nrow(df_subset) > 5) {  # Lower threshold for prospective cohort
+    ci_fit <- prodlim(Hist(time_c, outcome_comp) ~ 1, data = df_subset)
+    data.frame(
+      times = times_seq,
+      CIF_cre = predict(ci_fit, cause = 1, times = times_seq),
+      CIF_death = predict(ci_fit, cause = 3, times = times_seq),
+      CIF_discharge = predict(ci_fit, cause = 2, times = times_seq),
+      strategy = strat,
+      n = nrow(df_subset)
+    )
+  }
+})
+
+ci_strategy_df <- bind_rows(ci_by_strategy)
+
+# Summary at key timepoints
+key_times <- c(14, 30, 60, 90, 180)
+summary_table <- ci_strategy_df %>%
+  filter(times %in% key_times) %>%
+  select(strategy, times, CIF_cre, n) %>%
+  mutate(CIF_cre_pct = round(CIF_cre * 100, 1)) %>%
+  pivot_wider(names_from = times, values_from = CIF_cre_pct, names_prefix = "Day_")
+
+cat("\n--- CRE Infection Cumulative Incidence (%) by Strategy ---\n")
+cat("    Prospective Patients Only\n")
+print(as.data.frame(summary_table))
+
+# Plot cumulative incidence curves
+strategy_colors <- c("No Strategy" = "#E41A1C", 
+                     "Targeted Prophylaxis" = "#377EB8", 
+                     "Pre-emptive Strategy" = "#4DAF4A")
+
+p_ci_strategy <- ggplot(ci_strategy_df, aes(x = times, y = CIF_cre, color = strategy)) +
+  geom_line(size = 1.2) +
+  labs(
+    x = "Days since OLT",
+    y = "Cumulative incidence of CRE infection",
+    title = "CRE Infection by Management Strategy - Prospective Cohort",
+    subtitle = paste("N =", n_prospective, "prospective patients"),
+    color = "Strategy"
+  ) +
+  scale_color_manual(values = strategy_colors) +
+  scale_y_continuous(labels = scales::percent_format()) +
+  theme_bw(base_size = 14) +
+  theme(
+    panel.grid = element_blank(),
+    legend.position = "top",
+    axis.title = element_text(size = 14, face = "bold"),
+    axis.text = element_text(size = 12)
+  )
+
+print(p_ci_strategy)
+ggsave("cre_infection_by_strategy_prospective.png", p_ci_strategy, 
+       width = 10, height = 7, dpi = 300)
+
+# ============================================================
+# STEP 3: GRAY'S TEST FOR EQUALITY OF CIF
+# ============================================================
+
+cat("\n=== Gray's Test for Equality of CIF (Prospective) ===\n")
+
+# Prepare data for cmprsk
+time <- df_model_complete$time_c
+status <- df_model_complete$outcome_comp
+group <- as.numeric(df_model_complete$cre_strategy)
+
+# Gray's test
+gray_test <- cuminc(time, status, group, cencode = 0)
+
+cat("\nTesting equality of CRE infection incidence across strategies:\n")
+print(gray_test$Tests)
+
+# Extract p-value
+gray_p <- gray_test$Tests[1, "pv"]
+cat("\nGray's test p-value for CRE infection: ", format.pval(gray_p), "\n")
+
+if(gray_p < 0.05) {
+  cat("SIGNIFICANT: Strategies differ in CRE infection incidence (prospective cohort)\n")
+} else {
+  cat("NOT SIGNIFICANT: No evidence of difference between strategies (prospective cohort)\n")
+}
+
+# ============================================================
+# STEP 4: FINE-GRAY MODEL - UNADJUSTED
+# ============================================================
+
+cat("\n=== Fine-Gray Model: Unadjusted (Prospective) ===\n")
+
+# Fit Fine-Gray model with strategy as only predictor
+fg_unadjusted <- FGR(
+  Hist(time_c, outcome_comp) ~ cre_strategy,
+  data = df_model_complete,
+  cause = 1
+)
+
+# Extract coefficients
+fg_coef_unadj <- summary(fg_unadjusted)
+print(fg_coef_unadj)
+
+# Calculate subdistribution hazard ratios
+cat("\n--- Subdistribution Hazard Ratios (Unadjusted, Prospective) ---\n")
+cat("Reference: No Strategy\n")
+
+coef_vals <- fg_unadjusted$crrFit$coef
+se_vals <- sqrt(diag(fg_unadjusted$crrFit$var))
+
+for(i in 1:length(coef_vals)) {
+  hr <- exp(coef_vals[i])
+  ci_low <- exp(coef_vals[i] - 1.96 * se_vals[i])
+  ci_high <- exp(coef_vals[i] + 1.96 * se_vals[i])
+  z_val <- coef_vals[i] / se_vals[i]
+  p_val <- 2 * (1 - pnorm(abs(z_val)))
+  
+  cat(names(coef_vals)[i], ":\n")
+  cat("  SHR = ", round(hr, 2), " (95% CI: ", round(ci_low, 2), 
+      "-", round(ci_high, 2), "), p = ", format.pval(p_val), "\n", sep="")
+}
+
+# ============================================================
+# STEP 5: FINE-GRAY MODEL - ADJUSTED
+# ============================================================
+
+cat("\n=== Fine-Gray Model: Adjusted for Risk Factors (Prospective) ===\n")
+
+# Select covariates for adjustment (only those that exist and have data)
+potential_covariates <- c("post_olt_compli1", "post_olt_compli3", "post_olt_compli5",
+                          "multisite_col", "cre_col1", "cre_col2", "mec1", 
+                          "age_years", "meld_score")
+
+# Check which covariates are available with sufficient data
+available_covars <- c()
+for(covar in potential_covariates) {
+  if(covar %in% names(df_model_complete)) {
+    n_valid <- sum(!is.na(df_model_complete[[covar]]))
+    if(n_valid > 5) {  # Lower threshold for prospective cohort
+      available_covars <- c(available_covars, covar)
+    }
+  }
+}
+
+cat("Available covariates for adjustment in prospective cohort:\n")
+if(length(available_covars) > 0) {
+  print(available_covars)
+} else {
+  cat("  None - will perform unadjusted analysis only\n")
+}
+
+# Create formula and fit model if we have covariates
+if(length(available_covars) > 0) {
+  formula_adjusted <- as.formula(paste("Hist(time_c, outcome_comp) ~ cre_strategy +", 
+                                       paste(available_covars, collapse = " + ")))
+  
+  # Filter to complete cases for all variables
+  vars_needed <- c("time_c", "outcome_comp", "cre_strategy", available_covars)
+  df_model_adjusted <- df_model_complete %>%
+    select(all_of(vars_needed)) %>%
+    filter(complete.cases(.))
+  
+  cat("\nProspective patients with complete data for adjusted model: ", nrow(df_model_adjusted), "\n")
+  
+  if(nrow(df_model_adjusted) > 20) {  # Lower threshold for prospective
+    # Fit adjusted Fine-Gray model
+    fg_adjusted <- tryCatch({
+      FGR(formula_adjusted, data = df_model_adjusted, cause = 1)
+    }, error = function(e) {
+      cat("Error fitting adjusted model: ", e$message, "\n")
+      cat("Falling back to strategy-only model\n")
+      FGR(Hist(time_c, outcome_comp) ~ cre_strategy, data = df_model_adjusted, cause = 1)
+    })
+    
+    # Extract coefficients
+    fg_coef_adj <- summary(fg_adjusted)
+    print(fg_coef_adj)
+    
+    # Extract strategy effects
+    cat("\n--- Subdistribution Hazard Ratios for Strategies (Adjusted, Prospective) ---\n")
+    cat("Reference: No Strategy\n")
+    
+    coef_vals_adj <- fg_adjusted$crrFit$coef
+    se_vals_adj <- sqrt(diag(fg_adjusted$crrFit$var))
+    
+    # Find strategy coefficients
+    strategy_indices <- grep("cre_strategy", names(coef_vals_adj))
+    
+    if(length(strategy_indices) > 0) {
+      for(i in strategy_indices) {
+        hr <- exp(coef_vals_adj[i])
+        ci_low <- exp(coef_vals_adj[i] - 1.96 * se_vals_adj[i])
+        ci_high <- exp(coef_vals_adj[i] + 1.96 * se_vals_adj[i])
+        z_val <- coef_vals_adj[i] / se_vals_adj[i]
+        p_val <- 2 * (1 - pnorm(abs(z_val)))
+        
+        strategy_name <- gsub("cre_strategy", "", names(coef_vals_adj)[i])
+        cat(strategy_name, ":\n")
+        cat("  SHR = ", round(hr, 2), " (95% CI: ", round(ci_low, 2), 
+            "-", round(ci_high, 2), "), p = ", format.pval(p_val), "\n", sep="")
+      }
+    }
+  } else {
+    cat("Insufficient data for adjusted model in prospective cohort\n")
+    df_model_adjusted <- df_model_complete
+    fg_adjusted <- fg_unadjusted
+  }
+} else {
+  cat("\nNo covariates available for adjustment - using unadjusted model\n")
+  df_model_adjusted <- df_model_complete
+  fg_adjusted <- fg_unadjusted
+}
+
+# ============================================================
+# STEP 6: NUMBER NEEDED TO TREAT CALCULATION
+# ============================================================
+
+cat("\n=== Number Needed to Treat (NNT) Analysis ===\n")
+cat("    Prospective Cohort\n")
+
+# Calculate 30, 60, and 180-day CRE incidence by strategy
+nnt_times <- c(30, 60, 180)
+
+nnt_data <- ci_strategy_df %>%
+  filter(times %in% nnt_times) %>%
+  select(strategy, times, CIF_cre) %>%
+  pivot_wider(names_from = strategy, values_from = CIF_cre)
+
+cat("\n--- Cumulative Incidence by Strategy (Prospective) ---\n")
+print(nnt_data)
+
+# Calculate ARR and NNT compared to no strategy
+for(t in nnt_times) {
+  row_data <- nnt_data[nnt_data$times == t, ]
+  
+  if(nrow(row_data) > 0 && "No Strategy" %in% names(row_data)) {
+    no_strategy_risk <- row_data[["No Strategy"]]
+    
+    if(!is.na(no_strategy_risk)) {
+      
+      # Targeted Prophylaxis
+      if("Targeted Prophylaxis" %in% names(row_data)) {
+        targeted_risk <- row_data[["Targeted Prophylaxis"]]
+        
+        if(!is.na(targeted_risk)) {
+          arr_targeted <- no_strategy_risk - targeted_risk
+          
+          cat("\nDay ", t, " - Targeted Prophylaxis:\n", sep="")
+          cat("  No Strategy risk: ", round(no_strategy_risk * 100, 1), "%\n", sep="")
+          cat("  Targeted risk: ", round(targeted_risk * 100, 1), "%\n", sep="")
+          cat("  ARR = ", round(arr_targeted * 100, 1), "%\n", sep="")
+          
+          if(!is.na(arr_targeted) && arr_targeted > 0.001) {
+            nnt_targeted <- 1 / arr_targeted
+            cat("  NNT = ", round(nnt_targeted), "\n", sep="")
+          } else if(!is.na(arr_targeted) && arr_targeted < -0.001) {
+            nnh_targeted <- -1 / arr_targeted
+            cat("  NNH = ", round(nnh_targeted), " (increases risk)\n", sep="")
+          } else {
+            cat("  No meaningful difference\n")
+          }
+        }
+      }
+      
+      # Pre-emptive Strategy
+      if("Pre-emptive Strategy" %in% names(row_data)) {
+        preemptive_risk <- row_data[["Pre-emptive Strategy"]]
+        
+        if(!is.na(preemptive_risk)) {
+          arr_preemptive <- no_strategy_risk - preemptive_risk
+          
+          cat("\nDay ", t, " - Pre-emptive Strategy:\n", sep="")
+          cat("  No Strategy risk: ", round(no_strategy_risk * 100, 1), "%\n", sep="")
+          cat("  Pre-emptive risk: ", round(preemptive_risk * 100, 1), "%\n", sep="")
+          cat("  ARR = ", round(arr_preemptive * 100, 1), "%\n", sep="")
+          
+          if(!is.na(arr_preemptive) && arr_preemptive > 0.001) {
+            nnt_preemptive <- 1 / arr_preemptive
+            cat("  NNT = ", round(nnt_preemptive), "\n", sep="")
+          } else if(!is.na(arr_preemptive) && arr_preemptive < -0.001) {
+            nnh_preemptive <- -1 / arr_preemptive
+            cat("  NNH = ", round(nnh_preemptive), " (increases risk)\n", sep="")
+          } else {
+            cat("  No meaningful difference\n")
+          }
+        }
+      }
+    }
+  }
+}
+
+# ============================================================
+# STEP 7: SUMMARY AND CLINICAL IMPLICATIONS
+# ============================================================
+
+cat("\n============================================\n")
+cat("SUMMARY OF FINDINGS - PROSPECTIVE COHORT\n")
+cat("============================================\n")
+
+cat("\n1. SAMPLE SIZE:\n")
+cat("   Total prospective patients: ", n_prospective, "\n")
+cat("   Patients with complete data: ", nrow(df_model_complete), "\n")
+cat("   CRE infections: ", sum(df_model_complete$outcome_comp == 1), "\n")
+cat("   Deaths: ", sum(df_model_complete$outcome_comp == 3), "\n")
+
+cat("\n2. OVERALL EFFECT ON CRE INFECTION:\n")
+cat("   Gray's test p-value: ", format.pval(gray_p), "\n")
+
+cat("\n3. KEY FINDINGS:\n")
+cat("   Results limited to prospectively enrolled patients\n")
+cat("   This eliminates potential retrospective selection bias\n")
+
+# ============================================================
+# STEP 8: SAVE RESULTS
+# ============================================================
+
+# Save key results
+results_list_prospective <- list(
+  gray_test = gray_test,
+  fg_unadjusted = fg_unadjusted,
+  fg_adjusted = fg_adjusted,
+  cumulative_incidence = ci_strategy_df,
+  nnt_analysis = nnt_data,
+  n_total = n_total,
+  n_prospective = n_prospective,
+  n_patients_analyzed = nrow(df_model_complete),
+  n_cre_infections = sum(df_model_complete$outcome_comp == 1),
+  n_deaths = sum(df_model_complete$outcome_comp == 3)
+)
+
+save(results_list_prospective, file = "cre_infection_prospective_results.RData")
+
+cat("\n============================================\n")
+cat("Analysis complete - PROSPECTIVE COHORT ONLY\n")
+cat("Results saved to: cre_infection_prospective_results.RData\n")
+cat("Plot saved: cre_infection_by_strategy_prospective.png\n")
+cat("============================================\n")
 

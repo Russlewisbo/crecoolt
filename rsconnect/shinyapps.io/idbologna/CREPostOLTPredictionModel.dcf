@@ -5,6 +5,6 @@ account: idbologna
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 15416120
-bundleId: 10951802
+bundleId: 11002003
 url: https://idbologna.shinyapps.io/CREPostOLTPredictionModel/
 version: 1
