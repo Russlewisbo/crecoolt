@@ -138,7 +138,7 @@ A competing risk multivariate, Fine-gray model for day+180 CRE infection was the
 ::: callout-note
 ## Clarification from previous analysis
 
-In this initial analysis I have not yet created a new variable limiting CRE colonization to within 60 days pretransplant. The MDRO organism risk factor was limited to KPC-producing isolates.
+In this initial analysis I have not yet created a new variable limiting CRE colonization to within 60 days pretransplant.
 :::
 
 Predicted cumulative incidence of CRE infection versus the observed for the total (retrospective plus prospective cohort) is shown in [@fig-calibration1].
@@ -166,12 +166,11 @@ df_model <- data_extract %>%
     post_olt_compli5 = ifelse(post_olt_compli___5 == 1, 1, 0),
     multisite_col    = ifelse(multisite_colonization == 1, 1, 0),
     cre_col1         = ifelse(cre_colonization___1 == 1, 1, 0),
-    cre_col2         = ifelse(cre_colonization___2 == 1, 1, 0),
-    mec1             = ifelse(mec_of_carbapenem_resi___1 == 1, 1, 0)
+    cre_col2         = ifelse(cre_colonization___2 == 1, 1, 0)
   ) %>%
   select(time_c, outcome_comp,
          post_olt_compli1, post_olt_compli3, post_olt_compli5,
-         multisite_col, cre_col1, cre_col2, mec1) %>%
+         multisite_col, cre_col1, cre_col2) %>%
   filter(!is.na(time_c) & time_c >= 0)
 
 # ============================================================
@@ -180,7 +179,7 @@ df_model <- data_extract %>%
 fg_risk <- FGR(
   Hist(time_c, outcome_comp) ~ 
     post_olt_compli1 + post_olt_compli3 + post_olt_compli5 +
-    multisite_col + cre_col1 + cre_col2 + mec1,
+    multisite_col + cre_col1 + cre_col2,
   data  = df_model,
   cause = 1
 )
@@ -303,19 +302,18 @@ df_model <- data_extract %>%
     multisite_col    = as.integer(multisite_colonization == 1),
     cre_col1         = as.integer(cre_colonization___1 == 1),
     cre_col2         = as.integer(cre_colonization___2 == 1),
-    mec1             = as.integer(mec_of_carbapenem_resi___1 == 1),
     retro_group      = factor(ifelse(retro_or_pros == 1, "Retrospective", "Prospective"))
   ) %>%
   select(time_c, outcome_comp, retro_group,
          post_olt_compli1, post_olt_compli3, post_olt_compli5,
-         multisite_col, cre_col1, cre_col2, mec1) %>%
+         multisite_col, cre_col1, cre_col2) %>%
   filter(!is.na(time_c) & time_c >= 0 & !is.na(retro_group))
 
 ## 2) Fit FG once on full data
 fg_risk <- FGR(
   Hist(time_c, outcome_comp) ~ 
     post_olt_compli1 + post_olt_compli3 + post_olt_compli5 +
-    multisite_col + cre_col1 + cre_col2 + mec1,
+    multisite_col + cre_col1 + cre_col2,
   data  = df_model,
   cause = 1
 )
@@ -445,7 +443,7 @@ library(ggplot2)
 # 1. Select the covariates of interest
 # ============================================================
 covariates <- c("post_olt_compli1", "post_olt_compli3", "post_olt_compli5",
-                "multisite_col", "cre_col1", "cre_col2", "mec1")
+                "multisite_col", "cre_col1", "cre_col2")
 
 df_cov <- df_model %>%
   select(retro_group, all_of(covariates))
@@ -596,5 +594,6 @@ Distribution of covariates in the original CRECOOLT 2.0 model
 
 ::: callout-important
 ## Interesting observation
- There is a marked difference in the pre OLT versus post OLT CRE colonization rates between the previous CRECOOLT cohort and the current study. Most of the patients in the previous study had CRE colonization *after* OLT whereas in the current cohorts CRE colonization occurred *before* OLT. Yet the model still seemed to predict the risk of CRE infection well.
+
+There is a marked difference in the pre OLT versus post OLT CRE colonization rates between the previous CRECOOLT cohort and the current study. Most of the patients in the previous study had CRE colonization *after* OLT whereas in the current cohorts CRE colonization occurred *before* OLT. Yet the model still seemed to predict the risk of CRE infection well.
 :::
