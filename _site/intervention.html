@@ -6,7 +6,7 @@
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
-<meta name="dcterms.date" content="2025-09-25">
+<meta name="dcterms.date" content="2025-10-07">
 
 <title>Intervention impact – crecoolt</title>
 <style>
@@ -136,7 +136,7 @@ ul.task-list li input[type="checkbox"] {
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">25 September 2025</p>
+      <p class="date">7 October 2025</p>
     </div>
   </div>
   
@@ -148,73 +148,6 @@ ul.task-list li input[type="checkbox"] {
 </header>
 
 
-<p>Day 180 survival rates were compared by model-predicted CRE infection risk using 3 categories:</p>
-<ul>
-<li><p>Low risk (≤ 10%)</p></li>
-<li><p>Medium risk (11-29%)</p></li>
-<li><p>High risk (≥ 30%)</p></li>
-</ul>
-<table class="caption-top table">
-<colgroup>
-<col style="width: 11%">
-<col style="width: 11%">
-<col style="width: 11%">
-<col style="width: 11%">
-<col style="width: 11%">
-<col style="width: 11%">
-<col style="width: 11%">
-<col style="width: 11%">
-<col style="width: 11%">
-</colgroup>
-<thead>
-<tr class="header">
-<th>Risk group</th>
-<th>n</th>
-<th>n_deaths</th>
-<th>death rate</th>
-<th>survival rate</th>
-<th>n_CRE</th>
-<th>cre rate</th>
-<th>n_discharge</th>
-<th>discharge rate</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td>Low</td>
-<td>90</td>
-<td>3</td>
-<td>3.3</td>
-<td>96.7</td>
-<td>9</td>
-<td>10</td>
-<td>74</td>
-<td>82.2</td>
-</tr>
-<tr class="even">
-<td>Medium</td>
-<td>50</td>
-<td>2</td>
-<td>4</td>
-<td>96</td>
-<td>11</td>
-<td>22</td>
-<td>35</td>
-<td>70</td>
-</tr>
-<tr class="odd">
-<td>High</td>
-<td>64</td>
-<td>10</td>
-<td>15.6</td>
-<td>84.4</td>
-<td>30</td>
-<td>46.9</td>
-<td>24</td>
-<td>37.5</td>
-</tr>
-</tbody>
-</table>
 <div id="fig-compete_strat" class="quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-fig figure">
 <div aria-describedby="fig-compete_strat-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
@@ -407,124 +340,72 @@ Figure&nbsp;1: Excess CRE-related mortality by baseline mortality risk
 <pre><code>============================================</code></pre>
 </div>
 <div class="cell-output cell-output-stdout">
-<pre><code>CRE MANAGEMENT STRATEGY ANALYSIS</code></pre>
+<pre><code>SCORE TRAJECTORY ANALYSIS - PROSPECTIVE ONLY</code></pre>
 </div>
 <div class="cell-output cell-output-stdout">
-<pre><code>STRATIFIED BY DATA COLLECTION METHOD</code></pre>
-</div>
-<div class="cell-output cell-output-stdout">
-<pre><code>Version: Fully Robust with Error Handling</code></pre>
+<pre><code>Simplified Approach</code></pre>
 </div>
 <div class="cell-output cell-output-stdout">
 <pre><code>============================================</code></pre>
 </div>
 <div class="cell-output cell-output-stdout">
-<pre><code>
-=== Creating Management Strategy Variable ===</code></pre>
+<pre><code>Total records loaded: 3170 </code></pre>
 </div>
 <div class="cell-output cell-output-stdout">
 <pre><code>
-Checkbox variables found:</code></pre>
+=== Identifying Data Structure ===</code></pre>
 </div>
 <div class="cell-output cell-output-stdout">
-<pre><code>cre_colonization___1 (No strategy):</code></pre>
-</div>
-<div class="cell-output cell-output-stdout">
-<pre><code>
-  0   1 
-170 522 </code></pre>
+<pre><code>Found filter column: filter_$</code></pre>
 </div>
 <div class="cell-output cell-output-stdout">
 <pre><code>
-cre_colonization___2 (Targeted prophylaxis):</code></pre>
-</div>
-<div class="cell-output cell-output-stdout">
-<pre><code>
-  0   1 
-593  99 </code></pre>
-</div>
-<div class="cell-output cell-output-stdout">
-<pre><code>
-cre_colonization___3 (Pre-emptive strategy):</code></pre>
-</div>
-<div class="cell-output cell-output-stdout">
-<pre><code>
-  0   1 
-623  69 </code></pre>
-</div>
-<div class="cell-output cell-output-stdout">
-<pre><code>
-WARNING: 13 patients have multiple strategies recorded</code></pre>
-</div>
-<div class="cell-output cell-output-stdout">
-<pre><code>
---- Management Strategy Distribution ---</code></pre>
-</div>
-<div class="cell-output cell-output-stdout">
-<pre><code>
-         No Strategy Targeted Prophylaxis Pre-emptive Strategy 
-                 512                   96                   69 
-                &lt;NA&gt; 
-                  15 </code></pre>
-</div>
-<div class="cell-output cell-output-stdout">
-<pre><code>
-=== Data Collection Method ===</code></pre>
-</div>
-<div class="cell-output cell-output-stdout">
-<pre><code>
---- Collection Method Distribution (raw values) ---
+Using filter column: filter_$ 
+Filter column distribution:
 
-  1   2 
-521 171 
+   0    1 
+2478  692 
 
-Unique values in retro_or_pros:  1, 2 
-Detected binary coding (1/2)</code></pre>
+=== Extracting Prospective Data ===
+Prospective baseline records: 171 
+Unique prospective patients: 171 
+
+Prospective score records: 1067 
+Unique patients with scores: 169 </code></pre>
 </div>
 <div class="cell-output cell-output-stdout">
 <pre><code>
---- Collection Method Distribution (cleaned) ---</code></pre>
+=== Processing Baseline Data ===</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Baseline processing complete</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Outcome distribution:</code></pre>
 </div>
 <div class="cell-output cell-output-stdout">
 <pre><code>
-Retrospective   Prospective 
-          521           171 </code></pre>
+     Censored CRE Infection         Death     Discharge 
+            5            54            14            98 </code></pre>
 </div>
 <div class="cell-output cell-output-stdout">
 <pre><code>
-=== Baseline Characteristics ===</code></pre>
+=== Processing Score Data ===</code></pre>
 </div>
 <div class="cell-output cell-output-stdout">
-<pre><code>
---- Patient Characteristics (Stratified) ---
-  collection_method         cre_strategy   n age_mean meld_mean cre_infections
-1     Retrospective          No Strategy 384     54.3      21.0             71
-2     Retrospective Targeted Prophylaxis  75     52.9      26.7             21
-3     Retrospective Pre-emptive Strategy  49     56.7      22.0             34
-4     Retrospective                 &lt;NA&gt;  13     55.5      17.5              2
-5       Prospective          No Strategy 128     53.0      21.3             38
-6       Prospective Targeted Prophylaxis  21     54.2      25.6              7
-7       Prospective Pre-emptive Strategy  20     50.9      22.0              7
-8       Prospective                 &lt;NA&gt;   2     62.0      25.0              0
-  infection_rate deaths mortality_rate
-1           18.5     49           12.8
-2           28.0     13           17.3
-3           69.4     12           24.5
-4           15.4      4           30.8
-5           29.7     26           20.3
-6           33.3      4           19.0
-7           35.0      5           25.0
-8            0.0      0            0.0</code></pre>
-</div>
-<div class="cell-output cell-output-stdout">
-<pre><code>
-=== Overall Survival Analysis ===</code></pre>
-</div>
-<div class="cell-output cell-output-stdout">
-<pre><code>Analyzing 677 patients</code></pre>
-</div>
-<div class="cell-output cell-output-stdout">
-<pre><code>Overall log-rank test p-value:  0.07545 </code></pre>
+<pre><code>Valid score records: 655 
+
+=== Joining Data ===
+Final longitudinal records: 649 
+Unique patients: 158 
+
+=== Trajectory Analysis ===
+
+Patient trajectory summary:
+  Patients analyzed: 158 
+  Mean scores per patient: 4.11 
+
+=== Creating Visualizations ===</code></pre>
 </div>
 <div class="cell-output-display">
 <div>
@@ -535,179 +416,32 @@ Retrospective   Prospective
 </div>
 <div class="cell-output cell-output-stdout">
 <pre><code>
-=== Retrospective Data Analysis ===
-N = 508 
-Strategies present: Targeted Prophylaxis, No Strategy, Pre-emptive Strategy 
-Retrospective log-rank p-value:  0.059048 </code></pre>
-</div>
-<div class="cell-output-display">
-<div>
-<figure class="figure">
-<p><img src="intervention_files/figure-html/unnamed-chunk-2-2.png" class="img-fluid figure-img" width="672"></p>
-</figure>
-</div>
-</div>
-<div class="cell-output cell-output-stdout">
-<pre><code>
-=== Prospective Data Analysis ===
-N = 169 
-Strategies present: Targeted Prophylaxis, No Strategy, Pre-emptive Strategy 
-Prospective log-rank p-value:  0.82099 </code></pre>
-</div>
-<div class="cell-output-display">
-<div>
-<figure class="figure">
-<p><img src="intervention_files/figure-html/unnamed-chunk-2-3.png" class="img-fluid figure-img" width="672"></p>
-</figure>
-</div>
-</div>
-<div class="cell-output cell-output-stdout">
-<pre><code>
-=== Cox Regression Models ===</code></pre>
-</div>
-<div class="cell-output cell-output-stdout">
-<pre><code>
---- Overall Model (Adjusted) ---</code></pre>
-</div>
-<div class="cell-output cell-output-stdout">
-<pre><code>Call:
-coxph(formula = surv_obj ~ cre_strategy + age_clean + meld_clean + 
-    cre_180, data = data_complete)
+Outcome comparison:
+# A tibble: 4 × 5
+  primary_outcome     n mean_baseline mean_max mean_final
+  &lt;chr&gt;           &lt;int&gt;         &lt;dbl&gt;    &lt;dbl&gt;      &lt;dbl&gt;
+1 CRE Infection      50         12.1      31.3       28.6
+2 Censored            2          9.3      23.6       23.6
+3 Death              14         22.1      33.9       26.7
+4 Discharge          92          5.40     14.4       12.3
 
-  n= 672, number of events= 108 
-   (5 observations deleted due to missingness)
+=== Statistical Analysis ===
 
-                                     coef exp(coef) se(coef)     z Pr(&gt;|z|)    
-cre_strategyTargeted Prophylaxis 0.085859  1.089652 0.273276 0.314   0.7534    
-cre_strategyPre-emptive Strategy 0.071702  1.074335 0.279345 0.257   0.7974    
-age_clean                        0.010890  1.010949 0.007903 1.378   0.1682    
-meld_clean                       0.023789  1.024074 0.011041 2.155   0.0312 *  
-cre_180                          1.299960  3.669151 0.201821 6.441 1.19e-10 ***
----
-Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+Kruskal-Wallis test (baseline score by outcome):
+  p-value: 0.00016565 
+  SIGNIFICANT: Baseline scores differ by outcome
 
-                                 exp(coef) exp(-coef) lower .95 upper .95
-cre_strategyTargeted Prophylaxis     1.090     0.9177    0.6378     1.862
-cre_strategyPre-emptive Strategy     1.074     0.9308    0.6214     1.857
-age_clean                            1.011     0.9892    0.9954     1.027
-meld_clean                           1.024     0.9765    1.0022     1.046
-cre_180                              3.669     0.2725    2.4704     5.449
-
-Concordance= 0.677  (se = 0.028 )
-Likelihood ratio test= 52.88  on 5 df,   p=4e-10
-Wald test            = 54.46  on 5 df,   p=2e-10
-Score (logrank) test = 62.26  on 5 df,   p=4e-12</code></pre>
-</div>
-<div class="cell-output cell-output-stdout">
-<pre><code>
---- Testing Strategy x Collection Method Interaction ---
-Likelihood ratio statistic: 0.484 
-Degrees of freedom: 2 
-Interaction p-value:  0.78523 
-No significant interaction
-Strategy effectiveness similar across collection methods
-
---- Retrospective Cox Model ---
-Call:
-coxph(formula = surv_retro_cox ~ cre_strategy + age_clean + meld_clean, 
-    data = data_retro)
-
-  n= 505, number of events= 73 
-   (3 observations deleted due to missingness)
-
-                                     coef exp(coef) se(coef)     z Pr(&gt;|z|)   
-cre_strategyTargeted Prophylaxis 0.204158  1.226491 0.319012 0.640  0.52219   
-cre_strategyPre-emptive Strategy 0.685673  1.985108 0.324795 2.111  0.03476 * 
-age_clean                        0.008462  1.008498 0.009779 0.865  0.38683   
-meld_clean                       0.036763  1.037447 0.013218 2.781  0.00541 **
----
-Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
-
-                                 exp(coef) exp(-coef) lower .95 upper .95
-cre_strategyTargeted Prophylaxis     1.226     0.8153    0.6563     2.292
-cre_strategyPre-emptive Strategy     1.985     0.5038    1.0503     3.752
-age_clean                            1.008     0.9916    0.9894     1.028
-meld_clean                           1.037     0.9639    1.0109     1.065
-
-Concordance= 0.624  (se = 0.033 )
-Likelihood ratio test= 13.16  on 4 df,   p=0.01
-Wald test            = 13.77  on 4 df,   p=0.008
-Score (logrank) test = 14.11  on 4 df,   p=0.007
-
-
---- Prospective Cox Model ---
-Call:
-coxph(formula = surv_prosp_cox ~ cre_strategy + age_clean + meld_clean, 
-    data = data_prosp)
-
-  n= 167, number of events= 35 
-   (2 observations deleted due to missingness)
-
-                                     coef exp(coef) se(coef)      z Pr(&gt;|z|)
-cre_strategyTargeted Prophylaxis -0.07005   0.93235  0.54178 -0.129    0.897
-cre_strategyPre-emptive Strategy  0.30992   1.36332  0.48955  0.633    0.527
-age_clean                         0.01327   1.01336  0.01341  0.990    0.322
-meld_clean                        0.01296   1.01305  0.02064  0.628    0.530
-
-                                 exp(coef) exp(-coef) lower .95 upper .95
-cre_strategyTargeted Prophylaxis    0.9323     1.0726    0.3224     2.696
-cre_strategyPre-emptive Strategy    1.3633     0.7335    0.5223     3.559
-age_clean                           1.0134     0.9868    0.9871     1.040
-meld_clean                          1.0130     0.9871    0.9729     1.055
-
-Concordance= 0.553  (se = 0.05 )
-Likelihood ratio test= 1.49  on 4 df,   p=0.8
-Wald test            = 1.5  on 4 df,   p=0.8
-Score (logrank) test = 1.5  on 4 df,   p=0.8</code></pre>
+Results saved to prospective_trajectory_results.RData</code></pre>
 </div>
 <div class="cell-output cell-output-stdout">
 <pre><code>
 ============================================</code></pre>
 </div>
 <div class="cell-output cell-output-stdout">
-<pre><code>SUMMARY OF FINDINGS</code></pre>
+<pre><code>Analysis complete</code></pre>
 </div>
 <div class="cell-output cell-output-stdout">
 <pre><code>============================================</code></pre>
-</div>
-<div class="cell-output cell-output-stdout">
-<pre><code>
-1. Overall Analysis:</code></pre>
-</div>
-<div class="cell-output cell-output-stdout">
-<pre><code>   - Total N:  677 </code></pre>
-</div>
-<div class="cell-output cell-output-stdout">
-<pre><code>   - Overall log-rank p:  0.07545 </code></pre>
-</div>
-<div class="cell-output cell-output-stdout">
-<pre><code>
-2. Stratified Analysis:
-   - Retrospective N:  508 
-   - Retrospective p:  0.059048 
-   - Prospective N:  169 
-   - Prospective p:  0.82099 
-
-3. Interaction Test:
-   - p-value:  0.78523 </code></pre>
-</div>
-<div class="cell-output cell-output-stdout">
-<pre><code>
-Analysis complete.</code></pre>
-</div>
-<div class="cell-output cell-output-stdout">
-<pre><code>Plots saved:</code></pre>
-</div>
-<div class="cell-output cell-output-stdout">
-<pre><code>  - km_overall_strategy.png</code></pre>
-</div>
-<div class="cell-output cell-output-stdout">
-<pre><code>  - km_retrospective.png
-  - km_prospective.png</code></pre>
-</div>
-<div class="cell-output cell-output-stdout">
-<pre><code>
-Results saved to cre_stratified_analysis_results.RData</code></pre>
 </div>
 </div>
 </div>
@@ -715,6 +449,621 @@ Results saved to cre_stratified_analysis_results.RData</code></pre>
 Figure&nbsp;2: Analysis examining whether treatment strategy reduced CRE infection
 </figcaption>
 </figure>
+</div>
+<div class="cell">
+<div class="cell-output cell-output-stdout">
+<pre><code>
+============================================</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>SCORE DISTRIBUTION VS CRE INFECTION ANALYSIS</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>============================================</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+Data summary:</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Total patients: 158 </code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>CRE infections: 50 </code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>CRE infection rate: 31.65 %</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+=== Creating Box Plot Comparison ===</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+=== Creating Binned Score Analysis ===</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+=== Creating Continuous Relationship Plot ===</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+=== Creating Density Comparison ===</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+=== Creating Trajectory Pattern Analysis ===</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+=== Combining Visualizations ===</code></pre>
+</div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="intervention_files/figure-html/unnamed-chunk-3-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+=== Statistical Analysis ===</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+T-test for maximum score difference:</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>  Mean score (No CRE): 17.11 </code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>  Mean score (CRE): 31.34 </code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>  Difference: 14.22 </code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>  p-value: 2.0183e-05 </code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+Wilcoxon rank-sum test:</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>  p-value: 5.6508e-06 </code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+Logistic Regression Results:</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+Call:
+glm(formula = cre_infection ~ max_score, family = binomial(), 
+    data = score_cre_analysis)
+
+Coefficients:
+            Estimate Std. Error z value Pr(&gt;|z|)    
+(Intercept) -1.89910    0.32374  -5.866 4.46e-09 ***
+max_score    0.04854    0.01110   4.371 1.23e-05 ***
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+(Dispersion parameter for binomial family taken to be 1)
+
+    Null deviance: 197.24  on 157  degrees of freedom
+Residual deviance: 174.60  on 156  degrees of freedom
+AIC: 178.6
+
+Number of Fisher Scoring iterations: 4</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+Odds Ratio per unit increase in max score: 1.05 </code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>95% CI: 1.028 - 1.074 </code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+=== Creating Summary Table ===</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+Score Summary by CRE Status:</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 2 × 8
+  cre_status         n baseline_mean baseline_sd max_mean max_sd trajectory_mean
+  &lt;fct&gt;          &lt;int&gt;         &lt;dbl&gt;       &lt;dbl&gt;    &lt;dbl&gt;  &lt;dbl&gt;           &lt;dbl&gt;
+1 No CRE Infect…   108          7.64        11.6     17.1   14.1             6.7
+2 CRE Infection     50         12.1         12.7     31.3   19.9            16.5
+# ℹ 1 more variable: trajectory_sd &lt;dbl&gt;</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+Analysis results saved to score_cre_analysis_results.RData</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+============================================</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Score vs CRE Analysis Complete</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>============================================</code></pre>
+</div>
+</div>
+<div class="cell">
+<div class="cell-output cell-output-stdout">
+<pre><code>
+============================================</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>ANTI-CRE THERAPY EFFECTIVENESS ANALYSIS</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Simplified Standalone Version</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>============================================</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+=== Step 1: Processing Therapy Data ===</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Found therapy columns: cre_therapy___1, cre_therapy___2 </code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Therapy records processed: 655 </code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Records with therapy: 42 </code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+=== Step 2: Creating Patient-Level Summary ===</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+Patient-level summary:</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>  Total patients: 158 </code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>  Received therapy: 35 ( 22.2 %)</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>  CRE infections: 50 ( 31.6 %)</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+=== Step 3: Overall Effectiveness Analysis ===</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+2x2 Contingency Table:</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>       CRE_Infection
+Therapy  0  1
+      0 95 28
+      1 13 22</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 2 × 7
+  ever_received_therapy     n n_infections infection_rate therapy_label ci_lower
+                  &lt;dbl&gt; &lt;int&gt;        &lt;int&gt;          &lt;dbl&gt; &lt;chr&gt;            &lt;dbl&gt;
+1                     0   123           28          0.228 No Therapy       0.154
+2                     1    35           22          0.629 Received The…    0.457
+# ℹ 1 more variable: ci_upper &lt;dbl&gt;</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+Statistical Tests:
+  Fisher's exact test p-value: 1.9525e-05 
+  Odds ratio: 5.67 
+  Chi-square test p-value: 1.7567e-05 </code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+Effectiveness Metrics:
+  CRE rate without therapy: 22.8 %
+  CRE rate with therapy: 62.9 %
+  Absolute Risk Reduction (ARR): -40.1 %
+  Relative Risk Reduction (RRR): -176.1 %</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+=== Step 4: Stratified Analysis by Risk Group ===</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+Risk Reduction by Risk Group:</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 3 × 5
+  risk_group          infection_rate_thera…¹ infection_rate_thera…²    arr nnt  
+  &lt;chr&gt;                                &lt;dbl&gt;                  &lt;dbl&gt;  &lt;dbl&gt; &lt;lgl&gt;
+1 High Risk (&gt;20)                      0.351                  0.630 -0.278 NA   
+2 Low Risk (≤10)                       0.114                  0.75  -0.636 NA   
+3 Medium Risk (11-20)                  0.238                  0.5   -0.262 NA   
+# ℹ abbreviated names: ¹​infection_rate_therapy_0, ²​infection_rate_therapy_1</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+=== Creating Visualizations ===</code></pre>
+</div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="intervention_files/figure-html/unnamed-chunk-4-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="intervention_files/figure-html/unnamed-chunk-4-2.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="intervention_files/figure-html/unnamed-chunk-4-3.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+Note: NNT cannot be calculated (therapy may not show benefit in this data)</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+============================================</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>EFFECTIVENESS ANALYSIS SUMMARY</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>============================================</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+1. Overall Results:</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>   ✗ Therapy may be HARMFUL
+   - Increases infection by 40.1 percentage points</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+2. Risk-Stratified Results:</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>    High Risk (&gt;20) :
+     - Potentially harmful: ARR = -27.8 %
+    Low Risk (≤10) :
+     - Potentially harmful: ARR = -63.6 %
+    Medium Risk (11-20) :
+     - Potentially harmful: ARR = -26.2 %</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+3. Statistical Significance:</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>   - P-value: 1.9525e-05 
+   - SIGNIFICANT at α = 0.05</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+4. Clinical Recommendations:</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>   - Review therapy protocol - may not be beneficial</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+============================================</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Analysis Complete</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>============================================</code></pre>
+</div>
+</div>
+<div class="cell">
+<div class="cell-output-display">
+<div id="fig-score-cre-analysis" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-score-cre-analysis-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="intervention_files/figure-html/fig-score-cre-analysis-1.png" class="img-fluid figure-img" width="1400">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-score-cre-analysis-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;3: Score Distribution and CRE Infection Risk Analysis
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<p>Therapy paradox analysis</p>
+<div class="cell">
+<div class="cell-output cell-output-stdout">
+<pre><code>
+============================================</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>THERAPY PARADOX ANALYSIS</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Why do treated patients have worse outcomes?</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>============================================</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+=== Preparing Data ===</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+=== The Paradox ===</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+Simple Comparison (MISLEADING):</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 2 × 5
+  ever_received_therapy     n mean_score infection_rate therapy_label   
+                  &lt;dbl&gt; &lt;int&gt;      &lt;dbl&gt;          &lt;dbl&gt; &lt;chr&gt;           
+1                     0   123       16.8          0.228 No Therapy      
+2                     1    35       38.7          0.629 Received Therapy</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+⚠️ PARADOX: Treated patients have HIGHER infection rates!</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>But notice: Treated patients also have HIGHER risk scores</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+=== Creating Paradox Visualization ===</code></pre>
+</div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="intervention_files/figure-html/unnamed-chunk-5-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+=== Stratified Analysis (Controlling for Baseline Risk) ===</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+Within Risk Group Comparisons:</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 3 × 5
+  risk_group infection_rate_therapy_0 infection_rate_therapy_1 risk_difference
+  &lt;fct&gt;                         &lt;dbl&gt;                    &lt;dbl&gt;           &lt;dbl&gt;
+1 Low                           0.114                    0.75           -0.636
+2 Medium                        0.238                    0.5            -0.262
+3 High                          0.351                    0.630          -0.278
+# ℹ 1 more variable: therapy_effect &lt;chr&gt;</code></pre>
+</div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="intervention_files/figure-html/unnamed-chunk-5-2.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+=== Propensity Score Matching ===</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+Propensity Score Distribution:
+  Treated group: median PS = 0.397 
+  Control group: median PS = 0.102 
+
+Matched Sample Comparison:
+# A tibble: 2 × 4
+  ever_received_therapy     n mean_score infection_rate
+                  &lt;dbl&gt; &lt;int&gt;      &lt;dbl&gt;          &lt;dbl&gt;
+1                     0    27       31.4          0.370
+2                     1    27       31.6          0.593
+
+Treatment effect in matched sample: 22.2 %</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+=== Score Distribution Analysis ===</code></pre>
+</div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="intervention_files/figure-html/unnamed-chunk-5-3.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+=== Regression Analysis Adjusting for Score ===</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+Unadjusted Model (misleading):</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>  Therapy coefficient: 1.748 </code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>  Therapy OR: 5.74 </code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>  Interpretation: Therapy appears harmful </code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+Adjusted Model (accounting for risk score):</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>  Therapy coefficient: 1.084 </code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>  Therapy OR: 2.96 </code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>  Score coefficient: 0.036 </code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>  Interpretation: After adjusting for risk, therapy is harmful </code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+=== Exploring Timing Issues ===</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+Timing Analysis (for patients with therapy and infection):
+  Therapy given BEFORE infection: 4 
+  Therapy given AFTER infection: 18 
+
+⚠️ WARNING: Some therapy was given AFTER infection!
+This could explain the paradox - therapy given in response to infection</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+=== Creating Comprehensive Visualization ===</code></pre>
+</div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="intervention_files/figure-html/unnamed-chunk-5-4.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+============================================</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>EXPLAINING THE PARADOX</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>============================================</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+1. WHY THE PARADOX OCCURS:</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>   • Confounding by indication: Sicker patients get treatment</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>   • Higher risk patients → More likely to receive therapy</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>   • Higher risk patients → More likely to get infected</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>   • Creates spurious association between therapy and infection</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+2. KEY FINDINGS:</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>   • Unadjusted analysis: Therapy appears HARMFUL 
+   • After adjusting for risk: Therapy appears HARMFUL </code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+3. CLINICAL IMPLICATIONS:</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>   • Cannot evaluate therapy effectiveness without accounting for baseline risk</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>   • The scoring system is working: High-risk patients get therapy</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>   • Need risk-adjusted analysis or RCT to determine true effectiveness</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+4. RECOMMENDATIONS:</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>   a) For analysis:</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>      - Always adjust for baseline risk score</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>      - Consider propensity score methods</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>      - Check timing of therapy vs infection</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>   b) For clinical practice:</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>      - Current practice appropriately targets high-risk patients</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>      - Consider randomized trial for definitive evidence</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>      - Monitor outcomes within risk strata</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+5. ALTERNATIVE EXPLANATIONS TO CONSIDER:</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>   • Therapy ineffectiveness: The specific therapy may not work</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>   • Timing issues: Therapy given too late</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>   • Resistance: CRE strains resistant to therapy used</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>   • Dose/duration: Suboptimal therapy regimen</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>   • Therapy heterogeneity: Different therapy types used
+     - Type 1 used: 24 times
+     - Type 2 used: 18 times</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+============================================</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Paradox Analysis Complete</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>See visualizations for full understanding</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>============================================</code></pre>
+</div>
 </div>
 
 
@@ -792,7 +1141,7 @@ Figure&nbsp;2: Analysis examining whether treatment strategy reduced CRE infecti
     }
       var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
       var mailtoRegex = new RegExp(/^mailto:/);
-        var filterRegex = new RegExp("https:\/\/crecoolt\.org");
+        var filterRegex = new RegExp('/' + window.location.host + '/');
       var isInternal = (href) => {
           return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
       }
