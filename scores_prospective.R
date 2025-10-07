@@ -476,3 +476,282 @@ save(trajectory_results, file = "trajectory_analysis_results.RData")
 cat("\n============================================\n")
 cat("Analysis complete. Results and plots saved.\n")
 cat("============================================\n")
+
+
+############# Limit to prospectively studied patients ################
+
+#############################################
+## SIMPLIFIED SCORE TRAJECTORY ANALYSIS
+## PROSPECTIVE COHORT ONLY
+## Avoiding filter column naming issues
+#############################################
+
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(haven)
+
+cat("============================================\n")
+cat("SCORE TRAJECTORY ANALYSIS - PROSPECTIVE ONLY\n")
+cat("Simplified Approach\n")
+cat("============================================\n")
+
+# Load data
+data <- read_sav("CRECOOLT_overall.sav")
+cat("Total records loaded:", nrow(data), "\n")
+
+# ============================================================
+# IDENTIFY FILTER COLUMN
+# ============================================================
+
+cat("\n=== Identifying Data Structure ===\n")
+
+# Method 1: Check common filter column names
+filter_col <- NULL
+
+# Try different possible names
+if("filter_$" %in% names(data)) {
+  filter_col <- "filter_$"
+  cat("Found filter column: filter_$\n")
+} else if("filter" %in% names(data)) {
+  filter_col <- "filter"
+  cat("Found filter column: filter\n")
+} else if("filter_" %in% names(data)) {
+  filter_col <- "filter_"
+  cat("Found filter column: filter_\n")
+} else {
+  # Search for any column with filter in the name
+  possible <- grep("filter", names(data), ignore.case = TRUE, value = TRUE)
+  if(length(possible) > 0) {
+    filter_col <- possible[1]
+    cat("Found filter column:", filter_col, "\n")
+  }
+}
+
+if(is.null(filter_col)) {
+  cat("\nNo filter column found. Looking for alternative data structure indicators...\n")
+  
+  # Check for REDCap repeat structure
+  if("redcap_repeat_instance" %in% names(data)) {
+    cat("Found redcap_repeat_instance - using this for longitudinal structure\n")
+    
+    # Baseline: no repeat instance or instance = 1
+    baseline_data <- subset(data, 
+                            (is.na(redcap_repeat_instance) | redcap_repeat_instance == 1) & 
+                              retro_or_pros == 2)
+    
+    # Longitudinal: repeat instance > 1
+    score_data <- subset(data, 
+                         redcap_repeat_instance > 1 & 
+                           record_id %in% baseline_data$record_id)
+  } else {
+    stop("Cannot identify longitudinal data structure. Please check your data.")
+  }
+} else {
+  # Use the filter column we found
+  cat("\nUsing filter column:", filter_col, "\n")
+  
+  # Show distribution using base R to avoid issues
+  cat("Filter column distribution:\n")
+  print(table(data[[filter_col]], useNA = "ifany"))
+  
+  # ============================================================
+  # SEPARATE DATA - PROSPECTIVE ONLY
+  # ============================================================
+  
+  cat("\n=== Extracting Prospective Data ===\n")
+  
+  # Baseline: filter == 1 and prospective
+  baseline_data <- subset(data, 
+                          data[[filter_col]] == 1 & 
+                            retro_or_pros == 2)
+  
+  cat("Prospective baseline records:", nrow(baseline_data), "\n")
+  cat("Unique prospective patients:", length(unique(baseline_data$record_id)), "\n")
+  
+  # Get prospective patient IDs
+  prosp_ids <- unique(baseline_data$record_id)
+  
+  # Longitudinal: filter < 1 for prospective patients
+  score_data <- subset(data, 
+                       data[[filter_col]] < 1 & 
+                         record_id %in% prosp_ids)
+  
+  cat("\nProspective score records:", nrow(score_data), "\n")
+  cat("Unique patients with scores:", length(unique(score_data$record_id)), "\n")
+}
+
+# ============================================================
+# PROCESS BASELINE DATA
+# ============================================================
+
+cat("\n=== Processing Baseline Data ===\n")
+
+baseline_processed <- baseline_data %>%
+  select(
+    record_id,
+    date_of_transplant,
+    cre_infection,
+    cre_infection_date,
+    death,
+    death_date,
+    discharge_date,
+    any_of(c("cre_colonization___1", "cre_colonization___2", "cre_colonization___3"))
+  ) %>%
+  mutate(
+    date_of_transplant = as.Date(date_of_transplant),
+    cre_infection_date = as.Date(cre_infection_date),
+    death_date = as.Date(death_date),
+    discharge_date = as.Date(discharge_date),
+    
+    # Calculate outcomes
+    days_to_cre = as.numeric(cre_infection_date - date_of_transplant),
+    days_to_death = as.numeric(death_date - date_of_transplant),
+    days_to_discharge = as.numeric(discharge_date - date_of_transplant),
+    
+    # Primary outcome
+    primary_outcome = case_when(
+      cre_infection == 1 & !is.na(days_to_cre) ~ "CRE Infection",
+      death == 1 & !is.na(days_to_death) ~ "Death",
+      !is.na(days_to_discharge) ~ "Discharge",
+      TRUE ~ "Censored"
+    )
+  )
+
+cat("Baseline processing complete\n")
+cat("Outcome distribution:\n")
+print(table(baseline_processed$primary_outcome, useNA = "ifany"))
+
+# ============================================================
+# PROCESS SCORE DATA
+# ============================================================
+
+cat("\n=== Processing Score Data ===\n")
+
+if(nrow(score_data) > 0) {
+  score_processed <- score_data %>%
+    select(record_id, score, score_date, any_of(c("events", "score_impact___1", "score_impact___2", "score_impact___3"))) %>%
+    filter(!is.na(score) & !is.na(score_date)) %>%
+    mutate(
+      score_date = as.Date(score_date)
+    )
+  
+  cat("Valid score records:", nrow(score_processed), "\n")
+  
+  if(nrow(score_processed) > 0) {
+    # ============================================================
+    # JOIN DATA
+    # ============================================================
+    
+    cat("\n=== Joining Data ===\n")
+    
+    longitudinal_data <- score_processed %>%
+      inner_join(baseline_processed, by = "record_id") %>%
+      mutate(
+        days_from_olt = as.numeric(score_date - date_of_transplant)
+      ) %>%
+      filter(days_from_olt >= 0 & days_from_olt <= 180)
+    
+    cat("Final longitudinal records:", nrow(longitudinal_data), "\n")
+    cat("Unique patients:", n_distinct(longitudinal_data$record_id), "\n")
+    
+    # ============================================================
+    # TRAJECTORY ANALYSIS
+    # ============================================================
+    
+    cat("\n=== Trajectory Analysis ===\n")
+    
+    patient_summary <- longitudinal_data %>%
+      group_by(record_id, primary_outcome) %>%
+      summarise(
+        n_scores = n(),
+        baseline_score = first(score),
+        final_score = last(score),
+        max_score = max(score),
+        mean_score = mean(score),
+        trend = final_score - baseline_score,
+        .groups = "drop"
+      )
+    
+    cat("\nPatient trajectory summary:\n")
+    cat("  Patients analyzed:", nrow(patient_summary), "\n")
+    cat("  Mean scores per patient:", round(mean(patient_summary$n_scores), 2), "\n")
+    
+    # ============================================================
+    # VISUALIZATIONS
+    # ============================================================
+    
+    cat("\n=== Creating Visualizations ===\n")
+    
+    # 1. Trajectories by outcome
+    p1 <- ggplot(longitudinal_data, aes(x = days_from_olt, y = score, group = record_id)) +
+      geom_line(alpha = 0.3) +
+      geom_smooth(aes(group = NULL), method = "loess", se = TRUE, color = "red") +
+      facet_wrap(~ primary_outcome) +
+      labs(
+        title = "Score Trajectories by Outcome - Prospective Cohort",
+        x = "Days from Transplant",
+        y = "Score"
+      ) +
+      theme_minimal()
+    
+    print(p1)
+    ggsave("prospective_trajectories.png", p1, width = 10, height = 6, dpi = 300)
+    
+    # 2. Mean scores by outcome
+    outcome_summary <- patient_summary %>%
+      group_by(primary_outcome) %>%
+      summarise(
+        n = n(),
+        mean_baseline = mean(baseline_score),
+        mean_max = mean(max_score),
+        mean_final = mean(final_score),
+        .groups = "drop"
+      )
+    
+    cat("\nOutcome comparison:\n")
+    print(outcome_summary)
+    
+    # ============================================================
+    # STATISTICAL TESTS
+    # ============================================================
+    
+    cat("\n=== Statistical Analysis ===\n")
+    
+    # Test if baseline scores differ by outcome
+    if(length(unique(patient_summary$primary_outcome)) > 1) {
+      kw_test <- kruskal.test(baseline_score ~ primary_outcome, data = patient_summary)
+      cat("\nKruskal-Wallis test (baseline score by outcome):\n")
+      cat("  p-value:", format.pval(kw_test$p.value), "\n")
+      
+      if(kw_test$p.value < 0.05) {
+        cat("  SIGNIFICANT: Baseline scores differ by outcome\n")
+      }
+    }
+    
+    # Save results
+    results <- list(
+      baseline = baseline_processed,
+      longitudinal = longitudinal_data,
+      patient_summary = patient_summary,
+      outcome_summary = outcome_summary
+    )
+    
+    save(results, file = "prospective_trajectory_results.RData")
+    cat("\nResults saved to prospective_trajectory_results.RData\n")
+    
+  } else {
+    cat("\nNo valid score data found after filtering\n")
+  }
+} else {
+  cat("\nNo score data found for prospective patients\n")
+  cat("This may indicate:\n")
+  cat("  1. Scores haven't been entered yet\n")
+  cat("  2. Scores are in a different format\n")
+  cat("  3. The filter structure is different than expected\n")
+}
+
+cat("\n============================================\n")
+cat("Analysis complete\n")
+cat("============================================\n")
+
