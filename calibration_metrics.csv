@@ -1,0 +1,7 @@
+"Metric","Value","Interpretation"
+"Calibration Intercept",-2.785,"Poor"
+"Calibration Slope",5.737,"Poor"
+"E/O Ratio",0.996,"Good"
+"Brier Score",0.1161,"Good"
+"C-statistic",0.774,"Good"
+"Hosmer-Lemeshow p-value",0.3319,"Good calibration"

@@ -109,9 +109,9 @@ ui <- fluidPage(
       
       div(class = "checkbox-container",
           checkboxInput("multipost", 
-                        "Multi-drug Resistant Organism Post-transplant", 
+                        "Multisite colonization after transplant", 
                         value = FALSE),
-          em("MDRO infection after transplant")
+          em("Colonization with CRE organism isolated from mulitple body sites")
       ),
       
       br(),
@@ -207,8 +207,8 @@ ui <- fluidPage(
                    tags$dt("CRE Post-transplant"),
                    tags$dd("Documented CRE colonization or infection within 60 days after transplantation"),
                    br(),
-                   tags$dt("MDRO Post-transplant"),
-                   tags$dd("Multi-drug resistant organism infection following transplantation")
+                   tags$dt("Multisite colonization post transplantation"),
+                   tags$dd("Multi-site colonization post transplantation")
                  ),
                  br(),
                  
@@ -487,7 +487,7 @@ server <- function(input, output, session) {
     hr_table <- data.frame(
       "Risk Factor" = c("Reintubation", "Mechanical Ventilation", 
                         "Acute Renal Failure", "CRE Pre-transplant", 
-                        "CRE Post-transplant", "MDRO Post-transplant"),
+                        "CRE Post-transplant", "Multisite colonization"),
       "Hazard Ratio" = round(coef_summary$conf.int[, 1], 2),
       "95% CI Lower" = round(coef_summary$conf.int[, 3], 2),
       "95% CI Upper" = round(coef_summary$conf.int[, 4], 2),
@@ -521,7 +521,7 @@ server <- function(input, output, session) {
     cat("Acute Renal Failure:", sum(df$arf == 1), "(", round(mean(df$arf == 1) * 100, 1), "%)\n")
     cat("CRE Pre-transplant:", sum(df$crepre_60 == 1), "(", round(mean(df$crepre_60 == 1) * 100, 1), "%)\n")
     cat("CRE Post-transplant:", sum(df$crepost_60 == 1), "(", round(mean(df$crepost_60 == 1) * 100, 1), "%)\n")
-    cat("MDRO Post-transplant:", sum(df$multipost == 1), "(", round(mean(df$multipost == 1) * 100, 1), "%)\n")
+    cat("Multisite colonization:", sum(df$multipost == 1), "(", round(mean(df$multipost == 1) * 100, 1), "%)\n")
   })
   
   # Risk factor distribution plot
@@ -532,7 +532,7 @@ server <- function(input, output, session) {
     # Calculate prevalence
     prevalence_data <- data.frame(
       Risk_Factor = c("Reintubation", "Mechanical\nVentilation", "Acute Renal\nFailure", 
-                      "CRE\nPre-transplant", "CRE\nPost-transplant", "MDRO\nPost-transplant"),
+                      "CRE\nPre-transplant", "CRE\nPost-transplant", "Multisite\nPost-transplant"),
       Prevalence = c(mean(df$reint == 1), mean(df$mv == 1), mean(df$arf == 1),
                      mean(df$crepre_60 == 1), mean(df$crepost_60 == 1), mean(df$multipost == 1)) * 100
     )

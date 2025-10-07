@@ -1,0 +1,4 @@
+"risk_group_tertile","n","n_deaths","death_rate","survival_rate","n_cre","cre_rate","n_discharge","discharge_rate"
+"Low",90,3,3.3,96.7,9,10,74,82.2
+"Medium",50,2,4,96,11,22,35,70
+"High",64,10,15.6,84.4,30,46.9,24,37.5

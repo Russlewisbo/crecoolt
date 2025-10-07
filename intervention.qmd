@@ -1,5 +1,867 @@
 ---
 title: "Intervention impact"
+date: "2025-09-25"     # ISO format; quoted
+date-format: "D MMMM YYYY"  # optional: 25 September 2025
+format: 
+  html:
+    code-fold: true
+    number-sections: false
+execute:
+  echo: false
+  warning: false
+  freeze: true         # (you can keep this on after you refresh the cache)
+bibliography: references.bib
+csl: nature.csl
 ---
 
-Coming soon!
+Day 180 survival rates were compared by model-predicted CRE infection risk using 3 categories:
+
+-   Low risk (≤ 10%)
+
+-   Medium risk (11-29%)
+
+-   High risk (≥ 30%)
+
+| Risk group | n | n_deaths | death rate | survival rate | n_CRE | cre rate | n_discharge | discharge rate |
+|--------|--------|--------|--------|--------|--------|--------|--------|--------|
+| Low | 90 | 3 | 3.3 | 96.7 | 9 | 10 | 74 | 82.2 |
+| Medium | 50 | 2 | 4 | 96 | 11 | 22 | 35 | 70 |
+| High | 64 | 10 | 15.6 | 84.4 | 30 | 46.9 | 24 | 37.5 |
+
+::: {#fig-compete_strat}
+```{r}
+
+#############################################
+## FIXED RISK ANALYSIS WITH NA HANDLING
+## Properly handles missing values throughout
+#############################################
+
+library(dplyr)
+library(ggplot2)
+
+cat("============================================\n")
+cat("SIMPLE RISK ANALYSIS WITH NA HANDLING\n")
+cat("============================================\n")
+
+# ============================================================
+# STEP 1: LOAD DATA
+# ============================================================
+
+cat("\n=== Loading Data ===\n")
+
+data_full <- read.csv("CRECOOLT_overall.csv", stringsAsFactors = FALSE)
+cat("Total records:", nrow(data_full), "\n")
+
+# Basic subset
+data_work <- data_full %>%
+  filter(!is.na(retro_or_pros))
+
+cat("After filtering:", nrow(data_work), "\n")
+
+# ============================================================
+# STEP 2: CREATE OUTCOMES
+# ============================================================
+
+cat("\n=== Creating Outcomes ===\n")
+
+# Convert dates
+data_work$date_of_transplant <- as.Date(data_work$date_of_transplant)
+data_work$death_date <- as.Date(data_work$death_date)
+data_work$discharge_date <- as.Date(data_work$discharge_date)
+
+# Create death outcome
+data_work$days_to_death <- as.numeric(data_work$death_date - data_work$date_of_transplant)
+data_work$death_180 <- ifelse(!is.na(data_work$days_to_death) & 
+                                data_work$days_to_death <= 180 & 
+                                data_work$days_to_death > 0, 1, 0)
+data_work$death_180[is.na(data_work$death_180)] <- 0
+
+# Create time variable
+data_work$time_simple <- 180
+data_work$time_simple[data_work$death_180 == 1] <- data_work$days_to_death[data_work$death_180 == 1]
+
+# Filter valid cases
+data_work <- data_work %>%
+  filter(!is.na(time_simple) & time_simple > 0 & time_simple <= 180)
+
+cat("Valid patients:", nrow(data_work), "\n")
+cat("Deaths within 180 days:", sum(data_work$death_180), "\n")
+cat("Crude mortality:", round(mean(data_work$death_180) * 100, 1), "%\n")
+
+# ============================================================
+# STEP 3: PREPARE PREDICTORS
+# ============================================================
+
+cat("\n=== Preparing Predictors ===\n")
+
+# Initialize all predictor columns
+data_work$age_clean <- NA
+data_work$meld_clean <- NA
+data_work$cci_clean <- NA
+
+# Age
+if("age" %in% names(data_work)) {
+  data_work$age_clean <- suppressWarnings(as.numeric(as.character(data_work$age)))
+  cat("Age: ", sum(!is.na(data_work$age_clean)), " valid values, range ", 
+      round(min(data_work$age_clean, na.rm=T)), "-", 
+      round(max(data_work$age_clean, na.rm=T)), "\n", sep="")
+}
+
+# MELD
+if("meld_score" %in% names(data_work)) {
+  data_work$meld_clean <- suppressWarnings(as.numeric(as.character(data_work$meld_score)))
+  cat("MELD: ", sum(!is.na(data_work$meld_clean)), " valid values, range ", 
+      round(min(data_work$meld_clean, na.rm=T)), "-", 
+      round(max(data_work$meld_clean, na.rm=T)), "\n", sep="")
+}
+
+# CCI
+if("cci" %in% names(data_work)) {
+  data_work$cci_clean <- suppressWarnings(as.numeric(as.character(data_work$cci)))
+  cat("CCI: ", sum(!is.na(data_work$cci_clean)), " valid values\n", sep="")
+}
+
+# Binary complications
+cat("\nComplications:\n")
+for(i in 1:11) {
+  var_name <- paste0("post_olt_compli___", i)
+  if(var_name %in% names(data_work)) {
+    data_work[[paste0("compli_", i)]] <- ifelse(data_work[[var_name]] == 1, 1, 0)
+    data_work[[paste0("compli_", i)]][is.na(data_work[[paste0("compli_", i)]])] <- 0
+    n_cases <- sum(data_work[[paste0("compli_", i)]])
+    if(n_cases > 0) {
+      cat("  Complication ", i, ": ", n_cases, " cases\n", sep="")
+    }
+  }
+}
+
+# ============================================================
+# STEP 4: CREATE SIMPLE RISK SCORE
+# ============================================================
+
+cat("\n=== Creating Risk Score ===\n")
+
+# Initialize risk score for all patients
+data_work$risk_points <- 0
+
+# Add age points (if available)
+if(sum(!is.na(data_work$age_clean)) > 30) {
+  age_median <- median(data_work$age_clean, na.rm = TRUE)
+  data_work$age_risk <- ifelse(!is.na(data_work$age_clean) & data_work$age_clean > age_median, 1, 0)
+  data_work$risk_points <- data_work$risk_points + data_work$age_risk
+  cat("Added age component (median = ", round(age_median), ")\n", sep="")
+}
+
+# Add MELD points (if available)
+if(sum(!is.na(data_work$meld_clean)) > 30) {
+  meld_median <- median(data_work$meld_clean, na.rm = TRUE)
+  data_work$meld_risk <- ifelse(!is.na(data_work$meld_clean) & data_work$meld_clean > meld_median, 1, 0)
+  data_work$risk_points <- data_work$risk_points + data_work$meld_risk
+  cat("Added MELD component (median = ", round(meld_median), ")\n", sep="")
+}
+
+# Add major complications
+major_complications <- c("compli_1", "compli_3", "compli_5")  # ARF, Vent, Reintervention
+for(comp in major_complications) {
+  if(comp %in% names(data_work)) {
+    data_work$risk_points <- data_work$risk_points + data_work[[comp]]
+    cat("Added ", comp, " (n=", sum(data_work[[comp]]), ")\n", sep="")
+  }
+}
+
+# Check risk score distribution
+cat("\nRisk score distribution:\n")
+print(table(data_work$risk_points))
+
+# ============================================================
+# STEP 5: CREATE RISK GROUPS
+# ============================================================
+
+cat("\n=== Creating Risk Groups ===\n")
+
+# Method 1: Try tertiles if enough variation
+if(length(unique(data_work$risk_points)) >= 3) {
+  # Use tertiles with NA handling
+  risk_tertiles <- quantile(data_work$risk_points, 
+                            probs = c(0, 1/3, 2/3, 1), 
+                            na.rm = TRUE)  # This is the fix!
+  
+  # Handle ties by adjusting breaks
+  if(length(unique(risk_tertiles)) < 4) {
+    # If ties, use simple equal groups
+    data_work$risk_group <- cut(rank(data_work$risk_points, ties.method = "random"),
+                                breaks = 3,
+                                labels = c("Low", "Medium", "High"))
+  } else {
+    data_work$risk_group <- cut(data_work$risk_points,
+                                breaks = risk_tertiles,
+                                labels = c("Low", "Medium", "High"),
+                                include.lowest = TRUE)
+  }
+} else {
+  # Method 2: Simple grouping based on score
+  cat("Using simple grouping due to limited variation\n")
+  data_work$risk_group <- factor(
+    ifelse(data_work$risk_points == 0, "Low",
+           ifelse(data_work$risk_points <= 1, "Medium", "High")),
+    levels = c("Low", "Medium", "High")
+  )
+}
+
+# Check distribution
+cat("\nRisk group distribution:\n")
+print(table(data_work$risk_group, useNA = "ifany"))
+
+# ============================================================
+# STEP 6: ADD CRE INFORMATION
+# ============================================================
+
+cat("\n=== Adding CRE Status ===\n")
+
+# Initialize CRE variable
+data_work$cre_180 <- 0
+
+# Check different CRE variable names
+if("cre_infection_date" %in% names(data_work)) {
+  data_work$cre_infection_date <- as.Date(data_work$cre_infection_date)
+  cre_days <- as.numeric(data_work$cre_infection_date - data_work$date_of_transplant)
+  data_work$cre_180 <- ifelse(!is.na(cre_days) & cre_days <= 180 & cre_days > 0, 1, 0)
+  cat("CRE from dates: ", sum(data_work$cre_180), " infections\n", sep="")
+} else if("cre_infection" %in% names(data_work)) {
+  data_work$cre_180 <- ifelse(data_work$cre_infection == 1, 1, 0)
+  data_work$cre_180[is.na(data_work$cre_180)] <- 0
+  cat("CRE from binary variable: ", sum(data_work$cre_180), " infections\n", sep="")
+} else if("cre_180d" %in% names(data_work)) {
+  data_work$cre_180 <- ifelse(data_work$cre_180d == 1, 1, 0)
+  data_work$cre_180[is.na(data_work$cre_180)] <- 0
+  cat("CRE from existing variable: ", sum(data_work$cre_180), " infections\n", sep="")
+}
+
+cat("Total CRE infections within 180 days: ", sum(data_work$cre_180), "\n", sep="")
+
+# ============================================================
+# STEP 7: ANALYSIS
+# ============================================================
+
+cat("\n=== ANALYSIS RESULTS ===\n")
+
+# Overall mortality
+cat("\nOverall 180-day mortality: ", 
+    round(mean(data_work$death_180) * 100, 1), "%\n", sep="")
+
+# By risk group
+risk_table <- data_work %>%
+  group_by(risk_group) %>%
+  summarise(
+    n = n(),
+    deaths = sum(death_180),
+    mortality_pct = round(deaths/n * 100, 1),
+    cre_n = sum(cre_180),
+    cre_pct = round(cre_n/n * 100, 1)
+  )
+
+cat("\n--- Mortality by Risk Group ---\n")
+print(as.data.frame(risk_table))
+
+# By CRE status
+cre_table <- data_work %>%
+  mutate(CRE_status = ifelse(cre_180 == 1, "CRE+", "CRE-")) %>%
+  group_by(CRE_status) %>%
+  summarise(
+    n = n(),
+    deaths = sum(death_180),
+    mortality_pct = round(deaths/n * 100, 1)
+  )
+
+cat("\n--- Mortality by CRE Status ---\n")
+print(as.data.frame(cre_table))
+
+# Combined
+combined_table <- data_work %>%
+  mutate(CRE_status = ifelse(cre_180 == 1, "CRE+", "CRE-")) %>%
+  group_by(risk_group, CRE_status) %>%
+  summarise(
+    n = n(),
+    deaths = sum(death_180),
+    mortality_pct = round(deaths/n * 100, 1),
+    .groups = "drop"
+  )
+
+cat("\n--- Mortality by Risk Group and CRE Status ---\n")
+print(as.data.frame(combined_table))
+
+# ============================================================
+# STEP 8: VISUALIZATION
+# ============================================================
+
+# Create bar plot
+p <- ggplot(combined_table, aes(x = risk_group, y = mortality_pct, fill = CRE_status)) +
+  geom_col(position = position_dodge(width = 0.8), width = 0.7) +
+  geom_text(aes(label = paste0(mortality_pct, "%\n(n=", n, ")")), 
+            position = position_dodge(width = 0.8),
+            vjust = -0.2, size = 3) +
+  scale_fill_manual(values = c("CRE-" = "steelblue", "CRE+" = "red")) +
+  labs(title = "180-Day Mortality by Risk Group and CRE Status",
+       x = "Risk Group",
+       y = "Mortality (%)",
+       fill = "CRE Status") +
+  theme_bw(base_size = 12) +
+  theme(legend.position = "top")
+
+print(p)
+
+# Save results
+baseline_data <- data_work
+save(baseline_data, file = "baseline_data_final.RData")
+write.csv(combined_table, "mortality_by_risk_and_cre.csv", row.names = FALSE)
+
+cat("\n============================================\n")
+cat("ANALYSIS COMPLETE\n")
+cat("============================================\n")
+cat("\nData saved as 'baseline_data' and 'baseline_data_final.RData'\n")
+cat("Results saved to 'mortality_by_risk_and_cre.csv'\n")
+
+```
+
+Excess CRE-related mortality by baseline mortality risk
+:::
+
+::: {#fig-compete_pro_retro}
+```{r}
+#############################################
+## CRE MANAGEMENT STRATEGY SURVIVAL ANALYSIS
+## STRATIFIED BY COLLECTION METHOD
+## Variable: retro_or_pros
+## 
+## FULLY ROBUST VERSION
+## - All variables properly initialized
+## - No conditional statements on potentially undefined variables
+## - Manual likelihood ratio test calculation
+## - Comprehensive error handling
+##
+## EXPECTED BEHAVIOR:
+## - Will attempt stratified analysis if retro_or_pros exists
+## - Falls back to overall analysis if stratification fails
+## - Continues even if some models don't converge
+## - Saves whatever results were successfully generated
+#############################################
+
+# Load libraries
+library(survival)
+library(survminer)
+library(dplyr)
+library(ggplot2)
+library(tidyr)
+
+cat("============================================\n")
+cat("CRE MANAGEMENT STRATEGY ANALYSIS\n")
+cat("STRATIFIED BY DATA COLLECTION METHOD\n")
+cat("Version: Fully Robust with Error Handling\n")
+cat("============================================\n")
+
+# Load data
+if(!exists("baseline_data")) {
+  load("baseline_data_final.RData")
+}
+data_analysis <- baseline_data
+
+# Initialize flags and variables
+skip_stratified <- FALSE
+p_interaction <- NA  # Always initialize
+p_retro <- NA  # Always initialize
+p_prosp <- NA  # Always initialize
+data_retro <- NULL  # Initialize
+data_prosp <- NULL  # Initialize
+
+# ============================================================
+# STEP 1: CREATE MANAGEMENT STRATEGY VARIABLE
+# ============================================================
+
+cat("\n=== Creating Management Strategy Variable ===\n")
+
+# Check the checkbox variables
+cat("\nCheckbox variables found:\n")
+cat("cre_colonization___1 (No strategy):\n")
+print(table(data_analysis$cre_colonization___1, useNA = "ifany"))
+cat("\ncre_colonization___2 (Targeted prophylaxis):\n")
+print(table(data_analysis$cre_colonization___2, useNA = "ifany"))
+cat("\ncre_colonization___3 (Pre-emptive strategy):\n")
+print(table(data_analysis$cre_colonization___3, useNA = "ifany"))
+
+# Create composite management strategy variable
+data_analysis$cre_management_strategy <- NA
+data_analysis$cre_management_strategy[data_analysis$cre_colonization___1 == 1] <- 1
+data_analysis$cre_management_strategy[data_analysis$cre_colonization___2 == 1] <- 2
+data_analysis$cre_management_strategy[data_analysis$cre_colonization___3 == 1] <- 3
+
+# Check for multiple strategies
+multiple_strategies <- rowSums(data_analysis[, c("cre_colonization___1", 
+                                                 "cre_colonization___2", 
+                                                 "cre_colonization___3")], na.rm = TRUE)
+n_multiple <- sum(multiple_strategies > 1, na.rm = TRUE)
+if(n_multiple > 0) {
+  cat("\nWARNING: ", n_multiple, " patients have multiple strategies recorded\n", sep="")
+}
+
+# Create factor with meaningful labels
+data_analysis$cre_strategy <- factor(
+  data_analysis$cre_management_strategy,
+  levels = c(1, 2, 3),
+  labels = c("No Strategy", "Targeted Prophylaxis", "Pre-emptive Strategy")
+)
+
+cat("\n--- Management Strategy Distribution ---\n")
+print(table(data_analysis$cre_strategy, useNA = "ifany"))
+
+# ============================================================
+# STEP 2: CHECK AND PROCESS COLLECTION METHOD VARIABLE
+# ============================================================
+
+cat("\n=== Data Collection Method ===\n")
+
+# Check if retro_or_pros exists
+if(!"retro_or_pros" %in% names(data_analysis)) {
+  cat("\nWARNING: 'retro_or_pros' variable not found\n")
+  cat("Proceeding with unstratified analysis only\n")
+  skip_stratified <- TRUE
+  data_analysis$collection_method <- NA
+} else {
+  # Check the variable
+  cat("\n--- Collection Method Distribution (raw values) ---\n")
+  print(table(data_analysis$retro_or_pros, useNA = "ifany"))
+  
+  unique_vals <- unique(data_analysis$retro_or_pros)
+  cat("\nUnique values in retro_or_pros: ", paste(unique_vals, collapse=", "), "\n")
+  
+  if(all(is.na(data_analysis$retro_or_pros))) {
+    cat("\nAll values are NA - cannot stratify\n")
+    skip_stratified <- TRUE
+    data_analysis$collection_method <- NA
+  } else {
+    # Process the variable
+    valid_vals <- unique_vals[!is.na(unique_vals)]
+    
+    # Convert to character for safer comparison
+    valid_vals_char <- as.character(valid_vals)
+    
+    # Try to determine coding
+    if(all(tolower(valid_vals_char) %in% c("retro", "pros"))) {
+      cat("Detected text coding (retro/pros)\n")
+      retro_val <- valid_vals[tolower(valid_vals_char) == "retro"][1]
+      pros_val <- valid_vals[tolower(valid_vals_char) == "pros"][1]
+      if(!is.na(retro_val) && !is.na(pros_val)) {
+        data_analysis$collection_method <- factor(
+          data_analysis$retro_or_pros,
+          levels = c(retro_val, pros_val),
+          labels = c("Retrospective", "Prospective")
+        )
+      } else {
+        cat("Error: Could not properly map retro/pros values\n")
+        skip_stratified <- TRUE
+        data_analysis$collection_method <- NA
+      }
+    } else if(all(valid_vals_char %in% c("0", "1"))) {
+      cat("Detected binary coding (0/1)\n")
+      data_analysis$collection_method <- factor(
+        data_analysis$retro_or_pros,
+        levels = c(0, 1),
+        labels = c("Retrospective", "Prospective")
+      )
+    } else if(all(valid_vals_char %in% c("1", "2"))) {
+      cat("Detected binary coding (1/2)\n")
+      data_analysis$collection_method <- factor(
+        data_analysis$retro_or_pros,
+        levels = c(1, 2),
+        labels = c("Retrospective", "Prospective")
+      )
+    } else {
+      cat("Unknown coding - using as is\n")
+      cat("Values found:", paste(valid_vals_char, collapse=", "), "\n")
+      data_analysis$collection_method <- factor(data_analysis$retro_or_pros)
+    }
+  }
+}
+
+cat("\n--- Collection Method Distribution (cleaned) ---\n")
+if(!skip_stratified) {
+  print(table(data_analysis$collection_method, useNA = "ifany"))
+} else {
+  cat("Collection method not available\n")
+}
+
+# ============================================================
+# STEP 3: BASELINE CHARACTERISTICS
+# ============================================================
+
+cat("\n=== Baseline Characteristics ===\n")
+
+if(!skip_stratified) {
+  # Stratified summary
+  baseline_stratified <- data_analysis %>%
+    group_by(collection_method, cre_strategy) %>%
+    summarise(
+      n = n(),
+      age_mean = round(mean(age_clean, na.rm = TRUE), 1),
+      meld_mean = round(mean(meld_clean, na.rm = TRUE), 1),
+      cre_infections = sum(cre_180, na.rm = TRUE),
+      infection_rate = round(mean(cre_180, na.rm = TRUE) * 100, 1),
+      deaths = sum(death_180, na.rm = TRUE),
+      mortality_rate = round(mean(death_180, na.rm = TRUE) * 100, 1),
+      .groups = "drop"
+    )
+  cat("\n--- Patient Characteristics (Stratified) ---\n")
+  print(as.data.frame(baseline_stratified))
+} else {
+  # Unstratified summary
+  baseline_summary <- data_analysis %>%
+    group_by(cre_strategy) %>%
+    summarise(
+      n = n(),
+      age_mean = round(mean(age_clean, na.rm = TRUE), 1),
+      meld_mean = round(mean(meld_clean, na.rm = TRUE), 1),
+      cre_infections = sum(cre_180, na.rm = TRUE),
+      infection_rate = round(mean(cre_180, na.rm = TRUE) * 100, 1),
+      deaths = sum(death_180, na.rm = TRUE),
+      mortality_rate = round(mean(death_180, na.rm = TRUE) * 100, 1),
+      .groups = "drop"
+    )
+  cat("\n--- Patient Characteristics (Unstratified) ---\n")
+  print(as.data.frame(baseline_summary))
+}
+
+# ============================================================
+# STEP 4: SURVIVAL ANALYSIS
+# ============================================================
+
+# Remove missing strategy
+data_complete <- data_analysis[!is.na(data_analysis$cre_strategy), ]
+
+if(nrow(data_complete) < 10) {
+  cat("\n=== ERROR: Insufficient data for analysis ===\n")
+  cat("Only", nrow(data_complete), "patients with valid strategy data\n")
+  cat("Analysis cannot proceed.\n")
+  stop("Insufficient data")
+}
+
+# Overall survival analysis
+cat("\n=== Overall Survival Analysis ===\n")
+cat("Analyzing", nrow(data_complete), "patients\n")
+surv_obj <- Surv(time = data_complete$time_simple, event = data_complete$death_180)
+km_fit <- survfit(surv_obj ~ cre_strategy, data = data_complete)
+
+# Log-rank test
+log_rank_p <- NA  # Initialize
+tryCatch({
+  survdiff_result <- survdiff(surv_obj ~ cre_strategy, data = data_complete)
+  log_rank_p <- 1 - pchisq(survdiff_result$chisq, length(survdiff_result$n) - 1)
+  cat("Overall log-rank test p-value: ", format.pval(log_rank_p), "\n")
+}, error = function(e) {
+  cat("Error calculating log-rank test:", e$message, "\n")
+})
+
+# Create overall KM plot
+tryCatch({
+  km_plot_overall <- ggsurvplot(
+    km_fit,
+    data = data_complete,
+    pval = TRUE,
+    conf.int = TRUE,
+    xlab = "Days from Transplant",
+    ylab = "Survival Probability",
+    title = "Overall Survival by CRE Management Strategy",
+    legend.title = "Strategy",
+    palette = c("#E41A1C", "#377EB8", "#4DAF4A"),
+    risk.table = TRUE,
+    ggtheme = theme_bw(),
+    xlim = c(0, 180)
+  )
+  print(km_plot_overall)
+  ggsave("km_overall_strategy.png", plot = km_plot_overall$plot, 
+         width = 10, height = 8, dpi = 300)
+}, error = function(e) {
+  cat("Error creating overall KM plot:", e$message, "\n")
+})
+
+if(!skip_stratified) {
+  # RETROSPECTIVE ANALYSIS
+  cat("\n=== Retrospective Data Analysis ===\n")
+  data_retro <- data_complete[!is.na(data_complete$collection_method) & 
+                                data_complete$collection_method == "Retrospective", ]
+  
+  if(nrow(data_retro) > 20 && length(unique(data_retro$cre_strategy)) > 1) {
+    cat("N =", nrow(data_retro), "\n")
+    cat("Strategies present:", paste(unique(data_retro$cre_strategy), collapse=", "), "\n")
+    
+    surv_retro <- Surv(time = data_retro$time_simple, event = data_retro$death_180)
+    km_retro <- survfit(surv_retro ~ cre_strategy, data = data_retro)
+    
+    tryCatch({
+      survdiff_retro <- survdiff(surv_retro ~ cre_strategy, data = data_retro)
+      p_retro <- 1 - pchisq(survdiff_retro$chisq, length(survdiff_retro$n) - 1)
+      cat("Retrospective log-rank p-value: ", format.pval(p_retro), "\n")
+    }, error = function(e) {
+      cat("Error calculating retrospective log-rank test:", e$message, "\n")
+      p_retro <- NA
+    })
+    
+    tryCatch({
+      km_plot_retro <- ggsurvplot(
+        km_retro,
+        data = data_retro,
+        pval = TRUE,
+        conf.int = TRUE,
+        xlab = "Days from Transplant",
+        ylab = "Survival Probability",
+        title = "Retrospective: Survival by CRE Management Strategy",
+        legend.title = "Strategy",
+        palette = c("#E41A1C", "#377EB8", "#4DAF4A"),
+        risk.table = TRUE,
+        ggtheme = theme_bw(),
+        xlim = c(0, 180)
+      )
+      print(km_plot_retro)
+      ggsave("km_retrospective.png", plot = km_plot_retro$plot,
+             width = 10, height = 8, dpi = 300)
+    }, error = function(e) {
+      cat("Error creating retrospective KM plot:", e$message, "\n")
+    })
+  } else {
+    if(nrow(data_retro) <= 20) {
+      cat("Insufficient retrospective data (n=", nrow(data_retro), ")\n")
+    } else {
+      cat("Insufficient variation in strategies for retrospective analysis\n")
+    }
+  }
+  
+  # PROSPECTIVE ANALYSIS
+  cat("\n=== Prospective Data Analysis ===\n")
+  data_prosp <- data_complete[!is.na(data_complete$collection_method) & 
+                                data_complete$collection_method == "Prospective", ]
+  
+  if(nrow(data_prosp) > 20 && length(unique(data_prosp$cre_strategy)) > 1) {
+    cat("N =", nrow(data_prosp), "\n")
+    cat("Strategies present:", paste(unique(data_prosp$cre_strategy), collapse=", "), "\n")
+    
+    surv_prosp <- Surv(time = data_prosp$time_simple, event = data_prosp$death_180)
+    km_prosp <- survfit(surv_prosp ~ cre_strategy, data = data_prosp)
+    
+    tryCatch({
+      survdiff_prosp <- survdiff(surv_prosp ~ cre_strategy, data = data_prosp)
+      p_prosp <- 1 - pchisq(survdiff_prosp$chisq, length(survdiff_prosp$n) - 1)
+      cat("Prospective log-rank p-value: ", format.pval(p_prosp), "\n")
+    }, error = function(e) {
+      cat("Error calculating prospective log-rank test:", e$message, "\n")
+      p_prosp <- NA
+    })
+    
+    tryCatch({
+      km_plot_prosp <- ggsurvplot(
+        km_prosp,
+        data = data_prosp,
+        pval = TRUE,
+        conf.int = TRUE,
+        xlab = "Days from Transplant",
+        ylab = "Survival Probability",
+        title = "Prospective: Survival by CRE Management Strategy",
+        legend.title = "Strategy",
+        palette = c("#E41A1C", "#377EB8", "#4DAF4A"),
+        risk.table = TRUE,
+        ggtheme = theme_bw(),
+        xlim = c(0, 180)
+      )
+      print(km_plot_prosp)
+      ggsave("km_prospective.png", plot = km_plot_prosp$plot,
+             width = 10, height = 8, dpi = 300)
+    }, error = function(e) {
+      cat("Error creating prospective KM plot:", e$message, "\n")
+    })
+  } else {
+    if(nrow(data_prosp) <= 20) {
+      cat("Insufficient prospective data (n=", nrow(data_prosp), ")\n")
+    } else {
+      cat("Insufficient variation in strategies for prospective analysis\n")
+    }
+  }
+}
+
+# ============================================================
+# STEP 5: COX REGRESSION MODELS
+# ============================================================
+
+cat("\n=== Cox Regression Models ===\n")
+
+# Overall Cox model
+cat("\n--- Overall Model (Adjusted) ---\n")
+tryCatch({
+  cox_overall <- coxph(surv_obj ~ cre_strategy + age_clean + meld_clean + cre_180, 
+                       data = data_complete)
+  print(summary(cox_overall))
+}, error = function(e) {
+  cat("Error fitting overall Cox model:", e$message, "\n")
+  cat("Trying simpler model...\n")
+  tryCatch({
+    cox_overall <- coxph(surv_obj ~ cre_strategy, data = data_complete)
+    print(summary(cox_overall))
+  }, error = function(e2) {
+    cat("Error fitting simple Cox model:", e2$message, "\n")
+  })
+})
+
+if(!skip_stratified) {
+  # Test for interaction
+  cat("\n--- Testing Strategy x Collection Method Interaction ---\n")
+  
+  # Initialize p_interaction outside tryCatch to ensure it exists
+  p_interaction <- NA
+  
+  if(sum(!is.na(data_complete$collection_method)) > 30) {
+    # Try to fit models and test interaction
+    test_succeeded <- FALSE
+    
+    tryCatch({
+      cox_no_int <- coxph(surv_obj ~ cre_strategy + collection_method + 
+                            age_clean + meld_clean + cre_180, 
+                          data = data_complete)
+      
+      cox_with_int <- coxph(surv_obj ~ cre_strategy * collection_method + 
+                              age_clean + meld_clean + cre_180, 
+                            data = data_complete)
+      
+      # Use logLik to manually calculate LR test
+      ll_no_int <- as.numeric(logLik(cox_no_int))
+      ll_with_int <- as.numeric(logLik(cox_with_int))
+      lr_stat <- 2 * (ll_with_int - ll_no_int)
+      df_diff <- length(coef(cox_with_int)) - length(coef(cox_no_int))
+      
+      # Calculate p-value
+      if(df_diff > 0 && lr_stat >= 0 && !is.na(lr_stat) && !is.na(df_diff)) {
+        p_interaction <- pchisq(lr_stat, df = df_diff, lower.tail = FALSE)
+        test_succeeded <- TRUE
+        
+        cat("Likelihood ratio statistic:", round(lr_stat, 3), "\n")
+        cat("Degrees of freedom:", df_diff, "\n")
+        cat("Interaction p-value: ", format.pval(p_interaction), "\n")
+        
+        # Only check p-value if it's valid
+        if(!is.na(p_interaction) && is.numeric(p_interaction) && length(p_interaction) == 1) {
+          if(p_interaction < 0.05) {
+            cat("SIGNIFICANT INTERACTION detected\n")
+            cat("Strategy effectiveness differs by collection method\n")
+          } else {
+            cat("No significant interaction\n")
+            cat("Strategy effectiveness similar across collection methods\n")
+          }
+        }
+      } else {
+        cat("Could not calculate valid test statistics\n")
+        p_interaction <- NA
+      }
+    }, error = function(e) {
+      cat("Error testing interaction:", e$message, "\n")
+      p_interaction <- NA
+      test_succeeded <- FALSE
+    })
+    
+    if(!test_succeeded) {
+      cat("Interaction test did not complete successfully\n")
+      p_interaction <- NA
+    }
+  } else {
+    cat("Insufficient data to test interaction\n")
+    p_interaction <- NA
+  }
+  
+  # Stratified Cox models if enough data
+  if(exists("data_retro") && nrow(data_retro) > 30 && 
+     length(unique(data_retro$cre_strategy)) > 1) {
+    cat("\n--- Retrospective Cox Model ---\n")
+    tryCatch({
+      surv_retro_cox <- Surv(time = data_retro$time_simple, event = data_retro$death_180)
+      cox_retro <- coxph(surv_retro_cox ~ cre_strategy + age_clean + meld_clean, 
+                         data = data_retro)
+      print(summary(cox_retro))
+    }, error = function(e) {
+      cat("Error fitting retrospective Cox model:", e$message, "\n")
+    })
+  }
+  
+  if(exists("data_prosp") && nrow(data_prosp) > 30 && 
+     length(unique(data_prosp$cre_strategy)) > 1) {
+    cat("\n--- Prospective Cox Model ---\n")
+    tryCatch({
+      surv_prosp_cox <- Surv(time = data_prosp$time_simple, event = data_prosp$death_180)
+      cox_prosp <- coxph(surv_prosp_cox ~ cre_strategy + age_clean + meld_clean, 
+                         data = data_prosp)
+      print(summary(cox_prosp))
+    }, error = function(e) {
+      cat("Error fitting prospective Cox model:", e$message, "\n")
+    })
+  }
+} else {
+  cat("\n--- Stratified Cox models not performed ---\n")
+  p_interaction <- NA  # Ensure it's defined even if skip_stratified is TRUE
+}
+
+# ============================================================
+# STEP 6: SUMMARY
+# ============================================================
+
+cat("\n============================================\n")
+cat("SUMMARY OF FINDINGS\n")
+cat("============================================\n")
+
+cat("\n1. Overall Analysis:\n")
+cat("   - Total N: ", nrow(data_complete), "\n")
+if(!is.na(log_rank_p)) {
+  cat("   - Overall log-rank p: ", format.pval(log_rank_p), "\n")
+} else {
+  cat("   - Overall log-rank p: Could not calculate\n")
+}
+
+if(!skip_stratified) {
+  cat("\n2. Stratified Analysis:\n")
+  if(exists("data_retro") && !is.null(data_retro)) {
+    cat("   - Retrospective N: ", nrow(data_retro), "\n")
+    if(exists("p_retro") && !is.na(p_retro)) {
+      cat("   - Retrospective p: ", format.pval(p_retro), "\n")
+    }
+  }
+  if(exists("data_prosp") && !is.null(data_prosp)) {
+    cat("   - Prospective N: ", nrow(data_prosp), "\n")
+    if(exists("p_prosp") && !is.na(p_prosp)) {
+      cat("   - Prospective p: ", format.pval(p_prosp), "\n")
+    }
+  }
+  if(exists("p_interaction") && !is.na(p_interaction)) {
+    cat("\n3. Interaction Test:\n")
+    cat("   - p-value: ", format.pval(p_interaction), "\n")
+  }
+} else {
+  cat("\n2. Stratified analysis not performed (collection method unavailable)\n")
+}
+
+cat("\nAnalysis complete.\n")
+cat("Plots saved:\n")
+if(file.exists("km_overall_strategy.png")) {
+  cat("  - km_overall_strategy.png\n")
+}
+if(!skip_stratified) {
+  if(file.exists("km_retrospective.png")) {
+    cat("  - km_retrospective.png\n")
+  }
+  if(file.exists("km_prospective.png")) {
+    cat("  - km_prospective.png\n")
+  }
+}
+
+# Save results
+tryCatch({
+  save.image(file = "cre_stratified_analysis_results.RData")
+  cat("\nResults saved to cre_stratified_analysis_results.RData\n")
+}, error = function(e) {
+  cat("\nError saving results:", e$message, "\n")
+})
+
+```
+Analysis examining whether treatment strategy reduced CRE infection
+:::
