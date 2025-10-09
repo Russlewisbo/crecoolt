@@ -241,6 +241,7 @@ Patient trajectory summary:
 </div>
 </div>
 </div>
+<p>Individual patient score trajectories (gray lines) and locally weighted regression curves (LOESS, red line with 95% confidence interval in gray shading) are shown for the first 75 days post-transplant, stratified by primary clinical outcome. The risk score incorporates clinical and laboratory parameters to quantify CRE infection risk. Censored patients (n=X) had incomplete follow-up without reaching a definitive endpoint. CRE infection (n=X) includes all patients who developed carbapenem-resistant Enterobacteriaceae infections during follow-up. Death (n=X) represents all-cause mortality. Discharge (n=X) indicates successful hospital discharge without CRE infection or death. Score trajectories demonstrate distinct patterns: discharged patients show early peak and resolution, deaths show progressive elevation, CRE infections display high variability, and censored patients maintain persistently elevated scores.</p>
 <div class="cell">
 <div class="cell-output-display">
 <div id="fig-score-distribution-boxplot" class="quarto-float quarto-figure quarto-figure-center anchored">
@@ -870,111 +871,100 @@ Intervention Combinations:</code></pre>
 4 Therapy Only          23           15          0.652       36.1</code></pre>
 </div>
 </div>
-<div class="cell">
-<div class="cell-output cell-output-stdout">
-<pre><code>
-=== Regression Analysis for Diagnostic Tests ===</code></pre>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
 </div>
-<div class="cell-output cell-output-stdout">
-<pre><code>
-Unadjusted Analysis (Diagnostic Only):</code></pre>
+<div class="callout-title-container flex-fill">
+Note
 </div>
-<div class="cell-output cell-output-stdout">
-<pre><code>  Diagnostic coefficient: 1.771 </code></pre>
 </div>
-<div class="cell-output cell-output-stdout">
-<pre><code>  Diagnostic OR: 5.879 </code></pre>
-</div>
-<div class="cell-output cell-output-stdout">
-<pre><code>
-Adjusted for Risk Score:</code></pre>
-</div>
-<div class="cell-output cell-output-stdout">
-<pre><code>  Diagnostic coefficient: 1.419 </code></pre>
-</div>
-<div class="cell-output cell-output-stdout">
-<pre><code>  Diagnostic OR: 4.135 </code></pre>
-</div>
-<div class="cell-output cell-output-stdout">
-<pre><code>  Score coefficient: 0.041 </code></pre>
-</div>
-<div class="cell-output cell-output-stdout">
-<pre><code>
-Full Model (Diagnostic + Therapy + Score):</code></pre>
-</div>
-<div class="cell-output cell-output-stdout">
-<pre><code>  Diagnostic coefficient: 1.398 </code></pre>
-</div>
-<div class="cell-output cell-output-stdout">
-<pre><code>  Therapy coefficient: 0.917 </code></pre>
-</div>
-<div class="cell-output cell-output-stdout">
-<pre><code>  Score coefficient: 0.03 </code></pre>
+<div class="callout-body-container callout-body">
+<p>The scoring system is working to identify risk, but we cannot determine therapy effectiveness from these observational data due to confounding by indication that persists. I could try more propensity score matching but I am not convinced this will resolved the issue. It is surprising:</p>
+<ul>
+<li><p>Only 6.6% of patients had therapy changes with the score</p></li>
+<li><p>Only 6.4% had diagnostic changes with the score</p></li>
+</ul>
 </div>
 </div>
 <div class="cell">
 <div class="cell-output cell-output-stdout">
+<pre><code>=== ROC Analysis Results ===</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>AUC for max score: 0.725 </code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>95% CI: 0.639 - 0.81 </code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Optimal cutpoint (Youden method):</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>  Score threshold: 23.8 </code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>  Sensitivity: 60 %</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>  Specificity: 80.6 %</code></pre>
+</div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="intervention_files/figure-html/discrimination-analysis-fixed-1.png" class="img-fluid figure-img" width="768"></p>
+</figure>
+</div>
+</div>
+</div>
+<div class="cell">
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 4 × 4
+  primary_outcome     n avg_velocity avg_max_velocity
+  &lt;chr&gt;           &lt;int&gt;        &lt;dbl&gt;            &lt;dbl&gt;
+1 CRE Infection      44      Inf               Inf   
+2 Censored            2        0.606             1.25
+3 Death              11        2.87              5.53
+4 Discharge          81      Inf               Inf   </code></pre>
+</div>
+</div>
+<div class="cell">
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 4 × 5
+  risk_category     n n_cre cre_rate mortality_rate
+  &lt;fct&gt;         &lt;int&gt; &lt;int&gt;    &lt;dbl&gt;          &lt;dbl&gt;
+1 Low              48     8    0.167         0.0208
+2 Moderate         47    12    0.255         0.0851
+3 High             20     5    0.25          0.1   
+4 Very High        43    25    0.581         0.163 </code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 4 × 7
+  risk_category     n n_cre cre_rate mortality_rate   nnt recommendation        
+  &lt;fct&gt;         &lt;int&gt; &lt;int&gt;    &lt;dbl&gt;          &lt;dbl&gt; &lt;dbl&gt; &lt;chr&gt;                 
+1 Low              48     8    0.167         0.0208     6 Standard monitoring   
+2 Moderate         47    12    0.255         0.0851     4 Enhanced surveillance 
+3 High             20     5    0.25          0.1        4 Consider prophylaxis  
+4 Very High        43    25    0.581         0.163      2 Aggressive interventi…</code></pre>
+</div>
+</div>
+<div class="cell">
+<div class="cell-output cell-output-stdout">
 <pre><code>
-============================================</code></pre>
+=== Bootstrap Validation Results (n= 100 ) ===</code></pre>
 </div>
 <div class="cell-output cell-output-stdout">
-<pre><code>DIAGNOSTIC TEST UTILIZATION SUMMARY</code></pre>
+<pre><code>AUC:  0.721  (95% CI:  0.647 - 0.78 )</code></pre>
 </div>
 <div class="cell-output cell-output-stdout">
-<pre><code>============================================</code></pre>
+<pre><code>Optimal cutpoint:  23.2  (95% CI:  14.4 - 25.4 )</code></pre>
 </div>
 <div class="cell-output cell-output-stdout">
-<pre><code>
-1. KEY FINDINGS:</code></pre>
+<pre><code>Sensitivity:  0.621  (95% CI:  0.478 - 0.818 )</code></pre>
 </div>
 <div class="cell-output cell-output-stdout">
-<pre><code>   ✗ Diagnostic testing associated with HIGHER infection rates
-   - Likely confounding by indication
-   - Sicker patients receive more diagnostic tests</code></pre>
-</div>
-<div class="cell-output cell-output-stdout">
-<pre><code>
-2. UTILIZATION PATTERNS:</code></pre>
-</div>
-<div class="cell-output cell-output-stdout">
-<pre><code>   -  19.6 % of patients received diagnostic tests</code></pre>
-</div>
-<div class="cell-output cell-output-stdout">
-<pre><code>   - Higher scores → More diagnostic testing</code></pre>
-</div>
-<div class="cell-output cell-output-stdout">
-<pre><code>   - Testing correlates with risk stratification</code></pre>
-</div>
-<div class="cell-output cell-output-stdout">
-<pre><code>
-3. CLINICAL IMPLICATIONS:</code></pre>
-</div>
-<div class="cell-output cell-output-stdout">
-<pre><code>   - Diagnostic tests help identify at-risk patients</code></pre>
-</div>
-<div class="cell-output cell-output-stdout">
-<pre><code>   - May enable early intervention</code></pre>
-</div>
-<div class="cell-output cell-output-stdout">
-<pre><code>   - Consider diagnostic protocols based on score thresholds</code></pre>
-</div>
-<div class="cell-output cell-output-stdout">
-<pre><code>
-4. COMPARISON WITH THERAPY:</code></pre>
-</div>
-<div class="cell-output cell-output-stdout">
-<pre><code>   - Best outcomes: Neither 
-   - Worst outcomes: Diagnostic Only </code></pre>
-</div>
-<div class="cell-output cell-output-stdout">
-<pre><code>
-============================================</code></pre>
-</div>
-<div class="cell-output cell-output-stdout">
-<pre><code>Diagnostic Test Analysis Complete</code></pre>
-</div>
-<div class="cell-output cell-output-stdout">
-<pre><code>============================================</code></pre>
+<pre><code>Specificity:  0.792  (95% CI:  0.548 - 0.88 )</code></pre>
 </div>
 </div>
 

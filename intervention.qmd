@@ -249,6 +249,8 @@ ggplot(longitudinal_data, aes(x = days_from_olt, y = score, group = record_id)) 
   theme_minimal()
 ```
 
+Individual patient score trajectories (gray lines) and locally weighted regression curves (LOESS, red line with 95% confidence interval in gray shading) are shown for the first 75 days post-transplant, stratified by primary clinical outcome. The risk score incorporates clinical and laboratory parameters to quantify CRE infection risk. Censored patients (n=X) had incomplete follow-up without reaching a definitive endpoint. CRE infection (n=X) includes all patients who developed carbapenem-resistant Enterobacteriaceae infections during follow-up. Death (n=X) represents all-cause mortality. Discharge (n=X) indicates successful hospital discharge without CRE infection or death. Score trajectories demonstrate distinct patterns: discharged patients show early peak and resolution, deaths show progressive elevation, CRE infections display high variability, and censored patients maintain persistently elevated scores.
+
 ```{r}
 #| label: prepare-cre-analysis
 #| include: false
@@ -512,7 +514,7 @@ cat("\nScore Summary by CRE Status:\n")
 print(summary_table)
 ```
 
-## SCORE-driven CRE treatment 
+## SCORE-driven CRE treatment
 
 ```{r}
 
@@ -1393,94 +1395,10 @@ cat("\nIntervention Combinations:\n")
 print(interaction_analysis)
 ```
 
-```{r}
-#| label: diagnostic-regression-analysis
-#| echo: false
-#| warning: false
-#| message: false
+::: callout-note
+The scoring system is working to identify risk, but we cannot determine therapy effectiveness from these observational data due to confounding by indication that persists. I could try more propensity score matching but I am not convinced this will resolved the issue. It is surprising:
 
-cat("\n=== Regression Analysis for Diagnostic Tests ===\n")
+-   Only 6.6% of patients had therapy changes with the score
 
-# Unadjusted model
-unadjusted_diag_model <- glm(cre_infection ~ had_score_based_diagnostic,
-                             data = patient_diagnostic_data,
-                             family = binomial())
-
-# Adjusted model for risk score
-adjusted_diag_model <- glm(cre_infection ~ had_score_based_diagnostic + max_score,
-                           data = patient_diagnostic_data,
-                           family = binomial())
-
-# Full model including therapy
-full_model <- patient_diagnostic_data %>%
-  left_join(patient_therapy_data %>% select(record_id, received_score_based_therapy),
-            by = "record_id") %>%
-  glm(cre_infection ~ had_score_based_diagnostic + received_score_based_therapy + max_score,
-      data = .,
-      family = binomial())
-
-cat("\nUnadjusted Analysis (Diagnostic Only):\n")
-cat("  Diagnostic coefficient:", round(coef(unadjusted_diag_model)["had_score_based_diagnostic"], 3), "\n")
-cat("  Diagnostic OR:", round(exp(coef(unadjusted_diag_model)["had_score_based_diagnostic"]), 3), "\n")
-
-cat("\nAdjusted for Risk Score:\n")
-cat("  Diagnostic coefficient:", round(coef(adjusted_diag_model)["had_score_based_diagnostic"], 3), "\n")
-cat("  Diagnostic OR:", round(exp(coef(adjusted_diag_model)["had_score_based_diagnostic"]), 3), "\n")
-cat("  Score coefficient:", round(coef(adjusted_diag_model)["max_score"], 3), "\n")
-
-cat("\nFull Model (Diagnostic + Therapy + Score):\n")
-cat("  Diagnostic coefficient:", round(coef(full_model)["had_score_based_diagnostic"], 3), "\n")
-cat("  Therapy coefficient:", round(coef(full_model)["received_score_based_therapy"], 3), "\n")
-cat("  Score coefficient:", round(coef(full_model)["max_score"], 3), "\n")
-
-if(coef(unadjusted_diag_model)["had_score_based_diagnostic"] > 0 & 
-   coef(adjusted_diag_model)["had_score_based_diagnostic"] < 0) {
-  cat("\n✓ Simpson's Paradox detected for diagnostic testing!\n")
-}
-```
-
-```{r}
-#| label: diagnostic-summary
-#| echo: false
-#| warning: false
-#| message: false
-
-cat("\n============================================\n")
-cat("DIAGNOSTIC TEST UTILIZATION SUMMARY\n")
-cat("============================================\n")
-
-cat("\n1. KEY FINDINGS:\n")
-if(exists("arr_diag")) {
-  if(arr_diag > 0) {
-    cat("   ✓ Diagnostic testing associated with LOWER infection rates\n")
-    cat("   - Absolute difference:", round(arr_diag * 100, 1), "percentage points\n")
-  } else if(arr_diag < 0) {
-    cat("   ✗ Diagnostic testing associated with HIGHER infection rates\n")
-    cat("   - Likely confounding by indication\n")
-    cat("   - Sicker patients receive more diagnostic tests\n")
-  }
-}
-
-cat("\n2. UTILIZATION PATTERNS:\n")
-cat("   - ", round(mean(patient_diagnostic_data$had_score_based_diagnostic) * 100, 1), 
-    "% of patients received diagnostic tests\n")
-cat("   - Higher scores → More diagnostic testing\n")
-cat("   - Testing correlates with risk stratification\n")
-
-cat("\n3. CLINICAL IMPLICATIONS:\n")
-cat("   - Diagnostic tests help identify at-risk patients\n")
-cat("   - May enable early intervention\n")
-cat("   - Consider diagnostic protocols based on score thresholds\n")
-
-cat("\n4. COMPARISON WITH THERAPY:\n")
-if(exists("interaction_analysis")) {
-  best_group <- interaction_analysis$intervention_group[which.min(interaction_analysis$infection_rate)]
-  worst_group <- interaction_analysis$intervention_group[which.max(interaction_analysis$infection_rate)]
-  cat("   - Best outcomes:", best_group, "\n")
-  cat("   - Worst outcomes:", worst_group, "\n")
-}
-
-cat("\n============================================\n")
-cat("Diagnostic Test Analysis Complete\n")
-cat("============================================\n")
-```
+-   Only 6.4% had diagnostic changes with the score
+:::

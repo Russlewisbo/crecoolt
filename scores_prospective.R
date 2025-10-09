@@ -1516,9 +1516,63 @@ cat("============================================\n")
 
 ######################
 
-Diagnostic score evaluation
+Propensity score analysis
 
 ######################
 
+#| label: propensity-score-analysis
+#| echo: false
+#| warning: false
+#| message: false
+
+library(MatchIt)
+library(cobalt)
+
+cat("\n=== PROPENSITY SCORE MATCHING ANALYSIS ===\n")
+
+# Create propensity score model
+ps_model <- glm(received_score_based_therapy ~ max_score + baseline_score + 
+                  n_assessments + follow_up_days,
+                data = patient_therapy_data,
+                family = binomial())
+
+# Add propensity scores
+patient_therapy_data$propensity_score <- predict(ps_model, type = "response")
+
+# Perform matching (1:1 nearest neighbor)
+matched_data <- matchit(received_score_based_therapy ~ max_score + baseline_score + 
+                          n_assessments + follow_up_days,
+                        data = patient_therapy_data,
+                        method = "nearest",
+                        caliper = 0.2,
+                        ratio = 1)
+
+# Extract matched dataset
+matched_patients <- match.data(matched_data)
+
+# Check balance
+cat("\nBalance Statistics After Matching:\n")
+balance_table <- bal.tab(matched_data, un = TRUE)
+print(balance_table)
+
+# Analyze matched data
+matched_results <- matched_patients %>%
+  group_by(received_score_based_therapy) %>%
+  summarise(
+    n = n(),
+    infections = sum(cre_infection == 1),
+    infection_rate = mean(cre_infection == 1),
+    mean_score = mean(max_score),
+    .groups = "drop"
+  )
+
+cat("\n=== Matched Cohort Results ===\n")
+print(matched_results)
+
+# Test on matched data
+matched_test <- with(matched_patients, 
+                     fisher.test(table(received_score_based_therapy, cre_infection)))
+cat("\nMatched analysis p-value:", format.pval(matched_test$p.value), "\n")
+cat("Matched OR:", round(matched_test$estimate, 3), "\n")
 
 

@@ -597,3 +597,166 @@ Distribution of covariates in the original CRECOOLT 2.0 model
 
 There is a marked difference in the pre OLT versus post OLT CRE colonization rates between the previous CRECOOLT cohort and the current study. Most of the patients in the previous study had CRE colonization *after* OLT whereas in the current cohorts CRE colonization occurred *before* OLT. Yet the model still seemed to predict the risk of CRE infection well.
 :::
+
+
+```{r}
+#| label: discrimination-analysis-fixed
+#| echo: false
+#| warning: false
+#| message: false
+#| fig-width: 8
+#| fig-height: 6
+
+library(pROC)
+
+# ROC curve for maximum score predicting CRE infection
+roc_obj <- roc(score_cre_analysis$cre_infection, 
+               score_cre_analysis$max_score,
+               quiet = TRUE)
+
+# Calculate AUC
+auc_value <- auc(roc_obj)
+ci_auc_vals <- ci.auc(roc_obj)
+
+cat("=== ROC Analysis Results ===\n")
+cat("AUC for max score:", round(auc_value, 3), "\n")
+cat("95% CI:", round(ci_auc_vals[1], 3), "-", round(ci_auc_vals[3], 3), "\n\n")
+
+# Find optimal cutpoint
+coords_best <- coords(roc_obj, "best", method = "youden")
+cat("Optimal cutpoint (Youden method):\n")
+cat("  Score threshold:", round(coords_best$threshold, 1), "\n")
+cat("  Sensitivity:", round(coords_best$sensitivity * 100, 1), "%\n")
+cat("  Specificity:", round(coords_best$specificity * 100, 1), "%\n\n")
+
+# Create the plot without using abline
+ggroc(roc_obj, legacy.axes = TRUE) +
+  geom_segment(aes(x = 0, xend = 1, y = 0, yend = 1), 
+               color = "gray", linetype = "dashed") +
+  geom_point(x = 1 - coords_best$specificity, 
+             y = coords_best$sensitivity,
+             color = "red", size = 4) +
+  annotate("text", 
+           x = 0.6, y = 0.3, 
+           label = paste("AUC =", round(auc_value, 3)),
+           size = 5) +
+  annotate("text",
+           x = 1 - coords_best$specificity + 0.05,
+           y = coords_best$sensitivity - 0.05,
+           label = paste("Cutoff =", round(coords_best$threshold, 1)),
+           color = "red", size = 4) +
+  labs(
+    title = "ROC Curve for CRE Risk Score",
+    x = "False Positive Rate (1 - Specificity)",
+    y = "True Positive Rate (Sensitivity)"
+  ) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(size = 14, face = "bold"),
+    axis.title = element_text(size = 12)
+  )
+```
+
+```{r}
+#| label: decision-curve-analysis
+#| echo: false
+#| warning: false
+#| message: false
+
+library(rmda)
+
+# Prepare data for decision curve
+dca_data <- score_cre_analysis %>%
+  mutate(
+    cre_prob = max_score / 100,  # Convert score to probability-like scale
+    cre_outcome = cre_infection
+  )
+
+# Simple decision curve
+decision_curve(cre_outcome ~ cre_prob, 
+               data = dca_data,
+               thresholds = seq(0, 0.5, by = 0.01),
+               confidence.intervals = "none")
+```
+
+```{r}
+#| label: score-velocity
+#| echo: false
+#| warning: false
+#| message: false
+
+# Calculate score velocity (rate of change)
+score_velocity <- longitudinal_data %>%
+  group_by(record_id) %>%
+  arrange(days_from_olt) %>%
+  mutate(
+    score_change = score - lag(score),
+    days_between = days_from_olt - lag(days_from_olt),
+    velocity = score_change / days_between,
+    acceleration = velocity - lag(velocity)
+  ) %>%
+  filter(!is.na(velocity))
+
+# Summarize velocity by outcome
+velocity_summary <- score_velocity %>%
+  group_by(record_id, primary_outcome) %>%
+  summarise(
+    mean_velocity = mean(velocity, na.rm = TRUE),
+    max_velocity = max(velocity, na.rm = TRUE),
+    velocity_sd = sd(velocity, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+# Compare velocities
+velocity_comparison <- velocity_summary %>%
+  group_by(primary_outcome) %>%
+  summarise(
+    n = n(),
+    avg_velocity = mean(mean_velocity, na.rm = TRUE),
+    avg_max_velocity = mean(max_velocity, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+print(velocity_comparison)
+```
+
+```{r}
+#| label: risk-categories
+#| echo: false
+#| warning: false
+#| message: false
+
+# Create clinically meaningful risk categories
+risk_performance <- score_cre_analysis %>%
+  mutate(
+    risk_category = cut(max_score,
+                       breaks = c(-Inf, 10, 20, 30, Inf),
+                       labels = c("Low", "Moderate", "High", "Very High"))
+  ) %>%
+  group_by(risk_category) %>%
+  summarise(
+    n = n(),
+    n_cre = sum(cre_infection == 1, na.rm = TRUE),
+    cre_rate = mean(cre_infection == 1, na.rm = TRUE),
+    mortality_rate = mean(primary_outcome == "Death", na.rm = TRUE),
+    .groups = "drop"
+  )
+
+print(risk_performance)
+
+# Calculate NNT for each category
+risk_performance <- risk_performance %>%
+  mutate(
+    nnt = round(1 / cre_rate),
+    recommendation = case_when(
+      risk_category == "Low" ~ "Standard monitoring",
+      risk_category == "Moderate" ~ "Enhanced surveillance",
+      risk_category == "High" ~ "Consider prophylaxis",
+      risk_category == "Very High" ~ "Aggressive intervention"
+    )
+  )
+
+print(risk_performance)
+```
+
+
