@@ -14,365 +14,244 @@ bibliography: references.bib
 csl: nature.csl
 ---
 
-## 
-
-::: {#fig-compete_strat}
-```{r}
-
-# Load the required data
-
-load("prospective_trajectory_results.RData")  # or whatever file contains longitudinal_data
-
-#############################################
-## FIXED RISK ANALYSIS WITH NA HANDLING
-## Properly handles missing values throughout
-#############################################
-
-library(dplyr)
-library(ggplot2)
-
-cat("============================================\n")
-cat("SIMPLE RISK ANALYSIS WITH NA HANDLING\n")
-cat("============================================\n")
-
-# ============================================================
-# STEP 1: LOAD DATA
-# ============================================================
-
-cat("\n=== Loading Data ===\n")
-
-data_full <- read.csv("CRECOOLT_overall.csv", stringsAsFactors = FALSE)
-cat("Total records:", nrow(data_full), "\n")
-
-# Basic subset
-data_work <- data_full %>%
-  filter(!is.na(retro_or_pros))
-
-cat("After filtering:", nrow(data_work), "\n")
-
-# ============================================================
-# STEP 2: CREATE OUTCOMES
-# ============================================================
-
-cat("\n=== Creating Outcomes ===\n")
-
-# Convert dates
-data_work$date_of_transplant <- as.Date(data_work$date_of_transplant)
-data_work$death_date <- as.Date(data_work$death_date)
-data_work$discharge_date <- as.Date(data_work$discharge_date)
-
-# Create death outcome
-data_work$days_to_death <- as.numeric(data_work$death_date - data_work$date_of_transplant)
-data_work$death_180 <- ifelse(!is.na(data_work$days_to_death) & 
-                                data_work$days_to_death <= 180 & 
-                                data_work$days_to_death > 0, 1, 0)
-data_work$death_180[is.na(data_work$death_180)] <- 0
-
-# Create time variable
-data_work$time_simple <- 180
-data_work$time_simple[data_work$death_180 == 1] <- data_work$days_to_death[data_work$death_180 == 1]
-
-# Filter valid cases
-data_work <- data_work %>%
-  filter(!is.na(time_simple) & time_simple > 0 & time_simple <= 180)
-
-cat("Valid patients:", nrow(data_work), "\n")
-cat("Deaths within 180 days:", sum(data_work$death_180), "\n")
-cat("Crude mortality:", round(mean(data_work$death_180) * 100, 1), "%\n")
-
-# ============================================================
-# STEP 3: PREPARE PREDICTORS
-# ============================================================
-
-cat("\n=== Preparing Predictors ===\n")
-
-# Initialize all predictor columns
-data_work$age_clean <- NA
-data_work$meld_clean <- NA
-data_work$cci_clean <- NA
-
-# Age
-if("age" %in% names(data_work)) {
-  data_work$age_clean <- suppressWarnings(as.numeric(as.character(data_work$age)))
-  cat("Age: ", sum(!is.na(data_work$age_clean)), " valid values, range ", 
-      round(min(data_work$age_clean, na.rm=T)), "-", 
-      round(max(data_work$age_clean, na.rm=T)), "\n", sep="")
-}
-
-# MELD
-if("meld_score" %in% names(data_work)) {
-  data_work$meld_clean <- suppressWarnings(as.numeric(as.character(data_work$meld_score)))
-  cat("MELD: ", sum(!is.na(data_work$meld_clean)), " valid values, range ", 
-      round(min(data_work$meld_clean, na.rm=T)), "-", 
-      round(max(data_work$meld_clean, na.rm=T)), "\n", sep="")
-}
-
-# CCI
-if("cci" %in% names(data_work)) {
-  data_work$cci_clean <- suppressWarnings(as.numeric(as.character(data_work$cci)))
-  cat("CCI: ", sum(!is.na(data_work$cci_clean)), " valid values\n", sep="")
-}
-
-# Binary complications
-cat("\nComplications:\n")
-for(i in 1:11) {
-  var_name <- paste0("post_olt_compli___", i)
-  if(var_name %in% names(data_work)) {
-    data_work[[paste0("compli_", i)]] <- ifelse(data_work[[var_name]] == 1, 1, 0)
-    data_work[[paste0("compli_", i)]][is.na(data_work[[paste0("compli_", i)]])] <- 0
-    n_cases <- sum(data_work[[paste0("compli_", i)]])
-    if(n_cases > 0) {
-      cat("  Complication ", i, ": ", n_cases, " cases\n", sep="")
-    }
-  }
-}
-
-# ============================================================
-# STEP 4: CREATE SIMPLE RISK SCORE
-# ============================================================
-
-cat("\n=== Creating Risk Score ===\n")
-
-# Initialize risk score for all patients
-data_work$risk_points <- 0
-
-# Add age points (if available)
-if(sum(!is.na(data_work$age_clean)) > 30) {
-  age_median <- median(data_work$age_clean, na.rm = TRUE)
-  data_work$age_risk <- ifelse(!is.na(data_work$age_clean) & data_work$age_clean > age_median, 1, 0)
-  data_work$risk_points <- data_work$risk_points + data_work$age_risk
-  cat("Added age component (median = ", round(age_median), ")\n", sep="")
-}
-
-# Add MELD points (if available)
-if(sum(!is.na(data_work$meld_clean)) > 30) {
-  meld_median <- median(data_work$meld_clean, na.rm = TRUE)
-  data_work$meld_risk <- ifelse(!is.na(data_work$meld_clean) & data_work$meld_clean > meld_median, 1, 0)
-  data_work$risk_points <- data_work$risk_points + data_work$meld_risk
-  cat("Added MELD component (median = ", round(meld_median), ")\n", sep="")
-}
-
-# Add major complications
-major_complications <- c("compli_1", "compli_3", "compli_5")  # ARF, Vent, Reintervention
-for(comp in major_complications) {
-  if(comp %in% names(data_work)) {
-    data_work$risk_points <- data_work$risk_points + data_work[[comp]]
-    cat("Added ", comp, " (n=", sum(data_work[[comp]]), ")\n", sep="")
-  }
-}
-
-# Check risk score distribution
-cat("\nRisk score distribution:\n")
-print(table(data_work$risk_points))
-
-# ============================================================
-# STEP 5: CREATE RISK GROUPS
-# ============================================================
-
-cat("\n=== Creating Risk Groups ===\n")
-
-# Method 1: Try tertiles if enough variation
-if(length(unique(data_work$risk_points)) >= 3) {
-  # Use tertiles with NA handling
-  risk_tertiles <- quantile(data_work$risk_points, 
-                            probs = c(0, 1/3, 2/3, 1), 
-                            na.rm = TRUE)  # This is the fix!
-  
-  # Handle ties by adjusting breaks
-  if(length(unique(risk_tertiles)) < 4) {
-    # If ties, use simple equal groups
-    data_work$risk_group <- cut(rank(data_work$risk_points, ties.method = "random"),
-                                breaks = 3,
-                                labels = c("Low", "Medium", "High"))
-  } else {
-    data_work$risk_group <- cut(data_work$risk_points,
-                                breaks = risk_tertiles,
-                                labels = c("Low", "Medium", "High"),
-                                include.lowest = TRUE)
-  }
-} else {
-  # Method 2: Simple grouping based on score
-  cat("Using simple grouping due to limited variation\n")
-  data_work$risk_group <- factor(
-    ifelse(data_work$risk_points == 0, "Low",
-           ifelse(data_work$risk_points <= 1, "Medium", "High")),
-    levels = c("Low", "Medium", "High")
-  )
-}
-
-# Check distribution
-cat("\nRisk group distribution:\n")
-print(table(data_work$risk_group, useNA = "ifany"))
-
-# ============================================================
-# STEP 6: ADD CRE INFORMATION
-# ============================================================
-
-cat("\n=== Adding CRE Status ===\n")
-
-# Initialize CRE variable
-data_work$cre_180 <- 0
-
-# Check different CRE variable names
-if("cre_infection_date" %in% names(data_work)) {
-  data_work$cre_infection_date <- as.Date(data_work$cre_infection_date)
-  cre_days <- as.numeric(data_work$cre_infection_date - data_work$date_of_transplant)
-  data_work$cre_180 <- ifelse(!is.na(cre_days) & cre_days <= 180 & cre_days > 0, 1, 0)
-  cat("CRE from dates: ", sum(data_work$cre_180), " infections\n", sep="")
-} else if("cre_infection" %in% names(data_work)) {
-  data_work$cre_180 <- ifelse(data_work$cre_infection == 1, 1, 0)
-  data_work$cre_180[is.na(data_work$cre_180)] <- 0
-  cat("CRE from binary variable: ", sum(data_work$cre_180), " infections\n", sep="")
-} else if("cre_180d" %in% names(data_work)) {
-  data_work$cre_180 <- ifelse(data_work$cre_180d == 1, 1, 0)
-  data_work$cre_180[is.na(data_work$cre_180)] <- 0
-  cat("CRE from existing variable: ", sum(data_work$cre_180), " infections\n", sep="")
-}
-
-cat("Total CRE infections within 180 days: ", sum(data_work$cre_180), "\n", sep="")
-
-# ============================================================
-# STEP 7: ANALYSIS
-# ============================================================
-
-cat("\n=== ANALYSIS RESULTS ===\n")
-
-# Overall mortality
-cat("\nOverall 180-day mortality: ", 
-    round(mean(data_work$death_180) * 100, 1), "%\n", sep="")
-
-# By risk group
-risk_table <- data_work %>%
-  group_by(risk_group) %>%
-  summarise(
-    n = n(),
-    deaths = sum(death_180),
-    mortality_pct = round(deaths/n * 100, 1),
-    cre_n = sum(cre_180),
-    cre_pct = round(cre_n/n * 100, 1)
-  )
-
-cat("\n--- Mortality by Risk Group ---\n")
-print(as.data.frame(risk_table))
-
-# By CRE status
-cre_table <- data_work %>%
-  mutate(CRE_status = ifelse(cre_180 == 1, "CRE+", "CRE-")) %>%
-  group_by(CRE_status) %>%
-  summarise(
-    n = n(),
-    deaths = sum(death_180),
-    mortality_pct = round(deaths/n * 100, 1)
-  )
-
-cat("\n--- Mortality by CRE Status ---\n")
-print(as.data.frame(cre_table))
-
-# Combined
-combined_table <- data_work %>%
-  mutate(CRE_status = ifelse(cre_180 == 1, "CRE+", "CRE-")) %>%
-  group_by(risk_group, CRE_status) %>%
-  summarise(
-    n = n(),
-    deaths = sum(death_180),
-    mortality_pct = round(deaths/n * 100, 1),
-    .groups = "drop"
-  )
-
-cat("\n--- Mortality by Risk Group and CRE Status ---\n")
-print(as.data.frame(combined_table))
-
-# ============================================================
-# STEP 8: VISUALIZATION
-# ============================================================
-
-# Create bar plot
-p <- ggplot(combined_table, aes(x = risk_group, y = mortality_pct, fill = CRE_status)) +
-  geom_col(position = position_dodge(width = 0.8), width = 0.7) +
-  geom_text(aes(label = paste0(mortality_pct, "%\n(n=", n, ")")), 
-            position = position_dodge(width = 0.8),
-            vjust = -0.2, size = 3) +
-  scale_fill_manual(values = c("CRE-" = "steelblue", "CRE+" = "red")) +
-  labs(title = "180-Day Mortality by Risk Group and CRE Status",
-       x = "Risk Group",
-       y = "Mortality (%)",
-       fill = "CRE Status") +
-  theme_bw(base_size = 12) +
-  theme(legend.position = "top")
-
-print(p)
-
-# Save results
-baseline_data <- data_work
-save(baseline_data, file = "baseline_data_final.RData")
-write.csv(combined_table, "mortality_by_risk_and_cre.csv", row.names = FALSE)
-
-cat("\n============================================\n")
-cat("ANALYSIS COMPLETE\n")
-cat("============================================\n")
-cat("\nData saved as 'baseline_data' and 'baseline_data_final.RData'\n")
-cat("Results saved to 'mortality_by_risk_and_cre.csv'\n")
-
-```
-:::
-
 ## Score trajectory
 
 ```{r}
 
-### Visualization of score
-# ============================================================
-# SCORE DISTRIBUTION VS CRE INFECTION RATE ANALYSIS
-# Building on existing trajectory analysis
-# ============================================================
+#| label: setup
+#| include: false
+#| warning: false
+#| message: false
 
 library(dplyr)
 library(tidyr)
 library(ggplot2)
-library(patchwork)  # for combining plots
-library(scales)     # for percentage formatting
+library(haven)
+library(scales)
+```
 
-# Assuming you have already run your main analysis and have the results object
-# If not, load it:
-# load("prospective_trajectory_results.RData")
+```{r}
 
-cat("\n============================================\n")
-cat("SCORE DISTRIBUTION VS CRE INFECTION ANALYSIS\n")
+#| label: load-and-process-data
+#| echo: false
+#| warning: false
+#| message: false
+
+cat("============================================\n")
+cat("SCORE TRAJECTORY ANALYSIS - PROSPECTIVE ONLY\n")
+cat("Simplified Approach\n")
 cat("============================================\n")
 
+# Load data
+data <- read_sav("CRECOOLT_overall.sav")
+cat("Total records loaded:", nrow(data), "\n")
+
 # ============================================================
-# PREPARE DATA FOR VISUALIZATION
+# IDENTIFY FILTER COLUMN
 # ============================================================
 
-# Join datasets
-longitudinal_data <- score_processed %>%
-  inner_join(baseline_processed, by = "record_id") %>%
-  mutate(
-    # Calculate days from transplant for each score
-    days_from_olt = as.numeric(score_date - date_of_transplant),
+cat("\n=== Identifying Data Structure ===\n")
+
+# Method 1: Check common filter column names
+filter_col <- NULL
+
+# Try different possible names
+if("filter_$" %in% names(data)) {
+  filter_col <- "filter_$"
+  cat("Found filter column: filter_$\n")
+} else if("filter" %in% names(data)) {
+  filter_col <- "filter"
+  cat("Found filter column: filter\n")
+} else if("filter_" %in% names(data)) {
+  filter_col <- "filter_"
+  cat("Found filter column: filter_\n")
+} else {
+  # Search for any column with filter in the name
+  possible <- grep("filter", names(data), ignore.case = TRUE, value = TRUE)
+  if(length(possible) > 0) {
+    filter_col <- possible[1]
+    cat("Found filter column:", filter_col, "\n")
+  }
+}
+
+if(is.null(filter_col)) {
+  cat("\nNo filter column found. Looking for alternative data structure indicators...\n")
+  
+  # Check for REDCap repeat structure
+  if("redcap_repeat_instance" %in% names(data)) {
+    cat("Found redcap_repeat_instance - using this for longitudinal structure\n")
     
-    # Flag if score led to treatment change
-    treatment_impact = case_when(
-      score_impact___1 == 1 ~ "Changed therapy",
-      score_impact___2 == 1 ~ "Changed diagnostics",
-      score_impact___3 == 1 ~ "No change",
-      TRUE ~ "Unknown"
-    )
+    # Baseline: no repeat instance or instance = 1
+    baseline_data <- subset(data, 
+                            (is.na(redcap_repeat_instance) | redcap_repeat_instance == 1) & 
+                              retro_or_pros == 2)
+    
+    # Longitudinal: repeat instance > 1
+    score_data <- subset(data, 
+                         redcap_repeat_instance > 1 & 
+                           record_id %in% baseline_data$record_id)
+  } else {
+    stop("Cannot identify longitudinal data structure. Please check your data.")
+  }
+} else {
+  # Use the filter column we found
+  cat("\nUsing filter column:", filter_col, "\n")
+  
+  # Show distribution using base R to avoid issues
+  cat("Filter column distribution:\n")
+  print(table(data[[filter_col]], useNA = "ifany"))
+  
+  # ============================================================
+  # SEPARATE DATA - PROSPECTIVE ONLY
+  # ============================================================
+  
+  cat("\n=== Extracting Prospective Data ===\n")
+  
+  # Baseline: filter == 1 and prospective
+  baseline_data <- subset(data, 
+                          data[[filter_col]] == 1 & 
+                            retro_or_pros == 2)
+  
+  cat("Prospective baseline records:", nrow(baseline_data), "\n")
+  cat("Unique prospective patients:", length(unique(baseline_data$record_id)), "\n")
+  
+  # Get prospective patient IDs
+  prosp_ids <- unique(baseline_data$record_id)
+  
+  # Longitudinal: filter < 1 for prospective patients
+  score_data <- subset(data, 
+                       data[[filter_col]] < 1 & 
+                         record_id %in% prosp_ids)
+  
+  cat("\nProspective score records:", nrow(score_data), "\n")
+  cat("Unique patients with scores:", length(unique(score_data$record_id)), "\n")
+}
+
+# ============================================================
+# PROCESS BASELINE DATA
+# ============================================================
+
+cat("\n=== Processing Baseline Data ===\n")
+
+baseline_processed <- baseline_data %>%
+  select(
+    record_id,
+    date_of_transplant,
+    cre_infection,
+    cre_infection_date,
+    death,
+    death_date,
+    discharge_date,
+    any_of(c("cre_colonization___1", "cre_colonization___2", "cre_colonization___3"))
   ) %>%
-  filter(days_from_olt >= 0 & days_from_olt <= 180)  # Focus on first 180 days
+  mutate(
+    date_of_transplant = as.Date(date_of_transplant),
+    cre_infection_date = as.Date(cre_infection_date),
+    death_date = as.Date(death_date),
+    discharge_date = as.Date(discharge_date),
+    
+    # Calculate outcomes
+    days_to_cre = as.numeric(cre_infection_date - date_of_transplant),
+    days_to_death = as.numeric(death_date - date_of_transplant),
+    days_to_discharge = as.numeric(discharge_date - date_of_transplant),
+    
+    # Primary outcome
+    primary_outcome = case_when(
+      cre_infection == 1 & !is.na(days_to_cre) ~ "CRE Infection",
+      death == 1 & !is.na(days_to_death) ~ "Death",
+      !is.na(days_to_discharge) ~ "Discharge",
+      TRUE ~ "Censored"
+    )
+  )
 
-cat("Final longitudinal dataset:\n")
-cat("  Total score measurements:", nrow(longitudinal_data), "\n")
-cat("  Unique patients:", n_distinct(longitudinal_data$record_id), "\n")
+cat("Baseline processing complete\n")
+cat("Outcome distribution:\n")
+print(table(baseline_processed$primary_outcome, useNA = "ifany"))
 
-# Check cohort distribution in longitudinal data
-cohort_dist <- longitudinal_data %>%
-  group_by(record_id, retro_or_pros) %>%
-  summarise(n = n(), .groups = "drop") %>%
-  count(retro_or_pros)
+# ============================================================
+# PROCESS SCORE DATA
+# ============================================================
 
-cat("\nPatients with longitudinal scores by cohort:\n")
-print(cohort_dist)
+cat("\n=== Processing Score Data ===\n")
+
+if(nrow(score_data) > 0) {
+  score_processed <- score_data %>%
+    select(record_id, score, score_date, any_of(c("events", "score_impact___1", "score_impact___2", "score_impact___3"))) %>%
+    filter(!is.na(score) & !is.na(score_date)) %>%
+    mutate(
+      score_date = as.Date(score_date)
+    )
+  
+  cat("Valid score records:", nrow(score_processed), "\n")
+  
+  if(nrow(score_processed) > 0) {
+    # ============================================================
+    # JOIN DATA
+    # ============================================================
+    
+    cat("\n=== Joining Data ===\n")
+    
+    longitudinal_data <- score_processed %>%
+      inner_join(baseline_processed, by = "record_id") %>%
+      mutate(
+        days_from_olt = as.numeric(score_date - date_of_transplant)
+      ) %>%
+      filter(days_from_olt >= 0 & days_from_olt <= 180)
+    
+    cat("Final longitudinal records:", nrow(longitudinal_data), "\n")
+    cat("Unique patients:", n_distinct(longitudinal_data$record_id), "\n")
+    
+    # ============================================================
+    # TRAJECTORY ANALYSIS
+    # ============================================================
+    
+    cat("\n=== Trajectory Analysis ===\n")
+    
+    patient_summary <- longitudinal_data %>%
+      group_by(record_id, primary_outcome) %>%
+      summarise(
+        n_scores = n(),
+        baseline_score = first(score),
+        final_score = last(score),
+        max_score = max(score),
+        mean_score = mean(score),
+        trend = final_score - baseline_score,
+        .groups = "drop"
+      )
+    
+    cat("\nPatient trajectory summary:\n")
+    cat("  Patients analyzed:", nrow(patient_summary), "\n")
+    cat("  Mean scores per patient:", round(mean(patient_summary$n_scores), 2), "\n")
+  }
+}
+```
+
+```{r}
+
+#| label: fig-trajectories-by-outcome
+#| fig-width: 10
+#| fig-height: 6
+#| fig-cap: "Score Trajectories by Outcome - Prospective Cohort"
+#| echo: false
+#| warning: false
+#| message: false
+
+# Trajectories by outcome
+ggplot(longitudinal_data, aes(x = days_from_olt, y = score, group = record_id)) +
+  geom_line(alpha = 0.3) +
+  geom_smooth(aes(group = NULL), method = "loess", se = TRUE, color = "red") +
+  facet_wrap(~ primary_outcome) +
+  labs(
+    title = "Score Trajectories by Outcome - Prospective Cohort",
+    x = "Days from Transplant",
+    y = "Score"
+  ) +
+  theme_minimal()
+```
+
+```{r}
+#| label: prepare-cre-analysis
+#| include: false
 
 # Create analysis dataset with scores and CRE outcome
 score_cre_analysis <- longitudinal_data %>%
@@ -403,38 +282,6 @@ score_cre_analysis <- longitudinal_data %>%
     )
   )
 
-cat("\nData summary:\n")
-cat("Total patients:", nrow(score_cre_analysis), "\n")
-cat("CRE infections:", sum(score_cre_analysis$cre_infection == 1, na.rm = TRUE), "\n")
-cat("CRE infection rate:", 
-    round(mean(score_cre_analysis$cre_infection == 1, na.rm = TRUE) * 100, 2), "%\n")
-
-# ============================================================
-# VISUALIZATION 1: BOX PLOTS OF SCORE DISTRIBUTIONS
-# ============================================================
-
-cat("\n=== Creating Box Plot Comparison ===\n")
-
-p1 <- ggplot(score_cre_analysis, aes(x = cre_status, y = max_score, fill = cre_status)) +
-  geom_boxplot(alpha = 0.7) +
-  geom_jitter(width = 0.2, alpha = 0.3, size = 2) +
-  scale_fill_manual(values = c("No CRE Infection" = "#4CAF50", "CRE Infection" = "#F44336")) +
-  labs(
-    title = "Maximum Score Distribution by CRE Infection Status",
-    x = "CRE Status",
-    y = "Maximum Score During Follow-up",
-    fill = "CRE Status"
-  ) +
-  theme_minimal() +
-  theme(legend.position = "none") +
-  stat_summary(fun = mean, geom = "point", shape = 23, size = 3, fill = "white")
-
-# ============================================================
-# VISUALIZATION 2: SCORE BINS VS INFECTION RATE
-# ============================================================
-
-cat("\n=== Creating Binned Score Analysis ===\n")
-
 # Create score bins for max score
 score_cre_analysis <- score_cre_analysis %>%
   mutate(
@@ -457,8 +304,42 @@ bin_summary <- score_cre_analysis %>%
     .groups = "drop"
   ) %>%
   filter(!is.na(score_bin))
+```
 
-p2 <- ggplot(bin_summary, aes(x = score_bin, y = infection_rate)) +
+```{r}
+#| label: fig-score-distribution-boxplot
+#| fig-width: 8
+#| fig-height: 6
+#| fig-cap: "Maximum Score Distribution by CRE Infection Status"
+#| echo: false
+#| warning: false
+#| message: false
+
+ggplot(score_cre_analysis, aes(x = cre_status, y = max_score, fill = cre_status)) +
+  geom_boxplot(alpha = 0.7) +
+  geom_jitter(width = 0.2, alpha = 0.3, size = 2) +
+  scale_fill_manual(values = c("No CRE Infection" = "#4CAF50", "CRE Infection" = "#F44336")) +
+  labs(
+    title = "Maximum Score Distribution by CRE Infection Status",
+    x = "CRE Status",
+    y = "Maximum Score During Follow-up",
+    fill = "CRE Status"
+  ) +
+  theme_minimal() +
+  theme(legend.position = "none") +
+  stat_summary(fun = mean, geom = "point", shape = 23, size = 3, fill = "white")
+```
+
+```{r}
+#| label: fig-infection-rate-by-score
+#| fig-width: 8
+#| fig-height: 6
+#| fig-cap: "CRE Infection Rate by Score Category"
+#| echo: false
+#| warning: false
+#| message: false
+
+ggplot(bin_summary, aes(x = score_bin, y = infection_rate)) +
   geom_col(fill = "#2196F3", alpha = 0.7) +
   geom_errorbar(aes(ymin = ci_lower, ymax = ci_upper), 
                 width = 0.2, size = 0.8) +
@@ -473,15 +354,18 @@ p2 <- ggplot(bin_summary, aes(x = score_bin, y = infection_rate)) +
   ) +
   theme_minimal() +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
 
-# ============================================================
-# VISUALIZATION 3: CONTINUOUS RELATIONSHIP
-# ============================================================
+```{r}
+#| label: fig-continuous-relationship
+#| fig-width: 8
+#| fig-height: 6
+#| fig-cap: "Relationship Between Maximum Score and CRE Infection Risk"
+#| echo: false
+#| warning: false
+#| message: false
 
-cat("\n=== Creating Continuous Relationship Plot ===\n")
-
-# Create a smoothed relationship plot
-p3 <- ggplot(score_cre_analysis, aes(x = max_score, y = as.numeric(cre_infection == 1))) +
+ggplot(score_cre_analysis, aes(x = max_score, y = as.numeric(cre_infection == 1))) +
   geom_point(aes(color = cre_status), 
              position = position_jitter(height = 0.02), 
              alpha = 0.5, size = 2) +
@@ -498,14 +382,18 @@ p3 <- ggplot(score_cre_analysis, aes(x = max_score, y = as.numeric(cre_infection
   ) +
   theme_minimal() +
   theme(legend.position = "bottom")
+```
 
-# ============================================================
-# VISUALIZATION 4: DENSITY PLOTS
-# ============================================================
+```{r}
+#| label: fig-density-comparison
+#| fig-width: 8
+#| fig-height: 6
+#| fig-cap: "Score Distribution Density by CRE Infection Status"
+#| echo: false
+#| warning: false
+#| message: false
 
-cat("\n=== Creating Density Comparison ===\n")
-
-p4 <- ggplot(score_cre_analysis, aes(x = max_score, fill = cre_status)) +
+ggplot(score_cre_analysis, aes(x = max_score, fill = cre_status)) +
   geom_density(alpha = 0.5) +
   scale_fill_manual(values = c("No CRE Infection" = "#4CAF50", "CRE Infection" = "#F44336")) +
   labs(
@@ -523,12 +411,16 @@ p4 <- ggplot(score_cre_analysis, aes(x = max_score, fill = cre_status)) +
              linetype = "dashed", size = 1) +
   scale_color_manual(values = c("No CRE Infection" = "#2E7D32", "CRE Infection" = "#C62828"),
                      guide = "none")
+```
 
-# ============================================================
-# VISUALIZATION 5: TRAJECTORY PATTERNS
-# ============================================================
-
-cat("\n=== Creating Trajectory Pattern Analysis ===\n")
+```{r}
+#| label: fig-trajectory-pattern
+#| fig-width: 8
+#| fig-height: 5
+#| fig-cap: "CRE Infection Rate by Score Trajectory Pattern"
+#| echo: false
+#| warning: false
+#| message: false
 
 # Analyze score trajectories for patients who developed CRE
 trajectory_summary <- score_cre_analysis %>%
@@ -548,7 +440,7 @@ trajectory_rates <- trajectory_summary %>%
     .groups = "drop"
   )
 
-p5 <- ggplot(trajectory_rates, aes(x = trajectory_pattern, y = cre_rate)) +
+ggplot(trajectory_rates, aes(x = trajectory_pattern, y = cre_rate)) +
   geom_col(fill = "#FF9800", alpha = 0.7) +
   geom_text(aes(label = paste0(round(cre_rate * 100, 1), "%\n(n=", n, ")")), 
             vjust = -0.2, size = 3.5) +
@@ -559,34 +451,13 @@ p5 <- ggplot(trajectory_rates, aes(x = trajectory_pattern, y = cre_rate)) +
     y = "CRE Infection Rate"
   ) +
   theme_minimal()
+```
 
-# ============================================================
-# COMBINE PLOTS
-# ============================================================
-
-cat("\n=== Combining Visualizations ===\n")
-
-# Create a combined plot using patchwork
-combined_plot <- (p1 | p2) / (p3 | p4) / p5 +
-  plot_annotation(
-    title = "Score Distribution and CRE Infection Risk Analysis",
-    subtitle = paste("Prospective Cohort (n =", nrow(score_cre_analysis), "patients)"),
-    theme = theme(plot.title = element_text(size = 16, face = "bold"))
-  )
-
-print(combined_plot)
-ggsave("score_cre_combined_analysis.png", combined_plot, width = 14, height = 12, dpi = 300)
-
-# Save individual plots
-ggsave("score_cre_boxplot.png", p1, width = 8, height = 6, dpi = 300)
-ggsave("score_cre_bins.png", p2, width = 8, height = 6, dpi = 300)
-ggsave("score_cre_continuous.png", p3, width = 8, height = 6, dpi = 300)
-ggsave("score_cre_density.png", p4, width = 8, height = 6, dpi = 300)
-ggsave("score_cre_trajectory.png", p5, width = 8, height = 6, dpi = 300)
-
-# ============================================================
-# STATISTICAL ANALYSIS
-# ============================================================
+```{r}
+#| label: statistical-analysis
+#| echo: false
+#| warning: false
+#| message: false
 
 cat("\n=== Statistical Analysis ===\n")
 
@@ -615,13 +486,15 @@ or <- exp(coef(logit_model)[2])
 ci <- exp(confint(logit_model)[2,])
 cat("\nOdds Ratio per unit increase in max score:", round(or, 3), "\n")
 cat("95% CI:", round(ci[1], 3), "-", round(ci[2], 3), "\n")
+```
 
-# ============================================================
-# SUMMARY TABLE
-# ============================================================
+```{r}
+#| label: summary-table
+#| echo: false
+#| warning: false
+#| message: false
 
-cat("\n=== Creating Summary Table ===\n")
-
+# Create summary table
 summary_table <- score_cre_analysis %>%
   group_by(cre_status) %>%
   summarise(
@@ -637,37 +510,28 @@ summary_table <- score_cre_analysis %>%
 
 cat("\nScore Summary by CRE Status:\n")
 print(summary_table)
+```
 
-# Save analysis results
-analysis_results <- list(
-  score_cre_data = score_cre_analysis,
-  bin_summary = bin_summary,
-  trajectory_rates = trajectory_rates,
-  summary_table = summary_table,
-  statistical_tests = list(
-    t_test = t_test,
-    wilcox_test = wilcox_test,
-    logit_model = logit_model
-  )
-)
+## SCORE-driven CRE treatment 
 
-save(analysis_results, file = "score_cre_analysis_results.RData")
-cat("\nAnalysis results saved to score_cre_analysis_results.RData\n")
+```{r}
 
-cat("\n============================================\n")
-cat("Score vs CRE Analysis Complete\n")
-cat("============================================\n")
-
-# ============================================================
-# CORRECTED ANTI-CRE THERAPY EFFECTIVENESS ANALYSIS
-# Using score_impact___2 as the therapy indicator
-# ============================================================
+#| label: therapy-setup
+#| include: false
+#| warning: false
+#| message: false
 
 library(dplyr)
 library(tidyr)
 library(ggplot2)
-library(patchwork)
 library(scales)
+```
+
+```{r}
+#| label: therapy-data-processing
+#| echo: false
+#| warning: false
+#| message: false
 
 cat("\n============================================\n")
 cat("ANTI-CRE THERAPY EFFECTIVENESS ANALYSIS\n")
@@ -836,5 +700,787 @@ if(nrow(overall_comparison) == 2) {
     cat("\n- No difference detected\n")
   }
 }
+```
 
+```{r}
+#| label: fig-therapy-overall
+#| fig-width: 8
+#| fig-height: 6
+#| fig-cap: "CRE Infection Rates by Score-Based Therapy Status"
+#| echo: false
+#| warning: false
+#| message: false
+
+ggplot(overall_comparison, aes(x = therapy_label, y = infection_rate, fill = therapy_label)) +
+  geom_col(alpha = 0.8) +
+  geom_errorbar(aes(ymin = ci_lower, ymax = ci_upper), width = 0.2, size = 1) +
+  geom_text(aes(label = paste0(round(infection_rate * 100, 1), "%\n(", 
+                               n_infections, "/", n, ")")),
+            vjust = -0.5, size = 4) +
+  scale_y_continuous(labels = percent_format(), 
+                     limits = c(0, max(overall_comparison$ci_upper) * 1.2)) +
+  scale_fill_manual(values = c("Score-Based Therapy" = "#4CAF50", 
+                               "No Score-Based Therapy" = "#F44336")) +
+  labs(
+    title = "CRE Infection Rates by Score-Based Therapy Status",
+    subtitle = paste("Based on score_impact___2 | p =", format.pval(fisher_test$p.value)),
+    x = "",
+    y = "CRE Infection Rate",
+    fill = "Therapy Status"
+  ) +
+  theme_minimal() +
+  theme(legend.position = "none")
+```
+
+```{r}
+#| label: stratified-analysis
+#| echo: false
+#| warning: false
+#| message: false
+
+# Stratified comparison
+stratified_comparison <- patient_therapy_data %>%
+  group_by(risk_group, received_score_based_therapy) %>%
+  summarise(
+    n = n(),
+    n_infections = sum(cre_infection == 1, na.rm = TRUE),
+    infection_rate = mean(cre_infection == 1, na.rm = TRUE),
+    mean_score = mean(max_score, na.rm = TRUE),
+    .groups = "drop"
+  ) %>%
+  pivot_wider(
+    names_from = received_score_based_therapy,
+    values_from = c(n, n_infections, infection_rate, mean_score),
+    names_prefix = "therapy_"
+  ) %>%
+  mutate(
+    # Handle NA values
+    across(starts_with("n_"), ~replace_na(., 0)),
+    across(starts_with("infection_rate_"), ~replace_na(., 0)),
+    
+    # Calculate effectiveness within each stratum
+    arr = infection_rate_therapy_0 - infection_rate_therapy_1,
+    rrr = ifelse(infection_rate_therapy_0 > 0,
+                 (infection_rate_therapy_0 - infection_rate_therapy_1) / infection_rate_therapy_0,
+                 NA),
+    nnt = ifelse(arr > 0, 1/arr, NA)
+  )
+
+cat("\n=== Stratified Analysis by Risk Score ===\n")
+cat("\nRisk-Stratified Results:\n")
+print(stratified_comparison %>% 
+        select(risk_group, n_therapy_0, n_therapy_1, 
+               infection_rate_therapy_0, infection_rate_therapy_1, arr, nnt))
+
+# Statistical tests within strata
+cat("\n=== Within-Stratum Statistical Tests ===\n")
+for(risk in unique(patient_therapy_data$risk_group)) {
+  subset_data <- filter(patient_therapy_data, risk_group == risk)
+  if(length(unique(subset_data$received_score_based_therapy)) > 1) {
+    test_table <- table(subset_data$received_score_based_therapy, subset_data$cre_infection)
+    if(all(dim(test_table) >= 2)) {
+      test_result <- fisher.test(test_table)
+      cat("\n", risk, ":\n")
+      cat("  p-value:", format.pval(test_result$p.value), "\n")
+      cat("  Odds ratio:", round(test_result$estimate, 3), "\n")
+    }
+  }
+}
+```
+
+```{r}
+#| label: fig-therapy-stratified
+#| fig-width: 10
+#| fig-height: 6
+#| fig-cap: "CRE Infection Rates Stratified by Risk Score"
+#| echo: false
+#| warning: false
+#| message: false
+
+# Prepare data for visualization
+stratified_viz <- patient_therapy_data %>%
+  group_by(risk_group, received_score_based_therapy) %>%
+  summarise(
+    n = n(),
+    n_infections = sum(cre_infection == 1, na.rm = TRUE),
+    infection_rate = mean(cre_infection == 1, na.rm = TRUE),
+    se = sqrt(infection_rate * (1 - infection_rate) / n),
+    ci_lower = pmax(0, infection_rate - 1.96 * se),
+    ci_upper = pmin(1, infection_rate + 1.96 * se),
+    .groups = "drop"
+  ) %>%
+  mutate(
+    therapy_label = ifelse(received_score_based_therapy == 1, "Therapy", "No Therapy")
+  )
+
+ggplot(stratified_viz, aes(x = therapy_label, y = infection_rate, fill = therapy_label)) +
+  facet_wrap(~ risk_group) +
+  geom_col(alpha = 0.8) +
+  geom_errorbar(aes(ymin = ci_lower, ymax = ci_upper), width = 0.2, size = 0.8) +
+  geom_text(aes(label = paste0(round(infection_rate * 100, 1), "%\n(", 
+                               n_infections, "/", n, ")")),
+            vjust = -0.5, size = 3) +
+  scale_y_continuous(labels = percent_format(), limits = c(0, 0.6)) +
+  scale_fill_manual(values = c("Therapy" = "#4CAF50", "No Therapy" = "#F44336")) +
+  labs(
+    title = "CRE Infection Rates Stratified by Risk Score",
+    subtitle = "Effect of score-based therapy (score_impact___2) within risk groups",
+    x = "",
+    y = "CRE Infection Rate",
+    fill = "Score-Based Therapy"
+  ) +
+  theme_minimal() +
+  theme(legend.position = "bottom")
+```
+
+```{r}
+#| label: fig-therapy-continuous
+#| fig-width: 10
+#| fig-height: 6
+#| fig-cap: "CRE Infection Probability by Maximum Score"
+#| echo: false
+#| warning: false
+#| message: false
+
+ggplot(patient_therapy_data, 
+       aes(x = max_score, y = as.numeric(cre_infection == 1),
+           color = factor(received_score_based_therapy))) +
+  geom_point(position = position_jitter(height = 0.02, width = 0.5), 
+             alpha = 0.5, size = 2) +
+  geom_smooth(method = "loess", se = TRUE, alpha = 0.2) +
+  scale_y_continuous(labels = percent_format(), limits = c(-0.05, 1.05)) +
+  scale_color_manual(values = c("0" = "#F44336", "1" = "#4CAF50"),
+                    labels = c("0" = "No Score-Based Therapy", 
+                              "1" = "Score-Based Therapy")) +
+  labs(
+    title = "CRE Infection Probability by Maximum Score",
+    subtitle = "Comparing patients with and without score-based therapy",
+    x = "Maximum Score",
+    y = "Probability of CRE Infection",
+    color = "Therapy Status"
+  ) +
+  theme_minimal() +
+  theme(legend.position = "bottom")
+```
+
+```{r}
+#| label: fig-therapy-utilization
+#| fig-width: 10
+#| fig-height: 6
+#| fig-cap: "Score-Based Therapy Utilization and Infection Rates"
+#| echo: false
+#| warning: false
+#| message: false
+
+therapy_by_score <- patient_therapy_data %>%
+  group_by(max_score_category) %>%
+  summarise(
+    n = n(),
+    therapy_rate = mean(received_score_based_therapy),
+    infection_rate = mean(cre_infection == 1, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+ggplot(therapy_by_score, aes(x = max_score_category)) +
+  geom_col(aes(y = therapy_rate), fill = "#2196F3", alpha = 0.7) +
+  geom_line(aes(y = infection_rate, group = 1), color = "red", size = 1.5) +
+  geom_point(aes(y = infection_rate), color = "red", size = 3) +
+  geom_text(aes(y = therapy_rate, label = paste0(round(therapy_rate * 100, 0), "%")),
+            vjust = -0.5, size = 3.5) +
+  scale_y_continuous(labels = percent_format(),
+                     sec.axis = sec_axis(~., name = "CRE Infection Rate (Red Line)")) +
+  labs(
+    title = "Score-Based Therapy Utilization and Infection Rates",
+    subtitle = "Blue bars: % receiving therapy | Red line: infection rate",
+    x = "Maximum Score Category",
+    y = "Therapy Rate (Blue Bars)"
+  ) +
+  theme_minimal()
+```
+
+```{r}
+#| label: regression-analysis
+#| echo: false
+#| warning: false
+#| message: false
+
+cat("\n=== Regression Analysis Adjusting for Baseline Risk ===\n")
+
+# Unadjusted model
+unadjusted_model <- glm(cre_infection ~ received_score_based_therapy,
+                        data = patient_therapy_data,
+                        family = binomial())
+
+# Adjusted model
+adjusted_model <- glm(cre_infection ~ received_score_based_therapy + max_score,
+                      data = patient_therapy_data,
+                      family = binomial())
+
+cat("\nUnadjusted Analysis:\n")
+cat("  Therapy coefficient:", round(coef(unadjusted_model)["received_score_based_therapy"], 3), "\n")
+cat("  Therapy OR:", round(exp(coef(unadjusted_model)["received_score_based_therapy"]), 3), "\n")
+
+cat("\nAdjusted for Risk Score:\n")
+cat("  Therapy coefficient:", round(coef(adjusted_model)["received_score_based_therapy"], 3), "\n")
+cat("  Therapy OR:", round(exp(coef(adjusted_model)["received_score_based_therapy"]), 3), "\n")
+cat("  Score coefficient:", round(coef(adjusted_model)["max_score"], 3), "\n")
+
+if(coef(unadjusted_model)["received_score_based_therapy"] > 0 & 
+   coef(adjusted_model)["received_score_based_therapy"] < 0) {
+  cat("\n✓ Simpson's Paradox detected! Effect reverses after adjustment\n")
+}
+```
+
+```{r}
+#| label: therapy-summary
+#| echo: false
+#| warning: false
+#| message: false
+
+cat("\n============================================\n")
+cat("THERAPY EFFECTIVENESS SUMMARY\n")
+cat("============================================\n")
+
+cat("\n1. KEY FINDING:\n")
+if(exists("arr")) {
+  if(arr > 0) {
+    cat("   ✓ Score-based therapy shows BENEFIT\n")
+    cat("   - Reduces infections by", round(arr * 100, 1), "percentage points\n")
+  } else if(arr < 0) {
+    cat("   ✗ Paradox detected: Therapy group has HIGHER infection rate\n")
+    cat("   - Likely due to confounding by indication\n")
+    cat("   - High-risk patients → Get therapy AND get infected\n")
+  }
+}
+
+cat("\n2. CLINICAL INTERPRETATION:\n")
+cat("   - Score successfully identifies high-risk patients\n")
+cat("   - These patients appropriately receive therapy\n")
+cat("   - True effectiveness requires risk adjustment or RCT\n")
+
+cat("\n3. RECOMMENDATIONS:\n")
+if(exists("adjusted_model")) {
+  if(coef(adjusted_model)["received_score_based_therapy"] < 0) {
+    cat("   ✓ After risk adjustment, therapy appears beneficial\n")
+    cat("   - Continue score-based therapy protocol\n")
+  } else {
+    cat("   - Review therapy effectiveness\n")
+    cat("   - Consider alternative interventions\n")
+  }
+}
+
+cat("\n============================================\n")
+cat("Analysis Complete\n")
+cat("============================================\n")
+```
+
+## SCORE-driven diagnostic testing
+
+```{r}
+#| label: diagnostic-setup
+#| include: false
+#| warning: false
+#| message: false
+
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(scales)
+```
+
+```{r}
+#| label: diagnostic-data-processing
+#| echo: false
+#| warning: false
+#| message: false
+
+cat("\n============================================\n")
+cat("DIAGNOSTIC TEST UTILIZATION ANALYSIS\n")
+cat("Based on score_impact___3 (Diagnostic Test Performed)\n")
+cat("============================================\n")
+
+# ============================================================
+# DATA PREPARATION FOR DIAGNOSTIC TEST ANALYSIS
+# ============================================================
+
+cat("\n=== Understanding the Variables ===\n")
+cat("score_impact___1 = No action taken\n")
+cat("score_impact___2 = Anti-CRE therapy started\n")
+cat("score_impact___3 = Diagnostic test performed (OUR FOCUS)\n")
+
+cat("\n=== Processing Score Impact Data for Diagnostics ===\n")
+
+# Process score data with diagnostic test indicator
+score_diagnostic_data <- score_data %>%
+  select(
+    record_id,
+    score,
+    score_date,
+    score_impact___1,  # No action
+    score_impact___2,  # Therapy started
+    score_impact___3   # DIAGNOSTIC TEST PERFORMED
+  ) %>%
+  filter(!is.na(score) & !is.na(score_date)) %>%
+  mutate(
+    score_date = as.Date(score_date),
+    
+    # Variable interpretation
+    no_action = ifelse(score_impact___1 == 1, 1, 0),
+    therapy_started = ifelse(score_impact___2 == 1, 1, 0),
+    diagnostic_performed = ifelse(score_impact___3 == 1, 1, 0),  # THIS IS OUR FOCUS
+    
+    # Any action taken
+    any_action = ifelse(therapy_started == 1 | diagnostic_performed == 1, 1, 0),
+    
+    # Score categories
+    score_category = cut(score, 
+                        breaks = c(-Inf, 5, 10, 15, 20, Inf),
+                        labels = c("0-5", "6-10", "11-15", "16-20", ">20"))
+  )
+
+cat("\nScore assessments processed:", nrow(score_diagnostic_data), "\n")
+cat("Assessments with diagnostic test:", sum(score_diagnostic_data$diagnostic_performed),
+    "(", round(mean(score_diagnostic_data$diagnostic_performed)*100, 1), "%)\n")
+cat("Assessments with therapy:", sum(score_diagnostic_data$therapy_started), 
+    "(", round(mean(score_diagnostic_data$therapy_started)*100, 1), "%)\n")
+cat("Assessments with no action:", sum(score_diagnostic_data$no_action),
+    "(", round(mean(score_diagnostic_data$no_action)*100, 1), "%)\n")
+
+# ============================================================
+# CREATE PATIENT-LEVEL SUMMARY FOR DIAGNOSTICS
+# ============================================================
+
+cat("\n=== Creating Patient-Level Summary for Diagnostic Tests ===\n")
+
+# Aggregate to patient level - did they EVER have diagnostic test based on score?
+patient_diagnostic_data <- score_diagnostic_data %>%
+  group_by(record_id) %>%
+  summarise(
+    # Diagnostic test exposure (EVER had diagnostic based on score_impact___3)
+    had_score_based_diagnostic = max(diagnostic_performed),
+    n_diagnostic_instances = sum(diagnostic_performed),
+    
+    # Other actions
+    ever_had_therapy = max(therapy_started),
+    ever_no_action = max(no_action),
+    
+    # Score metrics
+    baseline_score = first(score),
+    max_score = max(score),
+    mean_score = mean(score),
+    final_score = last(score),
+    n_assessments = n(),
+    
+    # Score categories
+    max_score_category = cut(max_score,
+                            breaks = c(-Inf, 5, 10, 15, 20, Inf),
+                            labels = c("0-5", "6-10", "11-15", "16-20", ">20")),
+    
+    # Risk stratification
+    risk_group = case_when(
+      max_score <= 10 ~ "Low Risk (≤10)",
+      max_score <= 20 ~ "Medium Risk (11-20)",
+      TRUE ~ "High Risk (>20)"
+    ),
+    
+    .groups = "drop"
+  ) %>%
+  # Join with outcomes
+  left_join(baseline_processed %>% 
+              select(record_id, cre_infection, primary_outcome, date_of_transplant,
+                     any_of(c("days_to_cre", "cre_infection_date"))),
+            by = "record_id") %>%
+  filter(!is.na(primary_outcome))
+
+cat("\nPatient-level summary:\n")
+cat("Total patients analyzed:", nrow(patient_diagnostic_data), "\n")
+cat("Patients who had score-based diagnostic test:", 
+    sum(patient_diagnostic_data$had_score_based_diagnostic), 
+    "(", round(mean(patient_diagnostic_data$had_score_based_diagnostic)*100, 1), "%)\n")
+cat("CRE infections overall:", sum(patient_diagnostic_data$cre_infection == 1, na.rm = TRUE),
+    "(", round(mean(patient_diagnostic_data$cre_infection == 1, na.rm = TRUE)*100, 1), "%)\n")
+
+# ============================================================
+# OVERALL DIAGNOSTIC TEST EFFECT
+# ============================================================
+
+cat("\n=== Overall Diagnostic Test Effect (score_impact___3) ===\n")
+
+# Overall comparison
+overall_diagnostic_comparison <- patient_diagnostic_data %>%
+  group_by(had_score_based_diagnostic) %>%
+  summarise(
+    n = n(),
+    n_infections = sum(cre_infection == 1, na.rm = TRUE),
+    infection_rate = mean(cre_infection == 1, na.rm = TRUE),
+    mean_max_score = mean(max_score, na.rm = TRUE),
+    sd_score = sd(max_score, na.rm = TRUE),
+    .groups = "drop"
+  ) %>%
+  mutate(
+    diagnostic_label = ifelse(had_score_based_diagnostic == 1, 
+                          "Had Diagnostic Test", "No Diagnostic Test"),
+    ci_lower = qbinom(0.025, n, infection_rate) / n,
+    ci_upper = qbinom(0.975, n, infection_rate) / n
+  )
+
+print(overall_diagnostic_comparison)
+
+# Statistical test
+diagnostic_table <- table(patient_diagnostic_data$had_score_based_diagnostic, 
+                         patient_diagnostic_data$cre_infection)
+fisher_test_diag <- fisher.test(diagnostic_table)
+chi_test_diag <- chisq.test(diagnostic_table)
+
+cat("\nStatistical Tests:\n")
+cat("  Fisher's exact test p-value:", format.pval(fisher_test_diag$p.value), "\n")
+cat("  Odds ratio:", round(fisher_test_diag$estimate, 3), "\n")
+
+# Calculate diagnostic test impact metrics
+if(nrow(overall_diagnostic_comparison) == 2) {
+  no_diag_rate <- overall_diagnostic_comparison$infection_rate[overall_diagnostic_comparison$had_score_based_diagnostic == 0]
+  diag_rate <- overall_diagnostic_comparison$infection_rate[overall_diagnostic_comparison$had_score_based_diagnostic == 1]
+  
+  arr_diag <- no_diag_rate - diag_rate
+  rrr_diag <- if(no_diag_rate > 0) (no_diag_rate - diag_rate) / no_diag_rate else NA
+  nnt_diag <- if(arr_diag > 0) 1/arr_diag else NA
+  
+  cat("\n=== Diagnostic Test Impact Metrics ===\n")
+  cat("Infection rate WITHOUT diagnostic test:", round(no_diag_rate * 100, 1), "%\n")
+  cat("Infection rate WITH diagnostic test:", round(diag_rate * 100, 1), "%\n")
+  cat("Absolute Risk Difference:", round(arr_diag * 100, 2), "%\n")
+  if(!is.na(rrr_diag)) cat("Relative Risk Reduction:", round(rrr_diag * 100, 2), "%\n")
+  if(!is.na(nnt_diag) & nnt_diag > 0) cat("Number Needed to Test:", round(nnt_diag, 0), "\n")
+  
+  if(arr_diag > 0) {
+    cat("\n✓ Diagnostic testing appears associated with LOWER infection rates\n")
+  } else if(arr_diag < 0) {
+    cat("\n✗ Diagnostic testing associated with HIGHER infection rates\n")
+    cat("  Note: Likely confounding - sicker patients get more testing\n")
+  } else {
+    cat("\n- No difference detected\n")
+  }
+}
+```
+
+```{r}
+#| label: fig-diagnostic-overall
+#| fig-width: 8
+#| fig-height: 6
+#| fig-cap: "CRE Infection Rates by Diagnostic Test Utilization"
+#| echo: false
+#| warning: false
+#| message: false
+
+ggplot(overall_diagnostic_comparison, aes(x = diagnostic_label, y = infection_rate, fill = diagnostic_label)) +
+  geom_col(alpha = 0.8) +
+  geom_errorbar(aes(ymin = ci_lower, ymax = ci_upper), width = 0.2, size = 1) +
+  geom_text(aes(label = paste0(round(infection_rate * 100, 1), "%\n(", 
+                               n_infections, "/", n, ")")),
+            vjust = -0.5, size = 4) +
+  scale_y_continuous(labels = percent_format(), 
+                     limits = c(0, max(overall_diagnostic_comparison$ci_upper) * 1.2)) +
+  scale_fill_manual(values = c("Had Diagnostic Test" = "#2196F3", 
+                               "No Diagnostic Test" = "#FF9800")) +
+  labs(
+    title = "CRE Infection Rates by Score-Based Diagnostic Test Status",
+    subtitle = paste("Based on score_impact___3 | p =", format.pval(fisher_test_diag$p.value)),
+    x = "",
+    y = "CRE Infection Rate",
+    fill = "Diagnostic Status"
+  ) +
+  theme_minimal() +
+  theme(legend.position = "none")
+```
+
+```{r}
+#| label: diagnostic-stratified-analysis
+#| echo: false
+#| warning: false
+#| message: false
+
+# Stratified comparison
+stratified_diagnostic_comparison <- patient_diagnostic_data %>%
+  group_by(risk_group, had_score_based_diagnostic) %>%
+  summarise(
+    n = n(),
+    n_infections = sum(cre_infection == 1, na.rm = TRUE),
+    infection_rate = mean(cre_infection == 1, na.rm = TRUE),
+    mean_score = mean(max_score, na.rm = TRUE),
+    .groups = "drop"
+  ) %>%
+  pivot_wider(
+    names_from = had_score_based_diagnostic,
+    values_from = c(n, n_infections, infection_rate, mean_score),
+    names_prefix = "diag_"
+  ) %>%
+  mutate(
+    # Handle NA values
+    across(starts_with("n_"), ~replace_na(., 0)),
+    across(starts_with("infection_rate_"), ~replace_na(., 0)),
+    
+    # Calculate effectiveness within each stratum
+    arr = infection_rate_diag_0 - infection_rate_diag_1,
+    rrr = ifelse(infection_rate_diag_0 > 0,
+                 (infection_rate_diag_0 - infection_rate_diag_1) / infection_rate_diag_0,
+                 NA),
+    nnt = ifelse(arr > 0, 1/arr, NA)
+  )
+
+cat("\n=== Stratified Analysis by Risk Score ===\n")
+cat("\nRisk-Stratified Diagnostic Test Results:\n")
+print(stratified_diagnostic_comparison %>% 
+        select(risk_group, n_diag_0, n_diag_1, 
+               infection_rate_diag_0, infection_rate_diag_1, arr, nnt))
+
+# Statistical tests within strata
+cat("\n=== Within-Stratum Statistical Tests ===\n")
+for(risk in unique(patient_diagnostic_data$risk_group)) {
+  subset_data <- filter(patient_diagnostic_data, risk_group == risk)
+  if(length(unique(subset_data$had_score_based_diagnostic)) > 1) {
+    test_table <- table(subset_data$had_score_based_diagnostic, subset_data$cre_infection)
+    if(all(dim(test_table) >= 2)) {
+      test_result <- fisher.test(test_table)
+      cat("\n", risk, ":\n")
+      cat("  p-value:", format.pval(test_result$p.value), "\n")
+      cat("  Odds ratio:", round(test_result$estimate, 3), "\n")
+    }
+  }
+}
+```
+
+```{r}
+#| label: fig-diagnostic-stratified
+#| fig-width: 10
+#| fig-height: 6
+#| fig-cap: "CRE Infection Rates Stratified by Risk Score and Diagnostic Testing"
+#| echo: false
+#| warning: false
+#| message: false
+
+# Prepare data for visualization
+stratified_diag_viz <- patient_diagnostic_data %>%
+  group_by(risk_group, had_score_based_diagnostic) %>%
+  summarise(
+    n = n(),
+    n_infections = sum(cre_infection == 1, na.rm = TRUE),
+    infection_rate = mean(cre_infection == 1, na.rm = TRUE),
+    se = sqrt(infection_rate * (1 - infection_rate) / n),
+    ci_lower = pmax(0, infection_rate - 1.96 * se),
+    ci_upper = pmin(1, infection_rate + 1.96 * se),
+    .groups = "drop"
+  ) %>%
+  mutate(
+    diagnostic_label = ifelse(had_score_based_diagnostic == 1, "Had Test", "No Test")
+  )
+
+ggplot(stratified_diag_viz, aes(x = diagnostic_label, y = infection_rate, fill = diagnostic_label)) +
+  facet_wrap(~ risk_group) +
+  geom_col(alpha = 0.8) +
+  geom_errorbar(aes(ymin = ci_lower, ymax = ci_upper), width = 0.2, size = 0.8) +
+  geom_text(aes(label = paste0(round(infection_rate * 100, 1), "%\n(", 
+                               n_infections, "/", n, ")")),
+            vjust = -0.5, size = 3) +
+  scale_y_continuous(labels = percent_format(), limits = c(0, 0.6)) +
+  scale_fill_manual(values = c("Had Test" = "#2196F3", "No Test" = "#FF9800")) +
+  labs(
+    title = "CRE Infection Rates Stratified by Risk Score and Diagnostic Testing",
+    subtitle = "Effect of score-based diagnostic testing (score_impact___3) within risk groups",
+    x = "",
+    y = "CRE Infection Rate",
+    fill = "Diagnostic Test"
+  ) +
+  theme_minimal() +
+  theme(legend.position = "bottom")
+```
+
+```{r}
+#| label: fig-diagnostic-continuous
+#| fig-width: 10
+#| fig-height: 6
+#| fig-cap: "CRE Infection Probability by Maximum Score and Diagnostic Testing"
+#| echo: false
+#| warning: false
+#| message: false
+
+ggplot(patient_diagnostic_data, 
+       aes(x = max_score, y = as.numeric(cre_infection == 1),
+           color = factor(had_score_based_diagnostic))) +
+  geom_point(position = position_jitter(height = 0.02, width = 0.5), 
+             alpha = 0.5, size = 2) +
+  geom_smooth(method = "loess", se = TRUE, alpha = 0.2) +
+  scale_y_continuous(labels = percent_format(), limits = c(-0.05, 1.05)) +
+  scale_color_manual(values = c("0" = "#FF9800", "1" = "#2196F3"),
+                    labels = c("0" = "No Diagnostic Test", 
+                              "1" = "Had Diagnostic Test")) +
+  labs(
+    title = "CRE Infection Probability by Maximum Score and Diagnostic Testing",
+    subtitle = "Comparing patients with and without score-based diagnostic tests",
+    x = "Maximum Score",
+    y = "Probability of CRE Infection",
+    color = "Diagnostic Test Status"
+  ) +
+  theme_minimal() +
+  theme(legend.position = "bottom")
+```
+
+```{r}
+#| label: fig-diagnostic-utilization
+#| fig-width: 10
+#| fig-height: 6
+#| fig-cap: "Diagnostic Test Utilization and Infection Rates by Score Category"
+#| echo: false
+#| warning: false
+#| message: false
+
+diagnostic_by_score <- patient_diagnostic_data %>%
+  group_by(max_score_category) %>%
+  summarise(
+    n = n(),
+    diagnostic_rate = mean(had_score_based_diagnostic),
+    infection_rate = mean(cre_infection == 1, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+ggplot(diagnostic_by_score, aes(x = max_score_category)) +
+  geom_col(aes(y = diagnostic_rate), fill = "#9C27B0", alpha = 0.7) +
+  geom_line(aes(y = infection_rate, group = 1), color = "red", size = 1.5) +
+  geom_point(aes(y = infection_rate), color = "red", size = 3) +
+  geom_text(aes(y = diagnostic_rate, label = paste0(round(diagnostic_rate * 100, 0), "%")),
+            vjust = -0.5, size = 3.5) +
+  scale_y_continuous(labels = percent_format(),
+                     sec.axis = sec_axis(~., name = "CRE Infection Rate (Red Line)")) +
+  labs(
+    title = "Score-Based Diagnostic Test Utilization and Infection Rates",
+    subtitle = "Purple bars: % receiving diagnostic test | Red line: infection rate",
+    x = "Maximum Score Category",
+    y = "Diagnostic Test Rate (Purple Bars)"
+  ) +
+  theme_minimal()
+```
+
+```{r}
+#| label: diagnostic-therapy-interaction
+#| echo: false
+#| warning: false
+#| message: false
+
+cat("\n=== Interaction Between Diagnostic Tests and Therapy ===\n")
+
+# Analyze interaction between diagnostics and therapy
+interaction_analysis <- patient_diagnostic_data %>%
+  left_join(patient_therapy_data %>% 
+              select(record_id, received_score_based_therapy),
+            by = "record_id") %>%
+  mutate(
+    intervention_group = case_when(
+      had_score_based_diagnostic == 1 & received_score_based_therapy == 1 ~ "Both",
+      had_score_based_diagnostic == 1 & received_score_based_therapy == 0 ~ "Diagnostic Only",
+      had_score_based_diagnostic == 0 & received_score_based_therapy == 1 ~ "Therapy Only",
+      TRUE ~ "Neither"
+    )
+  ) %>%
+  group_by(intervention_group) %>%
+  summarise(
+    n = n(),
+    n_infections = sum(cre_infection == 1, na.rm = TRUE),
+    infection_rate = mean(cre_infection == 1, na.rm = TRUE),
+    mean_score = mean(max_score, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+cat("\nIntervention Combinations:\n")
+print(interaction_analysis)
+```
+
+```{r}
+#| label: diagnostic-regression-analysis
+#| echo: false
+#| warning: false
+#| message: false
+
+cat("\n=== Regression Analysis for Diagnostic Tests ===\n")
+
+# Unadjusted model
+unadjusted_diag_model <- glm(cre_infection ~ had_score_based_diagnostic,
+                             data = patient_diagnostic_data,
+                             family = binomial())
+
+# Adjusted model for risk score
+adjusted_diag_model <- glm(cre_infection ~ had_score_based_diagnostic + max_score,
+                           data = patient_diagnostic_data,
+                           family = binomial())
+
+# Full model including therapy
+full_model <- patient_diagnostic_data %>%
+  left_join(patient_therapy_data %>% select(record_id, received_score_based_therapy),
+            by = "record_id") %>%
+  glm(cre_infection ~ had_score_based_diagnostic + received_score_based_therapy + max_score,
+      data = .,
+      family = binomial())
+
+cat("\nUnadjusted Analysis (Diagnostic Only):\n")
+cat("  Diagnostic coefficient:", round(coef(unadjusted_diag_model)["had_score_based_diagnostic"], 3), "\n")
+cat("  Diagnostic OR:", round(exp(coef(unadjusted_diag_model)["had_score_based_diagnostic"]), 3), "\n")
+
+cat("\nAdjusted for Risk Score:\n")
+cat("  Diagnostic coefficient:", round(coef(adjusted_diag_model)["had_score_based_diagnostic"], 3), "\n")
+cat("  Diagnostic OR:", round(exp(coef(adjusted_diag_model)["had_score_based_diagnostic"]), 3), "\n")
+cat("  Score coefficient:", round(coef(adjusted_diag_model)["max_score"], 3), "\n")
+
+cat("\nFull Model (Diagnostic + Therapy + Score):\n")
+cat("  Diagnostic coefficient:", round(coef(full_model)["had_score_based_diagnostic"], 3), "\n")
+cat("  Therapy coefficient:", round(coef(full_model)["received_score_based_therapy"], 3), "\n")
+cat("  Score coefficient:", round(coef(full_model)["max_score"], 3), "\n")
+
+if(coef(unadjusted_diag_model)["had_score_based_diagnostic"] > 0 & 
+   coef(adjusted_diag_model)["had_score_based_diagnostic"] < 0) {
+  cat("\n✓ Simpson's Paradox detected for diagnostic testing!\n")
+}
+```
+
+```{r}
+#| label: diagnostic-summary
+#| echo: false
+#| warning: false
+#| message: false
+
+cat("\n============================================\n")
+cat("DIAGNOSTIC TEST UTILIZATION SUMMARY\n")
+cat("============================================\n")
+
+cat("\n1. KEY FINDINGS:\n")
+if(exists("arr_diag")) {
+  if(arr_diag > 0) {
+    cat("   ✓ Diagnostic testing associated with LOWER infection rates\n")
+    cat("   - Absolute difference:", round(arr_diag * 100, 1), "percentage points\n")
+  } else if(arr_diag < 0) {
+    cat("   ✗ Diagnostic testing associated with HIGHER infection rates\n")
+    cat("   - Likely confounding by indication\n")
+    cat("   - Sicker patients receive more diagnostic tests\n")
+  }
+}
+
+cat("\n2. UTILIZATION PATTERNS:\n")
+cat("   - ", round(mean(patient_diagnostic_data$had_score_based_diagnostic) * 100, 1), 
+    "% of patients received diagnostic tests\n")
+cat("   - Higher scores → More diagnostic testing\n")
+cat("   - Testing correlates with risk stratification\n")
+
+cat("\n3. CLINICAL IMPLICATIONS:\n")
+cat("   - Diagnostic tests help identify at-risk patients\n")
+cat("   - May enable early intervention\n")
+cat("   - Consider diagnostic protocols based on score thresholds\n")
+
+cat("\n4. COMPARISON WITH THERAPY:\n")
+if(exists("interaction_analysis")) {
+  best_group <- interaction_analysis$intervention_group[which.min(interaction_analysis$infection_rate)]
+  worst_group <- interaction_analysis$intervention_group[which.max(interaction_analysis$infection_rate)]
+  cat("   - Best outcomes:", best_group, "\n")
+  cat("   - Worst outcomes:", worst_group, "\n")
+}
+
+cat("\n============================================\n")
+cat("Diagnostic Test Analysis Complete\n")
+cat("============================================\n")
 ```

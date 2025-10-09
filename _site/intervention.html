@@ -125,8 +125,9 @@ ul.task-list li input[type="checkbox"] {
     <h2 id="toc-title">On this page</h2>
    
   <ul>
-  <li><a href="#section" id="toc-section" class="nav-link active" data-scroll-target="#section"></a></li>
-  <li><a href="#score-trajectory" id="toc-score-trajectory" class="nav-link" data-scroll-target="#score-trajectory">Score trajectory</a></li>
+  <li><a href="#score-trajectory" id="toc-score-trajectory" class="nav-link active" data-scroll-target="#score-trajectory">Score trajectory</a></li>
+  <li><a href="#score-driven-cre-treatment" id="toc-score-driven-cre-treatment" class="nav-link" data-scroll-target="#score-driven-cre-treatment">SCORE-driven CRE treatment</a></li>
+  <li><a href="#score-driven-diagnostic-testing" id="toc-score-driven-diagnostic-testing" class="nav-link" data-scroll-target="#score-driven-diagnostic-testing">SCORE-driven diagnostic testing</a></li>
   </ul>
 </nav>
     </div>
@@ -158,195 +159,824 @@ ul.task-list li input[type="checkbox"] {
 </header>
 
 
-<section id="section" class="level2">
-<h2 class="anchored" data-anchor-id="section"></h2>
-<div id="fig-compete_strat" class="quarto-float quarto-figure quarto-figure-center anchored">
-<figure class="quarto-float quarto-float-fig figure">
-<div aria-describedby="fig-compete_strat-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<section id="score-trajectory" class="level2">
+<h2 class="anchored" data-anchor-id="score-trajectory">Score trajectory</h2>
 <div class="cell">
 <div class="cell-output cell-output-stdout">
 <pre><code>============================================</code></pre>
 </div>
 <div class="cell-output cell-output-stdout">
-<pre><code>SIMPLE RISK ANALYSIS WITH NA HANDLING</code></pre>
+<pre><code>SCORE TRAJECTORY ANALYSIS - PROSPECTIVE ONLY</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Simplified Approach</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>============================================</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Total records loaded: 3170 </code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+=== Identifying Data Structure ===</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Found filter column: filter_$</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+Using filter column: filter_$ 
+Filter column distribution:
+
+   0    1 
+2478  692 
+
+=== Extracting Prospective Data ===
+Prospective baseline records: 171 
+Unique prospective patients: 171 
+
+Prospective score records: 1067 
+Unique patients with scores: 169 </code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+=== Processing Baseline Data ===</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Baseline processing complete</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Outcome distribution:</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+     Censored CRE Infection         Death     Discharge 
+            5            54            14            98 </code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+=== Processing Score Data ===</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Valid score records: 655 
+
+=== Joining Data ===
+Final longitudinal records: 649 
+Unique patients: 158 
+
+=== Trajectory Analysis ===
+
+Patient trajectory summary:
+  Patients analyzed: 158 
+  Mean scores per patient: 4.11 </code></pre>
+</div>
+</div>
+<div class="cell">
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="intervention_files/figure-html/unnamed-chunk-3-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+<div class="cell">
+<div class="cell-output-display">
+<div id="fig-score-distribution-boxplot" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-score-distribution-boxplot-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="intervention_files/figure-html/fig-score-distribution-boxplot-1.png" class="img-fluid figure-img" width="768">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-score-distribution-boxplot-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;1: Maximum Score Distribution by CRE Infection Status
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<div class="cell">
+<div class="cell-output-display">
+<div id="fig-infection-rate-by-score" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-infection-rate-by-score-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="intervention_files/figure-html/fig-infection-rate-by-score-1.png" class="img-fluid figure-img" width="768">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-infection-rate-by-score-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;2: CRE Infection Rate by Score Category
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<div class="cell">
+<div class="cell-output-display">
+<div id="fig-continuous-relationship" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-continuous-relationship-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="intervention_files/figure-html/fig-continuous-relationship-1.png" class="img-fluid figure-img" width="768">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-continuous-relationship-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;3: Relationship Between Maximum Score and CRE Infection Risk
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<div class="cell">
+<div class="cell-output-display">
+<div id="fig-density-comparison" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-density-comparison-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="intervention_files/figure-html/fig-density-comparison-1.png" class="img-fluid figure-img" width="768">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-density-comparison-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;4: Score Distribution Density by CRE Infection Status
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<div class="cell">
+<div class="cell-output-display">
+<div id="fig-trajectory-pattern" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-trajectory-pattern-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="intervention_files/figure-html/fig-trajectory-pattern-1.png" class="img-fluid figure-img" width="768">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-trajectory-pattern-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;5: CRE Infection Rate by Score Trajectory Pattern
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<div class="cell">
+<div class="cell-output cell-output-stdout">
+<pre><code>
+=== Statistical Analysis ===</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+T-test for maximum score difference:</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>  Mean score (No CRE): 17.11 </code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>  Mean score (CRE): 31.34 </code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>  Difference: 14.22 </code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>  p-value: 2.0183e-05 </code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+Wilcoxon rank-sum test:</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>  p-value: 5.6508e-06 </code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+Logistic Regression Results:</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+Call:
+glm(formula = cre_infection ~ max_score, family = binomial(), 
+    data = score_cre_analysis)
+
+Coefficients:
+            Estimate Std. Error z value Pr(&gt;|z|)    
+(Intercept) -1.89910    0.32374  -5.866 4.46e-09 ***
+max_score    0.04854    0.01110   4.371 1.23e-05 ***
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+(Dispersion parameter for binomial family taken to be 1)
+
+    Null deviance: 197.24  on 157  degrees of freedom
+Residual deviance: 174.60  on 156  degrees of freedom
+AIC: 178.6
+
+Number of Fisher Scoring iterations: 4</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+Odds Ratio per unit increase in max score: 1.05 </code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>95% CI: 1.028 - 1.074 </code></pre>
+</div>
+</div>
+<div class="cell">
+<div class="cell-output cell-output-stdout">
+<pre><code>
+Score Summary by CRE Status:</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 2 × 8
+  cre_status         n baseline_mean baseline_sd max_mean max_sd trajectory_mean
+  &lt;fct&gt;          &lt;int&gt;         &lt;dbl&gt;       &lt;dbl&gt;    &lt;dbl&gt;  &lt;dbl&gt;           &lt;dbl&gt;
+1 No CRE Infect…   108          7.64        11.6     17.1   14.1             6.7
+2 CRE Infection     50         12.1         12.7     31.3   19.9            16.5
+# ℹ 1 more variable: trajectory_sd &lt;dbl&gt;</code></pre>
+</div>
+</div>
+</section>
+<section id="score-driven-cre-treatment" class="level2">
+<h2 class="anchored" data-anchor-id="score-driven-cre-treatment">SCORE-driven CRE treatment</h2>
+<div class="cell">
+<div class="cell-output cell-output-stdout">
+<pre><code>
+============================================</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>ANTI-CRE THERAPY EFFECTIVENESS ANALYSIS</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Based on score_impact___2 (Therapy Started)</code></pre>
 </div>
 <div class="cell-output cell-output-stdout">
 <pre><code>============================================</code></pre>
 </div>
 <div class="cell-output cell-output-stdout">
 <pre><code>
-=== Loading Data ===</code></pre>
+=== Understanding the Variables ===</code></pre>
 </div>
 <div class="cell-output cell-output-stdout">
-<pre><code>Total records: 3170 </code></pre>
+<pre><code>score_impact___1 = No action taken</code></pre>
 </div>
 <div class="cell-output cell-output-stdout">
-<pre><code>After filtering: 692 </code></pre>
+<pre><code>score_impact___2 = Anti-CRE therapy started (OUR FOCUS)</code></pre>
 </div>
 <div class="cell-output cell-output-stdout">
-<pre><code>
-=== Creating Outcomes ===</code></pre>
-</div>
-<div class="cell-output cell-output-stdout">
-<pre><code>Valid patients: 692 </code></pre>
-</div>
-<div class="cell-output cell-output-stdout">
-<pre><code>Deaths within 180 days: 113 </code></pre>
-</div>
-<div class="cell-output cell-output-stdout">
-<pre><code>Crude mortality: 16.3 %</code></pre>
+<pre><code>score_impact___3 = Diagnostic test performed</code></pre>
 </div>
 <div class="cell-output cell-output-stdout">
 <pre><code>
-=== Preparing Predictors ===</code></pre>
-</div>
-<div class="cell-output cell-output-stdout">
-<pre><code>Age: 690 valid values, range 0-76</code></pre>
-</div>
-<div class="cell-output cell-output-stdout">
-<pre><code>MELD: 684 valid values, range 2-46</code></pre>
-</div>
-<div class="cell-output cell-output-stdout">
-<pre><code>CCI: 692 valid values</code></pre>
+=== Processing Score Impact Data ===</code></pre>
 </div>
 <div class="cell-output cell-output-stdout">
 <pre><code>
-Complications:</code></pre>
+Score assessments processed: 655 </code></pre>
 </div>
 <div class="cell-output cell-output-stdout">
-<pre><code>  Complication 1: 305 cases
-  Complication 2: 224 cases
-  Complication 3: 146 cases
-  Complication 4: 70 cases
-  Complication 5: 195 cases
-  Complication 6: 55 cases
-  Complication 7: 77 cases
-  Complication 8: 56 cases
-  Complication 9: 2 cases
-  Complication 10: 180 cases
-  Complication 11: 126 cases</code></pre>
+<pre><code>Assessments where therapy started: 43 ( 6.6 %)</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Assessments with no action: 572 ( 87.3 %)</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Assessments with diagnostic test: 42 ( 6.4 %)</code></pre>
 </div>
 <div class="cell-output cell-output-stdout">
 <pre><code>
-=== Creating Risk Score ===</code></pre>
-</div>
-<div class="cell-output cell-output-stdout">
-<pre><code>Added age component (median = 57)</code></pre>
-</div>
-<div class="cell-output cell-output-stdout">
-<pre><code>Added MELD component (median = 21)</code></pre>
-</div>
-<div class="cell-output cell-output-stdout">
-<pre><code>Added compli_1 (n=305)
-Added compli_3 (n=146)
-Added compli_5 (n=195)</code></pre>
+=== Creating Patient-Level Summary ===</code></pre>
 </div>
 <div class="cell-output cell-output-stdout">
 <pre><code>
-Risk score distribution:</code></pre>
+Patient-level summary:</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Total patients analyzed: 158 </code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Patients who received score-based therapy: 36 ( 22.8 %)</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>CRE infections overall: 50 ( 31.6 %)</code></pre>
 </div>
 <div class="cell-output cell-output-stdout">
 <pre><code>
-  0   1   2   3   4   5 
- 84 217 170 143  69   9 </code></pre>
+=== Overall Treatment Effect (score_impact___2) ===</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 2 × 9
+  received_score_based_therapy     n n_infections infection_rate mean_max_score
+                         &lt;dbl&gt; &lt;int&gt;        &lt;int&gt;          &lt;dbl&gt;          &lt;dbl&gt;
+1                            0   122           28          0.230           16.6
+2                            1    36           22          0.611           38.8
+# ℹ 4 more variables: sd_score &lt;dbl&gt;, therapy_label &lt;chr&gt;, ci_lower &lt;dbl&gt;,
+#   ci_upper &lt;dbl&gt;</code></pre>
 </div>
 <div class="cell-output cell-output-stdout">
 <pre><code>
-=== Creating Risk Groups ===</code></pre>
+Statistical Tests:</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>  Fisher's exact test p-value: 3.2718e-05 </code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>  Odds ratio: 5.209 </code></pre>
 </div>
 <div class="cell-output cell-output-stdout">
 <pre><code>
-Risk group distribution:</code></pre>
+=== Treatment Effectiveness Metrics ===
+Infection rate WITHOUT score-based therapy: 23 %
+Infection rate WITH score-based therapy: 61.1 %
+Absolute Risk Reduction (ARR): -38.16 %
+Relative Risk Reduction (RRR): -166.27 %
+
+✗ Score-based therapy appears HARMFUL (paradox - likely confounding)
+  Note: High-risk patients more likely to receive therapy</code></pre>
 </div>
-<div class="cell-output cell-output-stdout">
-<pre><code>
-   Low Medium   High 
-   301    170    221 </code></pre>
 </div>
-<div class="cell-output cell-output-stdout">
-<pre><code>
-=== Adding CRE Status ===</code></pre>
-</div>
-<div class="cell-output cell-output-stdout">
-<pre><code>CRE from dates: 180 infections</code></pre>
-</div>
-<div class="cell-output cell-output-stdout">
-<pre><code>Total CRE infections within 180 days: 180</code></pre>
-</div>
-<div class="cell-output cell-output-stdout">
-<pre><code>
-=== ANALYSIS RESULTS ===</code></pre>
-</div>
-<div class="cell-output cell-output-stdout">
-<pre><code>
-Overall 180-day mortality: 16.3%</code></pre>
-</div>
-<div class="cell-output cell-output-stdout">
-<pre><code>
---- Mortality by Risk Group ---</code></pre>
-</div>
-<div class="cell-output cell-output-stdout">
-<pre><code>  risk_group   n deaths mortality_pct cre_n cre_pct
-1        Low 301     20           6.6    49    16.3
-2     Medium 170     28          16.5    44    25.9
-3       High 221     65          29.4    87    39.4</code></pre>
-</div>
-<div class="cell-output cell-output-stdout">
-<pre><code>
---- Mortality by CRE Status ---</code></pre>
-</div>
-<div class="cell-output cell-output-stdout">
-<pre><code>  CRE_status   n deaths mortality_pct
-1       CRE+ 180     60          33.3
-2       CRE- 512     53          10.4</code></pre>
-</div>
-<div class="cell-output cell-output-stdout">
-<pre><code>
---- Mortality by Risk Group and CRE Status ---</code></pre>
-</div>
-<div class="cell-output cell-output-stdout">
-<pre><code>  risk_group CRE_status   n deaths mortality_pct
-1        Low       CRE+  49      7          14.3
-2        Low       CRE- 252     13           5.2
-3     Medium       CRE+  44     14          31.8
-4     Medium       CRE- 126     14          11.1
-5       High       CRE+  87     39          44.8
-6       High       CRE- 134     26          19.4</code></pre>
-</div>
+<div class="cell">
 <div class="cell-output-display">
-<div>
-<figure class="figure">
-<p><img src="intervention_files/figure-html/unnamed-chunk-1-1.png" class="img-fluid figure-img" width="672"></p>
+<div id="fig-therapy-overall" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-therapy-overall-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="intervention_files/figure-html/fig-therapy-overall-1.png" class="img-fluid figure-img" width="768">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-therapy-overall-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;6: CRE Infection Rates by Score-Based Therapy Status
+</figcaption>
 </figure>
 </div>
+</div>
+</div>
+<div class="cell">
+<div class="cell-output cell-output-stdout">
+<pre><code>
+=== Stratified Analysis by Risk Score ===</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+Risk-Stratified Results:</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 3 × 7
+  risk_group          n_therapy_0 n_therapy_1 infection_rate_therapy_0
+  &lt;chr&gt;                     &lt;int&gt;       &lt;int&gt;                    &lt;dbl&gt;
+1 High Risk (&gt;20)              36          28                    0.361
+2 Low Risk (≤10)               44           4                    0.114
+3 Medium Risk (11-20)          42           4                    0.238
+# ℹ 3 more variables: infection_rate_therapy_1 &lt;dbl&gt;, arr &lt;dbl&gt;, nnt &lt;lgl&gt;</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+=== Within-Stratum Statistical Tests ===</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+ Low Risk (≤10) :
+  p-value: 0.011872 
+  Odds ratio: 20.735 
+
+ Medium Risk (11-20) :
+  p-value: 0.27577 
+  Odds ratio: 3.104 
+
+ High Risk (&gt;20) :
+  p-value: 0.076925 
+  Odds ratio: 2.69 </code></pre>
+</div>
+</div>
+<div class="cell">
+<div class="cell-output-display">
+<div id="fig-therapy-stratified" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-therapy-stratified-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="intervention_files/figure-html/fig-therapy-stratified-1.png" class="img-fluid figure-img" width="960">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-therapy-stratified-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;7: CRE Infection Rates Stratified by Risk Score
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<div class="cell">
+<div class="cell-output-display">
+<div id="fig-therapy-continuous" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-therapy-continuous-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="intervention_files/figure-html/fig-therapy-continuous-1.png" class="img-fluid figure-img" width="960">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-therapy-continuous-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;8: CRE Infection Probability by Maximum Score
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<div class="cell">
+<div class="cell-output-display">
+<div id="fig-therapy-utilization" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-therapy-utilization-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="intervention_files/figure-html/fig-therapy-utilization-1.png" class="img-fluid figure-img" width="960">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-therapy-utilization-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;9: Score-Based Therapy Utilization and Infection Rates
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<div class="cell">
+<div class="cell-output cell-output-stdout">
+<pre><code>
+=== Regression Analysis Adjusting for Baseline Risk ===</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+Unadjusted Analysis:</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>  Therapy coefficient: 1.663 </code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>  Therapy OR: 5.276 </code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+Adjusted for Risk Score:</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>  Therapy coefficient: 0.965 </code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>  Therapy OR: 2.625 </code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>  Score coefficient: 0.037 </code></pre>
+</div>
+</div>
+<div class="cell">
+<div class="cell-output cell-output-stdout">
+<pre><code>
+============================================</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>THERAPY EFFECTIVENESS SUMMARY</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>============================================</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+1. KEY FINDING:</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>   ✗ Paradox detected: Therapy group has HIGHER infection rate
+   - Likely due to confounding by indication
+   - High-risk patients → Get therapy AND get infected</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+2. CLINICAL INTERPRETATION:</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>   - Score successfully identifies high-risk patients</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>   - These patients appropriately receive therapy</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>   - True effectiveness requires risk adjustment or RCT</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+3. RECOMMENDATIONS:</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>   - Review therapy effectiveness
+   - Consider alternative interventions</code></pre>
 </div>
 <div class="cell-output cell-output-stdout">
 <pre><code>
 ============================================</code></pre>
 </div>
 <div class="cell-output cell-output-stdout">
-<pre><code>ANALYSIS COMPLETE</code></pre>
+<pre><code>Analysis Complete</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>============================================</code></pre>
+</div>
+</div>
+</section>
+<section id="score-driven-diagnostic-testing" class="level2">
+<h2 class="anchored" data-anchor-id="score-driven-diagnostic-testing">SCORE-driven diagnostic testing</h2>
+<div class="cell">
+<div class="cell-output cell-output-stdout">
+<pre><code>
+============================================</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>DIAGNOSTIC TEST UTILIZATION ANALYSIS</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Based on score_impact___3 (Diagnostic Test Performed)</code></pre>
 </div>
 <div class="cell-output cell-output-stdout">
 <pre><code>============================================</code></pre>
 </div>
 <div class="cell-output cell-output-stdout">
 <pre><code>
-Data saved as 'baseline_data' and 'baseline_data_final.RData'</code></pre>
+=== Understanding the Variables ===</code></pre>
 </div>
 <div class="cell-output cell-output-stdout">
-<pre><code>Results saved to 'mortality_by_risk_and_cre.csv'</code></pre>
+<pre><code>score_impact___1 = No action taken</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>score_impact___2 = Anti-CRE therapy started</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>score_impact___3 = Diagnostic test performed (OUR FOCUS)</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+=== Processing Score Impact Data for Diagnostics ===</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+Score assessments processed: 655 </code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Assessments with diagnostic test: 42 ( 6.4 %)</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Assessments with therapy: 43 ( 6.6 %)</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Assessments with no action: 572 ( 87.3 %)</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+=== Creating Patient-Level Summary for Diagnostic Tests ===</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+Patient-level summary:</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Total patients analyzed: 158 </code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Patients who had score-based diagnostic test: 31 ( 19.6 %)</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>CRE infections overall: 50 ( 31.6 %)</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+=== Overall Diagnostic Test Effect (score_impact___3) ===</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 2 × 9
+  had_score_based_diagnostic     n n_infections infection_rate mean_max_score
+                       &lt;dbl&gt; &lt;int&gt;        &lt;int&gt;          &lt;dbl&gt;          &lt;dbl&gt;
+1                          0   127           30          0.236           19.2
+2                          1    31           20          0.645           31.8
+# ℹ 4 more variables: sd_score &lt;dbl&gt;, diagnostic_label &lt;chr&gt;, ci_lower &lt;dbl&gt;,
+#   ci_upper &lt;dbl&gt;</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+Statistical Tests:</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>  Fisher's exact test p-value: 2.7221e-05 </code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>  Odds ratio: 5.799 </code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+=== Diagnostic Test Impact Metrics ===
+Infection rate WITHOUT diagnostic test: 23.6 %
+Infection rate WITH diagnostic test: 64.5 %
+Absolute Risk Difference: -40.89 %
+Relative Risk Reduction: -173.12 %
+
+✗ Diagnostic testing associated with HIGHER infection rates
+  Note: Likely confounding - sicker patients get more testing</code></pre>
 </div>
 </div>
+<div class="cell">
+<div class="cell-output-display">
+<div id="fig-diagnostic-overall" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-diagnostic-overall-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="intervention_files/figure-html/fig-diagnostic-overall-1.png" class="img-fluid figure-img" width="768">
 </div>
-<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig quarto-uncaptioned" id="fig-compete_strat-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;1
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-diagnostic-overall-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;10: CRE Infection Rates by Diagnostic Test Utilization
 </figcaption>
 </figure>
 </div>
-</section>
-<section id="score-trajectory" class="level2">
-<h2 class="anchored" data-anchor-id="score-trajectory">Score trajectory</h2>
+</div>
+</div>
+<div class="cell">
+<div class="cell-output cell-output-stdout">
+<pre><code>
+=== Stratified Analysis by Risk Score ===</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+Risk-Stratified Diagnostic Test Results:</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 3 × 7
+  risk_group       n_diag_0 n_diag_1 infection_rate_diag_0 infection_rate_diag_1
+  &lt;chr&gt;               &lt;int&gt;    &lt;int&gt;                 &lt;dbl&gt;                 &lt;dbl&gt;
+1 High Risk (&gt;20)        42       22                 0.429                 0.545
+2 Low Risk (≤10)         45        3                 0.133                 0.667
+3 Medium Risk (11…       40        6                 0.15                  1    
+# ℹ 2 more variables: arr &lt;dbl&gt;, nnt &lt;lgl&gt;</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+=== Within-Stratum Statistical Tests ===</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+ Low Risk (≤10) :
+  p-value: 0.067993 
+  Odds ratio: 11.88 
+
+ Medium Risk (11-20) :
+  p-value: 9.8646e-05 
+  Odds ratio: Inf 
+
+ High Risk (&gt;20) :
+  p-value: 0.43519 
+  Odds ratio: 1.588 </code></pre>
+</div>
+</div>
+<div class="cell">
+<div class="cell-output-display">
+<div id="fig-diagnostic-stratified" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-diagnostic-stratified-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="intervention_files/figure-html/fig-diagnostic-stratified-1.png" class="img-fluid figure-img" width="960">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-diagnostic-stratified-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;11: CRE Infection Rates Stratified by Risk Score and Diagnostic Testing
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<div class="cell">
+<div class="cell-output-display">
+<div id="fig-diagnostic-continuous" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-diagnostic-continuous-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="intervention_files/figure-html/fig-diagnostic-continuous-1.png" class="img-fluid figure-img" width="960">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-diagnostic-continuous-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;12: CRE Infection Probability by Maximum Score and Diagnostic Testing
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<div class="cell">
+<div class="cell-output-display">
+<div id="fig-diagnostic-utilization" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-diagnostic-utilization-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="intervention_files/figure-html/fig-diagnostic-utilization-1.png" class="img-fluid figure-img" width="960">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-diagnostic-utilization-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;13: Diagnostic Test Utilization and Infection Rates by Score Category
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<div class="cell">
+<div class="cell-output cell-output-stdout">
+<pre><code>
+=== Interaction Between Diagnostic Tests and Therapy ===</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+Intervention Combinations:</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 4 × 5
+  intervention_group     n n_infections infection_rate mean_score
+  &lt;chr&gt;              &lt;int&gt;        &lt;int&gt;          &lt;dbl&gt;      &lt;dbl&gt;
+1 Both                  13            7          0.538       43.5
+2 Diagnostic Only       18           13          0.722       23.3
+3 Neither              104           15          0.144       15.4
+4 Therapy Only          23           15          0.652       36.1</code></pre>
+</div>
+</div>
+<div class="cell">
+<div class="cell-output cell-output-stdout">
+<pre><code>
+=== Regression Analysis for Diagnostic Tests ===</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+Unadjusted Analysis (Diagnostic Only):</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>  Diagnostic coefficient: 1.771 </code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>  Diagnostic OR: 5.879 </code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+Adjusted for Risk Score:</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>  Diagnostic coefficient: 1.419 </code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>  Diagnostic OR: 4.135 </code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>  Score coefficient: 0.041 </code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+Full Model (Diagnostic + Therapy + Score):</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>  Diagnostic coefficient: 1.398 </code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>  Therapy coefficient: 0.917 </code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>  Score coefficient: 0.03 </code></pre>
+</div>
+</div>
+<div class="cell">
+<div class="cell-output cell-output-stdout">
+<pre><code>
+============================================</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>DIAGNOSTIC TEST UTILIZATION SUMMARY</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>============================================</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+1. KEY FINDINGS:</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>   ✗ Diagnostic testing associated with HIGHER infection rates
+   - Likely confounding by indication
+   - Sicker patients receive more diagnostic tests</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+2. UTILIZATION PATTERNS:</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>   -  19.6 % of patients received diagnostic tests</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>   - Higher scores → More diagnostic testing</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>   - Testing correlates with risk stratification</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+3. CLINICAL IMPLICATIONS:</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>   - Diagnostic tests help identify at-risk patients</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>   - May enable early intervention</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>   - Consider diagnostic protocols based on score thresholds</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+4. COMPARISON WITH THERAPY:</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>   - Best outcomes: Neither 
+   - Worst outcomes: Diagnostic Only </code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+============================================</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Diagnostic Test Analysis Complete</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>============================================</code></pre>
+</div>
+</div>
 
 
 </section>
