@@ -14,10 +14,14 @@ bibliography: references.bib
 csl: nature.csl
 ---
 
-## Fisk risk analysis- both study cohorts
+## 
 
 ::: {#fig-compete_strat}
 ```{r}
+
+# Load the required data
+
+load("prospective_trajectory_results.RData")  # or whatever file contains longitudinal_data
 
 #############################################
 ## FIXED RISK ANALYSIS WITH NA HANDLING
@@ -312,10 +316,9 @@ cat("Results saved to 'mortality_by_risk_and_cre.csv'\n")
 ```
 :::
 
-## Visualization of score trajectory
+## Score trajectory
+
 ```{r}
-
-
 
 ### Visualization of score
 # ============================================================
@@ -340,6 +343,36 @@ cat("============================================\n")
 # ============================================================
 # PREPARE DATA FOR VISUALIZATION
 # ============================================================
+
+# Join datasets
+longitudinal_data <- score_processed %>%
+  inner_join(baseline_processed, by = "record_id") %>%
+  mutate(
+    # Calculate days from transplant for each score
+    days_from_olt = as.numeric(score_date - date_of_transplant),
+    
+    # Flag if score led to treatment change
+    treatment_impact = case_when(
+      score_impact___1 == 1 ~ "Changed therapy",
+      score_impact___2 == 1 ~ "Changed diagnostics",
+      score_impact___3 == 1 ~ "No change",
+      TRUE ~ "Unknown"
+    )
+  ) %>%
+  filter(days_from_olt >= 0 & days_from_olt <= 180)  # Focus on first 180 days
+
+cat("Final longitudinal dataset:\n")
+cat("  Total score measurements:", nrow(longitudinal_data), "\n")
+cat("  Unique patients:", n_distinct(longitudinal_data$record_id), "\n")
+
+# Check cohort distribution in longitudinal data
+cohort_dist <- longitudinal_data %>%
+  group_by(record_id, retro_or_pros) %>%
+  summarise(n = n(), .groups = "drop") %>%
+  count(retro_or_pros)
+
+cat("\nPatients with longitudinal scores by cohort:\n")
+print(cohort_dist)
 
 # Create analysis dataset with scores and CRE outcome
 score_cre_analysis <- longitudinal_data %>%
@@ -625,14 +658,6 @@ cat("\n============================================\n")
 cat("Score vs CRE Analysis Complete\n")
 cat("============================================\n")
 
-
-  
-
-```
-
-## **Analysis of treatment effect**
-
-```{r}
 # ============================================================
 # CORRECTED ANTI-CRE THERAPY EFFECTIVENESS ANALYSIS
 # Using score_impact___2 as the therapy indicator
@@ -811,276 +836,5 @@ if(nrow(overall_comparison) == 2) {
     cat("\n- No difference detected\n")
   }
 }
-
-# ============================================================
-# VISUALIZATION 1: OVERALL COMPARISON
-# ============================================================
-
-cat("\n=== Creating Visualizations ===\n")
-
-p1 <- ggplot(overall_comparison, aes(x = therapy_label, y = infection_rate, fill = therapy_label)) +
-  geom_col(alpha = 0.8) +
-  geom_errorbar(aes(ymin = ci_lower, ymax = ci_upper), width = 0.2, size = 1) +
-  geom_text(aes(label = paste0(round(infection_rate * 100, 1), "%\n(", 
-                               n_infections, "/", n, ")")),
-            vjust = -0.5, size = 4) +
-  scale_y_continuous(labels = percent_format(), 
-                     limits = c(0, max(overall_comparison$ci_upper) * 1.2)) +
-  scale_fill_manual(values = c("Score-Based Therapy" = "#4CAF50", 
-                               "No Score-Based Therapy" = "#F44336")) +
-  labs(
-    title = "CRE Infection Rates by Score-Based Therapy Status",
-    subtitle = paste("Based on score_impact___2 | p =", format.pval(fisher_test$p.value)),
-    x = "",
-    y = "CRE Infection Rate",
-    fill = "Therapy Status"
-  ) +
-  theme_minimal() +
-  theme(legend.position = "none")
-
-print(p1)
-
-# ============================================================
-# STRATIFIED ANALYSIS BY RISK SCORE
-# ============================================================
-
-cat("\n=== Stratified Analysis by Risk Score ===\n")
-
-# Stratified comparison
-stratified_comparison <- patient_therapy_data %>%
-  group_by(risk_group, received_score_based_therapy) %>%
-  summarise(
-    n = n(),
-    n_infections = sum(cre_infection == 1, na.rm = TRUE),
-    infection_rate = mean(cre_infection == 1, na.rm = TRUE),
-    mean_score = mean(max_score, na.rm = TRUE),
-    .groups = "drop"
-  ) %>%
-  pivot_wider(
-    names_from = received_score_based_therapy,
-    values_from = c(n, n_infections, infection_rate, mean_score),
-    names_prefix = "therapy_"
-  ) %>%
-  mutate(
-    # Handle NA values
-    across(starts_with("n_"), ~replace_na(., 0)),
-    across(starts_with("infection_rate_"), ~replace_na(., 0)),
-    
-    # Calculate effectiveness within each stratum
-    arr = infection_rate_therapy_0 - infection_rate_therapy_1,
-    rrr = ifelse(infection_rate_therapy_0 > 0,
-                 (infection_rate_therapy_0 - infection_rate_therapy_1) / infection_rate_therapy_0,
-                 NA),
-    nnt = ifelse(arr > 0, 1/arr, NA)
-  )
-
-cat("\nRisk-Stratified Results:\n")
-print(stratified_comparison %>% 
-        select(risk_group, n_therapy_0, n_therapy_1, 
-               infection_rate_therapy_0, infection_rate_therapy_1, arr, nnt))
-
-# Statistical tests within strata
-cat("\n=== Within-Stratum Statistical Tests ===\n")
-for(risk in unique(patient_therapy_data$risk_group)) {
-  subset_data <- filter(patient_therapy_data, risk_group == risk)
-  if(length(unique(subset_data$received_score_based_therapy)) > 1) {
-    test_table <- table(subset_data$received_score_based_therapy, subset_data$cre_infection)
-    if(all(dim(test_table) >= 2)) {
-      test_result <- fisher.test(test_table)
-      cat("\n", risk, ":\n")
-      cat("  p-value:", format.pval(test_result$p.value), "\n")
-      cat("  Odds ratio:", round(test_result$estimate, 3), "\n")
-    }
-  }
-}
-
-# ============================================================
-# VISUALIZATION 2: STRATIFIED COMPARISON
-# ============================================================
-
-# Prepare data for visualization
-stratified_viz <- patient_therapy_data %>%
-  group_by(risk_group, received_score_based_therapy) %>%
-  summarise(
-    n = n(),
-    n_infections = sum(cre_infection == 1, na.rm = TRUE),
-    infection_rate = mean(cre_infection == 1, na.rm = TRUE),
-    se = sqrt(infection_rate * (1 - infection_rate) / n),
-    ci_lower = pmax(0, infection_rate - 1.96 * se),
-    ci_upper = pmin(1, infection_rate + 1.96 * se),
-    .groups = "drop"
-  ) %>%
-  mutate(
-    therapy_label = ifelse(received_score_based_therapy == 1, "Therapy", "No Therapy")
-  )
-
-p2 <- ggplot(stratified_viz, aes(x = therapy_label, y = infection_rate, fill = therapy_label)) +
-  facet_wrap(~ risk_group) +
-  geom_col(alpha = 0.8) +
-  geom_errorbar(aes(ymin = ci_lower, ymax = ci_upper), width = 0.2, size = 0.8) +
-  geom_text(aes(label = paste0(round(infection_rate * 100, 1), "%\n(", 
-                               n_infections, "/", n, ")")),
-            vjust = -0.5, size = 3) +
-  scale_y_continuous(labels = percent_format(), limits = c(0, 0.6)) +
-  scale_fill_manual(values = c("Therapy" = "#4CAF50", "No Therapy" = "#F44336")) +
-  labs(
-    title = "CRE Infection Rates Stratified by Risk Score",
-    subtitle = "Effect of score-based therapy (score_impact___2) within risk groups",
-    x = "",
-    y = "CRE Infection Rate",
-    fill = "Score-Based Therapy"
-  ) +
-  theme_minimal() +
-  theme(legend.position = "bottom")
-
-print(p2)
-
-# ============================================================
-# VISUALIZATION 3: CONTINUOUS RELATIONSHIP
-# ============================================================
-
-p3 <- ggplot(patient_therapy_data, 
-             aes(x = max_score, y = as.numeric(cre_infection == 1),
-                 color = factor(received_score_based_therapy))) +
-  geom_point(position = position_jitter(height = 0.02, width = 0.5), 
-             alpha = 0.5, size = 2) +
-  geom_smooth(method = "loess", se = TRUE, alpha = 0.2) +
-  scale_y_continuous(labels = percent_format(), limits = c(-0.05, 1.05)) +
-  scale_color_manual(values = c("0" = "#F44336", "1" = "#4CAF50"),
-                    labels = c("0" = "No Score-Based Therapy", 
-                              "1" = "Score-Based Therapy")) +
-  labs(
-    title = "CRE Infection Probability by Maximum Score",
-    subtitle = "Comparing patients with and without score-based therapy",
-    x = "Maximum Score",
-    y = "Probability of CRE Infection",
-    color = "Therapy Status"
-  ) +
-  theme_minimal() +
-  theme(legend.position = "bottom")
-
-print(p3)
-
-# ============================================================
-# VISUALIZATION 4: THERAPY UTILIZATION BY SCORE
-# ============================================================
-
-therapy_by_score <- patient_therapy_data %>%
-  group_by(max_score_category) %>%
-  summarise(
-    n = n(),
-    therapy_rate = mean(received_score_based_therapy),
-    infection_rate = mean(cre_infection == 1, na.rm = TRUE),
-    .groups = "drop"
-  )
-
-p4 <- ggplot(therapy_by_score, aes(x = max_score_category)) +
-  geom_col(aes(y = therapy_rate), fill = "#2196F3", alpha = 0.7) +
-  geom_line(aes(y = infection_rate, group = 1), color = "red", size = 1.5) +
-  geom_point(aes(y = infection_rate), color = "red", size = 3) +
-  geom_text(aes(y = therapy_rate, label = paste0(round(therapy_rate * 100, 0), "%")),
-            vjust = -0.5, size = 3.5) +
-  scale_y_continuous(labels = percent_format(),
-                     sec.axis = sec_axis(~., name = "CRE Infection Rate (Red Line)")) +
-  labs(
-    title = "Score-Based Therapy Utilization and Infection Rates",
-    subtitle = "Blue bars: % receiving therapy | Red line: infection rate",
-    x = "Maximum Score Category",
-    y = "Therapy Rate (Blue Bars)"
-  ) +
-  theme_minimal()
-
-print(p4)
-
-# ============================================================
-# ADJUSTED ANALYSIS
-# ============================================================
-
-cat("\n=== Regression Analysis Adjusting for Baseline Risk ===\n")
-
-# Unadjusted model
-unadjusted_model <- glm(cre_infection ~ received_score_based_therapy,
-                        data = patient_therapy_data,
-                        family = binomial())
-
-# Adjusted model
-adjusted_model <- glm(cre_infection ~ received_score_based_therapy + max_score,
-                      data = patient_therapy_data,
-                      family = binomial())
-
-cat("\nUnadjusted Analysis:\n")
-cat("  Therapy coefficient:", round(coef(unadjusted_model)["received_score_based_therapy"], 3), "\n")
-cat("  Therapy OR:", round(exp(coef(unadjusted_model)["received_score_based_therapy"]), 3), "\n")
-
-cat("\nAdjusted for Risk Score:\n")
-cat("  Therapy coefficient:", round(coef(adjusted_model)["received_score_based_therapy"], 3), "\n")
-cat("  Therapy OR:", round(exp(coef(adjusted_model)["received_score_based_therapy"]), 3), "\n")
-cat("  Score coefficient:", round(coef(adjusted_model)["max_score"], 3), "\n")
-
-if(coef(unadjusted_model)["received_score_based_therapy"] > 0 & 
-   coef(adjusted_model)["received_score_based_therapy"] < 0) {
-  cat("\n✓ Simpson's Paradox detected! Effect reverses after adjustment\n")
-}
-
-# ============================================================
-# COMBINE VISUALIZATIONS
-# ============================================================
-
-combined_analysis <- (p1 | p2) / (p3 | p4) +
-  plot_annotation(
-    title = "Score-Based Anti-CRE Therapy Effectiveness Analysis",
-    subtitle = paste("Based on score_impact___2 | n =", nrow(patient_therapy_data), 
-                    "patients |", sum(patient_therapy_data$received_score_based_therapy), 
-                    "received therapy"),
-    theme = theme(plot.title = element_text(size = 16, face = "bold"))
-  )
-
-print(combined_analysis)
-ggsave("score_based_therapy_effectiveness.png", combined_analysis, 
-       width = 14, height = 12, dpi = 300)
-
-# Save individual plots
-ggsave("therapy_overall_effect.png", p1, width = 8, height = 6, dpi = 300)
-ggsave("therapy_stratified_effect.png", p2, width = 10, height = 6, dpi = 300)
-ggsave("therapy_continuous_effect.png", p3, width = 10, height = 6, dpi = 300)
-ggsave("therapy_utilization_by_score.png", p4, width = 10, height = 6, dpi = 300)
-
-# ============================================================
-# FINAL SUMMARY
-# ============================================================
-
-cat("\n============================================\n")
-cat("THERAPY EFFECTIVENESS SUMMARY\n")
-cat("============================================\n")
-
-cat("\n1. KEY FINDING:\n")
-if(exists("arr")) {
-  if(arr > 0) {
-    cat("   ✓ Score-based therapy shows BENEFIT\n")
-    cat("   - Reduces infections by", round(arr * 100, 1), "percentage points\n")
-  } else if(arr < 0) {
-    cat("   ✗ Paradox detected: Therapy group has HIGHER infection rate\n")
-    cat("   - Likely due to confounding by indication\n")
-    cat("   - High-risk patients → Get therapy AND get infected\n")
-  }
-}
-
-cat("\n2. CLINICAL INTERPRETATION:\n")
-cat("   - Score successfully identifies high-risk patients\n")
-cat("   - These patients appropriately receive therapy\n")
-cat("   - True effectiveness requires risk adjustment or RCT\n")
-
-cat("\n3. RECOMMENDATIONS:\n")
-if(coef(adjusted_model)["received_score_based_therapy"] < 0) {
-  cat("   ✓ After risk adjustment, therapy appears beneficial\n")
-  cat("   - Continue score-based therapy protocol\n")
-} else {
-  cat("   - Review therapy effectiveness\n")
-  cat("   - Consider alternative interventions\n")
-}
-
-cat("\n============================================\n")
-cat("Analysis Complete\n")
-cat("============================================\n")
 
 ```
