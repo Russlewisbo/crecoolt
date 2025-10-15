@@ -2,7 +2,6 @@
 title: "reviewer"
 ---
 
-
 # Statistical Analysis
 
 ## Study Design and Patient Population
@@ -19,31 +18,17 @@ We first evaluated a baseline Cox proportional hazards model incorporating conve
 
 To address these calibration deficiencies, we employed a systematic model enhancement strategy with four progressively complex models:
 
-**Model 1 (Baseline):** Traditional Cox proportional hazards model with main effects only:
-- CRE infection within 180 days (binary)
-- Recipient age (continuous, years)
-- MELD score at transplant (continuous)
-- Individual major complications: acute renal failure (ARF) and mechanical ventilation
+**Model 1 (Baseline):** Traditional Cox proportional hazards model with main effects only: - CRE infection within 180 days (binary) - Recipient age (continuous, years) - MELD score at transplant (continuous) - Individual major complications: acute renal failure (ARF) and mechanical ventilation
 
-**Model 2 (Complication Burden):** Enhanced the baseline model by replacing individual complications with composite scores:
-- Major complication burden score: sum of life-threatening complications (ARF, mechanical ventilation, surgical reintervention)
-- Total complication burden score: sum of all recorded post-transplant complications
-- This approach better captured the cumulative impact of multiple complications on mortality risk
+**Model 2 (Complication Burden):** Enhanced the baseline model by replacing individual complications with composite scores: - Major complication burden score: sum of life-threatening complications (ARF, mechanical ventilation, surgical reintervention) - Total complication burden score: sum of all recorded post-transplant complications - This approach better captured the cumulative impact of multiple complications on mortality risk
 
-**Model 3 (Interaction Terms):** Recognized that CRE infection effects might vary across patient subgroups, we added clinically motivated interaction terms:
-- CRE × Age interaction: to capture differential CRE impact across age groups (centered age to improve interpretability)
-- CRE × MELD interaction: to assess whether CRE effects varied by baseline disease severity (centered MELD score)
-- CRE × Major complications interaction: to evaluate synergistic effects between infection and other complications
-- Age × MELD interaction: to capture combined effects of advanced age and severe liver disease
+**Model 3 (Interaction Terms):** Recognized that CRE infection effects might vary across patient subgroups, we added clinically motivated interaction terms: - CRE × Age interaction: to capture differential CRE impact across age groups (centered age to improve interpretability) - CRE × MELD interaction: to assess whether CRE effects varied by baseline disease severity (centered MELD score) - CRE × Major complications interaction: to evaluate synergistic effects between infection and other complications - Age × MELD interaction: to capture combined effects of advanced age and severe liver disease
 
-**Model 4 (Non-linear Relationships):** Incorporated restricted cubic splines to model non-linear associations:
-- Age modeled with natural splines (2 degrees of freedom, 3 knots at 10th, 50th, and 90th percentiles)
-- MELD score modeled with natural splines (2 degrees of freedom, 3 knots)
-- This approach captured potential threshold effects and non-linear risk increases
+**Model 4 (Non-linear Relationships):** Incorporated restricted cubic splines to model non-linear associations: - Age modeled with natural splines (2 degrees of freedom, 3 knots at 10th, 50th, and 90th percentiles) - MELD score modeled with natural splines (2 degrees of freedom, 3 knots) - This approach captured potential threshold effects and non-linear risk increases
 
 ### Feature Engineering
 
-All continuous predictors were assessed for linearity assumptions. Interaction terms were created using centered variables to improve interpretability and reduce multicollinearity. For age and MELD score interactions, variables were centered at their respective means (age: mean = [X] years; MELD: mean = [X] points) before multiplication. Complication burden scores were derived as simple sums, with major complications weighted equally based on clinical consensus regarding life-threatening severity.
+All continuous predictors were assessed for linearity assumptions. Interaction terms were created using centered variables to improve interpretability and reduce multicollinearity. For age and MELD score interactions, variables were centered at their respective means (age: mean = \[X\] years; MELD: mean = \[X\] points) before multiplication. Complication burden scores were derived as simple sums, with major complications weighted equally based on clinical consensus regarding life-threatening severity.
 
 ## Model Calibration Assessment
 
@@ -51,71 +36,57 @@ All continuous predictors were assessed for linearity assumptions. Interaction t
 
 Model calibration was assessed using multiple complementary approaches:
 
-1. **Calibration Slope and Intercept:** Obtained by regressing observed outcomes on the logit of predicted probabilities. Perfect calibration yields a slope of 1.0 and intercept of 0.0.
+1.  **Calibration Slope and Intercept:** Obtained by regressing observed outcomes on the logit of predicted probabilities. Perfect calibration yields a slope of 1.0 and intercept of 0.0.
 
-2. **Calibration Plots:** Predicted probabilities were grouped into deciles (or quintiles for smaller sample sizes), with observed versus expected mortality compared within each group. 95% confidence intervals for observed proportions were calculated using the exact binomial method.
+2.  **Calibration Plots:** Predicted probabilities were grouped into deciles (or quintiles for smaller sample sizes), with observed versus expected mortality compared within each group. 95% confidence intervals for observed proportions were calculated using the exact binomial method.
 
-3. **Prediction Distribution:** The standard deviation of predicted probabilities was calculated to assess model discrimination and appropriate risk stratification spread.
+3.  **Prediction Distribution:** The standard deviation of predicted probabilities was calculated to assess model discrimination and appropriate risk stratification spread.
 
 ### Discrimination Assessment
 
-Model discrimination was evaluated using:
-- Harrell's C-statistic (concordance index) with 95% confidence intervals
-- Comparison of prediction distributions between models
-- Brier score for overall model performance (combining calibration and discrimination)
+Model discrimination was evaluated using: - Harrell's C-statistic (concordance index) with 95% confidence intervals - Comparison of prediction distributions between models - Brier score for overall model performance (combining calibration and discrimination)
 
 ## Model Selection and Validation
 
-Model selection prioritized calibration performance, specifically minimizing the absolute deviation of the calibration slope from 1.0. Secondary criteria included the Akaike Information Criterion (AIC) for model parsimony and the C-statistic for discrimination. 
+Model selection prioritized calibration performance, specifically minimizing the absolute deviation of the calibration slope from 1.0. Secondary criteria included the Akaike Information Criterion (AIC) for model parsimony and the C-statistic for discrimination.
 
-The final model (Model 3 with interaction terms) demonstrated:
-- Calibration slope: [X] (95% CI: X-X), substantially improved from 5.737
-- Calibration intercept: [X] (95% CI: X-X), improved from -2.785
-- C-statistic: [X] (95% CI: X-X)
-- Prediction standard deviation: [X], representing a [X]-fold increase from baseline
+The final model (Model 3 with interaction terms) demonstrated: - Calibration slope: \[X\] (95% CI: X-X), substantially improved from 5.737 - Calibration intercept: \[X\] (95% CI: X-X), improved from -2.785 - C-statistic: \[X\] (95% CI: X-X) - Prediction standard deviation: \[X\], representing a \[X\]-fold increase from baseline
 
 ## Statistical Significance and Clinical Interpretation
 
 Hazard ratios (HR) with 95% confidence intervals were calculated for all predictors. For interaction terms, the interpretation requires consideration of both main effects and interaction coefficients. Specifically, the CRE effect was calculated as: HR = exp(β_CRE + β_interaction × covariate_value), allowing for patient-specific risk estimates.
 
-Statistical significance was assessed at α = 0.05. However, given the exploratory nature of interaction testing and the clinical importance of proper calibration, interaction terms demonstrating calibration improvement were retained even at marginal significance levels (p < 0.10) if they substantially improved model calibration.
+Statistical significance was assessed at α = 0.05. However, given the exploratory nature of interaction testing and the clinical importance of proper calibration, interaction terms demonstrating calibration improvement were retained even at marginal significance levels (p \< 0.10) if they substantially improved model calibration.
 
 ## Handling of Missing Data
 
-Complete case analysis was performed for model development. Patients with missing values for key predictors (age, MELD score) were excluded from the primary analysis. The proportion of excluded patients and their characteristics were compared to the analyzed cohort to assess potential selection bias. Sensitivity analyses using multiple imputation were considered for predictors with >10% missingness.
+Complete case analysis was performed for model development. Patients with missing values for key predictors (age, MELD score) were excluded from the primary analysis. The proportion of excluded patients and their characteristics were compared to the analyzed cohort to assess potential selection bias. Sensitivity analyses using multiple imputation were considered for predictors with \>10% missingness.
 
 ## Software Implementation
 
-All analyses were performed using R version [X.X.X] (R Foundation for Statistical Computing, Vienna, Austria). Cox proportional hazards models were fitted using the 'survival' package (version X.X). Model calibration was assessed using custom functions and the 'rms' package (version X.X). Visualization was performed using 'ggplot2' (version X.X) and 'survminer' (version X.X) packages. Restricted cubic splines were implemented using the 'splines' package.
+All analyses were performed using R version \[X.X.X\] (R Foundation for Statistical Computing, Vienna, Austria). Cox proportional hazards models were fitted using the 'survival' package (version X.X). Model calibration was assessed using custom functions and the 'rms' package (version X.X). Visualization was performed using 'ggplot2' (version X.X) and 'survminer' (version X.X) packages. Restricted cubic splines were implemented using the 'splines' package.
 
 ## Proportional Hazards Assumption
 
-The proportional hazards assumption was tested using scaled Schoenfeld residuals and visual inspection of log-log survival plots. For predictors violating this assumption (p < 0.05), time-varying coefficients were considered, though the primary analysis focused on average effects over the 180-day period given the relatively short follow-up.
+The proportional hazards assumption was tested using scaled Schoenfeld residuals and visual inspection of log-log survival plots. For predictors violating this assumption (p \< 0.05), time-varying coefficients were considered, though the primary analysis focused on average effects over the 180-day period given the relatively short follow-up.
 
 ## Clinical Utility Assessment
 
-Beyond statistical metrics, clinical utility was evaluated by:
-1. Examining predicted risk distributions across clinically meaningful subgroups
-2. Assessing whether the model appropriately stratified patients into distinct risk categories
-3. Evaluating face validity of interaction effects with clinical experts
+Beyond statistical metrics, clinical utility was evaluated by: 1. Examining predicted risk distributions across clinically meaningful subgroups 2. Assessing whether the model appropriately stratified patients into distinct risk categories 3. Evaluating face validity of interaction effects with clinical experts
 
 ## Sensitivity Analyses
 
-Several sensitivity analyses were conducted:
-1. Alternative interaction specifications (e.g., categorical age groups × CRE)
-2. Different knot placements for spline terms
-3. Exclusion of early deaths (<7 days) to assess immortal time bias
-4. Restriction to patients with complete 180-day follow-up
+Several sensitivity analyses were conducted: 1. Alternative interaction specifications (e.g., categorical age groups × CRE) 2. Different knot placements for spline terms 3. Exclusion of early deaths (\<7 days) to assess immortal time bias 4. Restriction to patients with complete 180-day follow-up
 
 ## Reporting Standards
 
 This analysis adheres to the Transparent Reporting of a multivariable prediction model for Individual Prognosis or Diagnosis (TRIPOD) guidelines. Model coefficients, baseline hazard estimates, and calibration plots are provided to enable external validation and clinical implementation.
 
----
+------------------------------------------------------------------------
 
 ## Key Methodological Innovations
 
-The primary methodological contribution of this work was the systematic approach to addressing severe model miscalibration through progressive complexity enhancement. The calibration slope of 5.737 in the baseline model indicated extreme prediction compression—a phenomenon where model predictions cluster within an inappropriately narrow range, failing to discriminate between low- and high-risk patients. 
+The primary methodological contribution of this work was the systematic approach to addressing severe model miscalibration through progressive complexity enhancement. The calibration slope of 5.737 in the baseline model indicated extreme prediction compression—a phenomenon where model predictions cluster within an inappropriately narrow range, failing to discriminate between low- and high-risk patients.
 
 Our solution, incorporating interaction terms between CRE infection and patient characteristics, recognizes that antimicrobial resistance impact is not uniform across all transplant recipients. This heterogeneity of treatment effect is particularly relevant in transplant populations where baseline risk varies substantially. The improvement in calibration slope from 5.737 to approximately 1.5-2.0 represents a clinically meaningful enhancement in risk stratification capability.
 
