@@ -10,6 +10,7 @@ website:
       - about.qmd
       - validation.qmd
       - intervention.qmd
+      - stewardship.qmd
       
 
 format:

@@ -1,0 +1,595 @@
+---
+title: "CRE Risk Score Stewardship Analysis"
+date: "2025-10-07"
+date-format: "D MMMM YYYY"
+format: 
+  html:
+    code-fold: true
+    number-sections: false
+execute:
+  echo: false
+  warning: false
+  message: false
+---
+
+```{r setup}
+#| label: setup
+#| include: false
+
+# Load required libraries
+library(tidyverse)
+library(knitr)
+library(kableExtra)
+library(scales)
+library(gridExtra)
+
+# Set theme for plots
+theme_set(theme_minimal())
+
+# Custom color palette
+steward_colors <- c(
+  "Appropriate Therapy" = "#4CAF50",
+  "Appropriate No Therapy" = "#8BC34A",
+  "Borderline No Therapy" = "#FFC107",
+  "Potential Overtreatment" = "#FF9800",
+  "Missed Opportunity" = "#F44336",
+  "Other" = "#9E9E9E"
+)
+```
+
+```{r load-data}
+#| label: load-and-process-data
+#| include: false
+
+# Load the CRECOOLT data
+df <- read.csv("CRECOOLT_overall.csv", stringsAsFactors = FALSE)
+
+# Create patient-level summary
+patient_data <- df %>%
+  group_by(record_id) %>%
+  summarise(
+    # Score metrics
+    max_score = max(score, na.rm = TRUE),
+    mean_score = mean(score, na.rm = TRUE),
+    baseline_score = first(score[!is.na(score)]),
+    
+    # Clinical actions based on score
+    received_therapy = ifelse(any(score_impact___2 == 1, na.rm = TRUE), 1, 0),
+    had_diagnostic = ifelse(any(score_impact___3 == 1, na.rm = TRUE), 1, 0),
+    any_action = ifelse(received_therapy == 1 | had_diagnostic == 1, 1, 0),
+    
+    # CRE outcome
+    cre_infection = if("cre_infection" %in% names(df)) {
+      first(cre_infection[!is.na(cre_infection)])
+    } else {
+      NA
+    },
+    
+    .groups = "drop"
+  ) %>%
+  # Remove invalid scores
+  filter(!is.na(max_score) & !is.infinite(max_score))
+
+# Add risk stratification
+patient_data <- patient_data %>%
+  mutate(
+    risk_category = cut(
+      max_score,
+      breaks = c(-Inf, 10, 20, Inf),
+      labels = c("Low Risk (≤10)", "Medium Risk (11-20)", "High Risk (>20)")
+    ),
+    risk_category = factor(risk_category, 
+                          levels = c("Low Risk (≤10)", "Medium Risk (11-20)", "High Risk (>20)"))
+  )
+
+# Add appropriateness classification
+patient_data <- patient_data %>%
+  mutate(
+    appropriateness = case_when(
+      risk_category == "Low Risk (≤10)" & received_therapy == 1 ~ "Potential Overtreatment",
+      risk_category == "High Risk (>20)" & received_therapy == 0 ~ "Missed Opportunity",
+      risk_category %in% c("Medium Risk (11-20)", "High Risk (>20)") & 
+        received_therapy == 1 ~ "Appropriate Therapy",
+      risk_category == "Low Risk (≤10)" & received_therapy == 0 ~ "Appropriate No Therapy",
+      risk_category == "Medium Risk (11-20)" & received_therapy == 0 ~ "Borderline No Therapy",
+      TRUE ~ "Other"
+    )
+  )
+
+# Create key subsets for analysis
+low_risk <- patient_data %>% filter(risk_category == "Low Risk (≤10)")
+low_risk_therapy <- low_risk %>% filter(received_therapy == 1)
+high_risk <- patient_data %>% filter(risk_category == "High Risk (>20)")
+high_risk_no_therapy <- high_risk %>% filter(received_therapy == 0)
+all_therapy <- patient_data %>% filter(received_therapy == 1)
+```
+
+## Executive Summary
+
+```{r summary-stats}
+#| label: summary-statistics
+
+# Calculate key metrics
+n_patients <- nrow(patient_data)
+n_therapy <- sum(patient_data$received_therapy)
+pct_therapy <- round(100 * mean(patient_data$received_therapy), 1)
+n_cre <- sum(patient_data$cre_infection == 1, na.rm = TRUE)
+pct_cre <- round(100 * mean(patient_data$cre_infection == 1, na.rm = TRUE), 1)
+
+# Display summary
+summary_data <- data.frame(
+  Metric = c("Total patients analyzed",
+             "Patients receiving therapy", 
+             "CRE infections",
+             "Score utilization rate"),
+  Value = c(n_patients,
+            paste0(n_therapy, " (", pct_therapy, "%)"),
+            paste0(n_cre, " (", pct_cre, "%)"),
+            paste0(round(100 * mean(patient_data$any_action), 1), "%"))
+)
+
+summary_data %>%
+  kable(caption = "Study Population Overview") %>%
+  kable_styling(bootstrap_options = c("striped", "hover"), full_width = FALSE)
+```
+
+## Key Stewardship Findings
+
+### Potential Overtreatment
+
+```{r overtreatment}
+#| label: overtreatment-analysis
+
+# Calculate overtreatment metrics
+low_risk_therapy_pct <- if(nrow(all_therapy) > 0) {
+  round(100 * nrow(low_risk_therapy) / nrow(all_therapy), 1)
+} else {0}
+
+overtreatment_data <- data.frame(
+  Metric = c("Low-risk patients receiving therapy",
+             "Total low-risk patients",
+             "% of all therapy to low-risk"),
+  Value = c(nrow(low_risk_therapy),
+            nrow(low_risk),
+            paste0(low_risk_therapy_pct, "%"))
+)
+
+overtreatment_data %>%
+  kable(caption = "Overtreatment Analysis") %>%
+  kable_styling(bootstrap_options = c("striped", "hover"), full_width = FALSE)
+```
+
+### Missed Opportunities
+
+```{r undertreatment}
+#| label: undertreatment-analysis
+
+# Calculate undertreatment metrics
+high_risk_no_therapy_pct <- if(nrow(high_risk) > 0) {
+  round(100 * nrow(high_risk_no_therapy) / nrow(high_risk), 1)
+} else {0}
+
+undertreatment_data <- data.frame(
+  Metric = c("High-risk patients NOT receiving therapy",
+             "Total high-risk patients", 
+             "% high-risk untreated"),
+  Value = c(nrow(high_risk_no_therapy),
+            nrow(high_risk),
+            paste0(high_risk_no_therapy_pct, "%"))
+)
+
+if(!all(is.na(high_risk_no_therapy$cre_infection)) && nrow(high_risk_no_therapy) > 0) {
+  cre_rate <- round(100 * sum(high_risk_no_therapy$cre_infection == 1, na.rm = TRUE) / 
+                    nrow(high_risk_no_therapy), 1)
+  undertreatment_data <- rbind(undertreatment_data,
+                               data.frame(Metric = "CRE rate in untreated high-risk",
+                                        Value = paste0(cre_rate, "%")))
+}
+
+undertreatment_data %>%
+  kable(caption = "Missed Opportunities Analysis") %>%
+  kable_styling(bootstrap_options = c("striped", "hover"), full_width = FALSE) %>%
+  row_spec(1, bold = TRUE, color = "white", background = "#F44336")
+```
+
+## Therapy Allocation by Risk Category
+
+```{r therapy-by-risk}
+#| label: risk-category-analysis
+
+therapy_by_risk <- patient_data %>%
+  group_by(risk_category) %>%
+  summarise(
+    n_total = n(),
+    n_therapy = sum(received_therapy == 1),
+    pct_therapy = round(100 * mean(received_therapy == 1), 1),
+    n_cre = sum(cre_infection == 1, na.rm = TRUE),
+    cre_rate = round(100 * mean(cre_infection == 1, na.rm = TRUE), 1),
+    .groups = "drop"
+  )
+
+therapy_by_risk %>%
+  kable(col.names = c("Risk Category", "Total", "Received Therapy", "% Therapy", "CRE Cases", "CRE Rate (%)"),
+        caption = "Therapy Allocation and Outcomes by Risk") %>%
+  kable_styling(bootstrap_options = c("striped", "hover"), full_width = FALSE) %>%
+  row_spec(which(therapy_by_risk$risk_category == "High Risk (>20)"), 
+           bold = TRUE, background = "#ffebee")
+```
+
+## Visualizations
+
+```{r fig1}
+#| label: fig-therapy-allocation
+#| fig-cap: "Therapy Utilization by Risk Category"
+#| fig-width: 8
+#| fig-height: 5
+
+ggplot(therapy_by_risk, aes(x = risk_category)) +
+  geom_col(aes(y = n_total), fill = "lightgray", alpha = 0.5) +
+  geom_col(aes(y = n_therapy), fill = "#2196F3", alpha = 0.8) +
+  geom_text(aes(y = n_total, label = paste0("Total: ", n_total)), 
+            vjust = -0.5, size = 3.5) +
+  geom_text(aes(y = n_therapy/2, label = paste0(n_therapy, "\n(", pct_therapy, "%)")),
+            color = "white", size = 3.5, fontweight = "bold") +
+  geom_line(aes(y = cre_rate * max(n_total) / 100, group = 1), 
+            color = "#F44336", size = 1.5) +
+  geom_point(aes(y = cre_rate * max(n_total) / 100), 
+             color = "#F44336", size = 3) +
+  scale_y_continuous(
+    sec.axis = sec_axis(~ . * 100 / max(therapy_by_risk$n_total),
+                        name = "CRE Rate (%, Red Line)")
+  ) +
+  labs(
+    title = "Therapy Utilization and CRE Rates by Risk Category",
+    x = "Risk Category",
+    y = "Number of Patients"
+  ) +
+  theme_minimal()
+```
+
+```{r fig2}
+#| label: fig-appropriateness
+#| fig-cap: "Therapy Appropriateness Classification"
+#| fig-width: 8
+#| fig-height: 5
+
+appropriateness_summary <- patient_data %>%
+  group_by(appropriateness) %>%
+  summarise(
+    n_patients = n(),
+    pct_total = round(100 * n() / nrow(patient_data), 1),
+    .groups = "drop"
+  ) %>%
+  mutate(appropriateness = factor(appropriateness,
+                                  levels = c("Appropriate Therapy",
+                                           "Appropriate No Therapy",
+                                           "Borderline No Therapy",
+                                           "Potential Overtreatment",
+                                           "Missed Opportunity")))
+
+ggplot(appropriateness_summary, aes(x = appropriateness, y = n_patients, fill = appropriateness)) +
+  geom_col(alpha = 0.8) +
+  geom_text(aes(label = paste0(n_patients, "\n(", pct_total, "%)")),
+            vjust = 0.5, size = 3.5, color = "white", fontweight = "bold") +
+  scale_fill_manual(values = steward_colors) +
+  labs(
+    title = "CRE Risk Score Stewardship Analysis",
+    x = "",
+    y = "Number of Patients"
+  ) +
+  theme_minimal() +
+  theme(
+    legend.position = "none",
+    axis.text.x = element_text(angle = 45, hjust = 1)
+  )
+
+
+# Basic ROC analysis without special packages
+# Sort by score
+roc_data <- patient_data %>%
+  arrange(desc(max_score)) %>%
+  mutate(
+    tpr = cumsum(cre_infection == 1) / sum(cre_infection == 1, na.rm = TRUE),
+    fpr = cumsum(cre_infection == 0) / sum(cre_infection == 0, na.rm = TRUE)
+  )
+
+# Calculate AUC using trapezoidal rule
+auc_manual <- sum(diff(roc_data$fpr) * 
+                 (roc_data$tpr[-1] + roc_data$tpr[-length(roc_data$tpr)])/2)
+
+# Plot ROC curve
+plot(roc_data$fpr, roc_data$tpr, type = "l", 
+     main = paste("ROC Curve (AUC =", round(auc_manual, 3), ")"),
+     xlab = "False Positive Rate", 
+     ylab = "True Positive Rate")
+abline(0, 1, lty = 2, col = "gray")
+
+# Find optimal cutpoint (Youden index)
+roc_data$youden <- roc_data$tpr - roc_data$fpr
+optimal_idx <- which.max(roc_data$youden)
+optimal_score <- roc_data$max_score[optimal_idx]
+
+cat("Optimal score cutpoint:", optimal_score, "\n")
+cat("Sensitivity:", round(roc_data$tpr[optimal_idx], 3), "\n")
+cat("Specificity:", round(1 - roc_data$fpr[optimal_idx], 3), "\n")
+```
+
+## Recommendations
+
+Based on the analysis of **`r nrow(patient_data)` patients**:
+
+1.  **Address High-Risk Treatment Gaps**: `r high_risk_no_therapy_pct`% of high-risk patients did not receive therapy (`r nrow(high_risk_no_therapy)` patients)
+
+2.  **Optimize Low-Risk Treatment**: `r low_risk_therapy_pct`% of therapy went to low-risk patients
+
+3.  **Improve Score Implementation**: Only `r round(100 * mean(patient_data$any_action), 1)`% of patients had score-driven actions
+
+4.  **Consider Automated Protocols**: Implement automatic therapy for scores \>20
+
+## 
+
+```{r}
+library(ggridges)
+
+patient_data %>%
+  mutate(cre_status = ifelse(cre_infection == 1, "CRE", "No CRE")) %>%
+  ggplot(aes(x = max_score, y = risk_category, fill = cre_status)) +
+  geom_density_ridges(alpha = 0.6, scale = 0.9) +
+  scale_fill_manual(values = c("CRE" = "#F44336", "No CRE" = "#4CAF50")) +
+  labs(title = "Score Distribution by Risk Category and Outcome",
+       x = "Maximum Score", y = "Risk Category") +
+  theme_minimal()
+```
+
+```{r}
+library(ggalluvial)
+
+flow_data <- patient_data %>%
+  count(risk_category, received_therapy, cre_infection) %>%
+  mutate(
+    therapy_label = ifelse(received_therapy == 1, "Therapy", "No Therapy"),
+    outcome_label = ifelse(cre_infection == 1, "CRE", "No CRE")
+  )
+
+ggplot(flow_data, aes(axis1 = risk_category, 
+                      axis2 = therapy_label,
+                      axis3 = outcome_label,
+                      y = n)) +
+  geom_alluvium(aes(fill = risk_category), alpha = 0.7) +
+  geom_stratum() +
+  geom_text(stat = "stratum", aes(label = after_stat(stratum))) +
+  scale_fill_manual(values = c("#4CAF50", "#FFC107", "#F44336")) +
+  labs(title = "Patient Flow: Risk → Therapy → Outcome") +
+  theme_minimal()
+```
+
+```{r}
+# ============================================================================
+# CRE STEWARDSHIP ANALYSIS - COMPLETE VERSION WITH ALL LIBRARIES
+# ============================================================================
+
+# Install packages if needed
+packages_needed <- c("tidyverse", "scales", "pROC", "kableExtra")
+packages_to_install <- packages_needed[!packages_needed %in% installed.packages()[,"Package"]]
+if(length(packages_to_install) > 0) {
+  install.packages(packages_to_install)
+}
+
+# Load all required libraries
+library(tidyverse)
+library(scales)
+library(pROC)      # For ROC analysis
+library(kableExtra) # For nice tables
+
+# Clear workspace
+rm(list = ls())
+
+# ============================================================================
+# LOAD AND PROCESS DATA
+# ============================================================================
+
+cat("Loading data...\n")
+df <- read.csv("CRECOOLT_overall.csv", stringsAsFactors = FALSE)
+cat("Data loaded:", nrow(df), "rows x", ncol(df), "columns\n\n")
+
+# Create patient-level data with all variables
+patient_data <- df %>%
+  group_by(record_id) %>%
+  summarise(
+    # Score metrics
+    max_score = max(score, na.rm = TRUE),
+    mean_score = mean(score, na.rm = TRUE),
+    
+    # Clinical actions
+    received_therapy = ifelse(any(score_impact___2 == 1, na.rm = TRUE), 1, 0),
+    had_diagnostic = ifelse(any(score_impact___3 == 1, na.rm = TRUE), 1, 0),
+    
+    # CRE outcome
+    cre_infection = ifelse(any(cre_infection == 1, na.rm = TRUE), 1, 0),
+    
+    .groups = "drop"
+  ) %>%
+  filter(!is.na(max_score) & !is.infinite(max_score)) %>%
+  mutate(
+    # Risk category
+    risk_category = cut(
+      max_score,
+      breaks = c(-Inf, 10, 20, Inf),
+      labels = c("Low Risk (≤10)", "Medium Risk (11-20)", "High Risk (>20)")
+    ),
+    
+    # Any action
+    any_action = ifelse(received_therapy == 1 | had_diagnostic == 1, 1, 0),
+    
+    # Appropriateness
+    appropriateness = case_when(
+      risk_category == "Low Risk (≤10)" & received_therapy == 1 ~ "Potential Overtreatment",
+      risk_category == "High Risk (>20)" & received_therapy == 0 ~ "Missed Opportunity",
+      risk_category %in% c("Medium Risk (11-20)", "High Risk (>20)") & 
+        received_therapy == 1 ~ "Appropriate Therapy",
+      risk_category == "Low Risk (≤10)" & received_therapy == 0 ~ "Appropriate No Therapy",
+      risk_category == "Medium Risk (11-20)" & received_therapy == 0 ~ "Borderline No Therapy",
+      TRUE ~ "Other"
+    )
+  )
+
+cat("Patient data created:", nrow(patient_data), "patients\n\n")
+
+# ============================================================================
+# ROC ANALYSIS (NOW WITH pROC LOADED)
+# ============================================================================
+
+if(!all(is.na(patient_data$cre_infection))) {
+  cat("========== ROC ANALYSIS ==========\n")
+  
+  # Calculate ROC
+  roc_obj <- roc(patient_data$cre_infection, patient_data$max_score, quiet = TRUE)
+  auc_value <- auc(roc_obj)
+  ci_auc <- ci.auc(roc_obj, quiet = TRUE)
+  
+  cat("AUC:", round(auc_value, 3), "\n")
+  cat("95% CI:", round(ci_auc[1], 3), "-", round(ci_auc[3], 3), "\n")
+  
+  # Find optimal cutpoint
+  coords_best <- coords(roc_obj, "best", best.method = "youden")
+  cat("\nOptimal cutpoint (Youden):", round(coords_best$threshold, 1), "\n")
+  cat("  Sensitivity:", round(coords_best$sensitivity, 3), "\n")
+  cat("  Specificity:", round(coords_best$specificity, 3), "\n\n")
+  
+  # Plot ROC curve
+  plot(roc_obj, main = paste("ROC Curve (AUC =", round(auc_value, 3), ")"))
+}
+
+# ============================================================================
+# SUBGROUP ANALYSIS WITH ROC
+# ============================================================================
+
+# Only run if we have additional variables for subgroups
+if("age" %in% names(patient_data) || "meld_score" %in% names(patient_data)) {
+  
+  cat("========== SUBGROUP ANALYSIS ==========\n")
+  
+  # Define subgroups (adjust based on your actual variables)
+  subgroups <- list(
+    "Overall" = rep(TRUE, nrow(patient_data))
+    # Add more subgroups if you have the variables:
+    # "Age ≥60" = patient_data$age >= 60,
+    # "Age <60" = patient_data$age < 60
+  )
+  
+  # Calculate AUC for each subgroup
+  subgroup_results <- map_df(names(subgroups), function(name) {
+    subset_data <- patient_data[subgroups[[name]], ]
+    if(nrow(subset_data) > 10 & sum(subset_data$cre_infection == 1) > 2) {
+      roc_obj <- roc(subset_data$cre_infection, subset_data$max_score, quiet = TRUE)
+      auc_ci <- ci.auc(roc_obj, quiet = TRUE)
+      data.frame(
+        subgroup = name,
+        n = nrow(subset_data),
+        auc = as.numeric(auc(roc_obj)),
+        ci_lower = auc_ci[1],
+        ci_upper = auc_ci[3],
+        events = sum(subset_data$cre_infection == 1)
+      )
+    } else {
+      NULL
+    }
+  })
+  
+  print(subgroup_results)
+}
+
+# ============================================================================
+# STEWARDSHIP METRICS
+# ============================================================================
+
+cat("========== STEWARDSHIP METRICS ==========\n\n")
+
+# Create subsets
+low_risk <- patient_data %>% filter(risk_category == "Low Risk (≤10)")
+low_risk_therapy <- low_risk %>% filter(received_therapy == 1)
+high_risk <- patient_data %>% filter(risk_category == "High Risk (>20)")
+high_risk_no_therapy <- high_risk %>% filter(received_therapy == 0)
+all_therapy <- patient_data %>% filter(received_therapy == 1)
+
+# Calculate key metrics
+cat("1. OVERTREATMENT:\n")
+cat("   Low-risk with therapy:", nrow(low_risk_therapy), "/", nrow(low_risk), "\n")
+cat("   % of all therapy to low-risk:", 
+    round(100 * nrow(low_risk_therapy) / nrow(all_therapy), 1), "%\n\n")
+
+cat("2. UNDERTREATMENT:\n")
+cat("   High-risk without therapy:", nrow(high_risk_no_therapy), "/", nrow(high_risk), "\n")
+cat("   % high-risk untreated:", 
+    round(100 * nrow(high_risk_no_therapy) / nrow(high_risk), 1), "%\n\n")
+
+# ============================================================================
+# SUMMARY TABLES
+# ============================================================================
+
+# Therapy by risk
+therapy_by_risk <- patient_data %>%
+  group_by(risk_category) %>%
+  summarise(
+    n_total = n(),
+    n_therapy = sum(received_therapy == 1),
+    pct_therapy = round(100 * mean(received_therapy == 1), 1),
+    n_cre = sum(cre_infection == 1, na.rm = TRUE),
+    cre_rate = round(100 * mean(cre_infection == 1, na.rm = TRUE), 1),
+    .groups = "drop"
+  )
+
+cat("THERAPY BY RISK CATEGORY:\n")
+print(therapy_by_risk)
+
+# Appropriateness
+appropriateness_summary <- patient_data %>%
+  group_by(appropriateness) %>%
+  summarise(
+    n_patients = n(),
+    pct_total = round(100 * n() / nrow(patient_data), 1),
+    n_cre = sum(cre_infection == 1, na.rm = TRUE),
+    cre_rate = round(100 * mean(cre_infection == 1, na.rm = TRUE), 1),
+    .groups = "drop"
+  )
+
+cat("\nAPPROPRIATENESS:\n")
+print(appropriateness_summary)
+
+# ============================================================================
+# PLOTS
+# ============================================================================
+
+# Plot 1: ROC Curve
+if(!all(is.na(patient_data$cre_infection))) {
+  p_roc <- ggroc(roc_obj) +
+    geom_abline(intercept = 1, slope = 1, linetype = "dashed", alpha = 0.5) +
+    labs(title = paste("ROC Curve (AUC =", round(auc_value, 3), ")"),
+         x = "Specificity", y = "Sensitivity") +
+    theme_minimal()
+  print(p_roc)
+}
+
+# Plot 2: Therapy by Risk
+p_therapy <- ggplot(therapy_by_risk, aes(x = risk_category)) +
+  geom_col(aes(y = n_total), fill = "lightgray", alpha = 0.5) +
+  geom_col(aes(y = n_therapy), fill = "#2196F3", alpha = 0.8) +
+  geom_text(aes(y = n_total, label = paste0("n=", n_total)), vjust = -0.5) +
+  labs(title = "Therapy Utilization by Risk Category",
+       x = "Risk Category", y = "Number of Patients") +
+  theme_minimal()
+print(p_therapy)
+
+# Plot 3: Appropriateness
+p_approp <- ggplot(appropriateness_summary, 
+                   aes(x = reorder(appropriateness, -n_patients), y = n_patients)) +
+  geom_col(fill = "#4CAF50", alpha = 0.7) +
+  geom_text(aes(label = paste0(n_patients, "\n(", pct_total, "%)")), 
+            vjust = 0.5, color = "white") +
+  labs(title = "Therapy Appropriateness", x = "", y = "N") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+print(p_approp)
+
+cat("\n========== ANALYSIS COMPLETE ==========\n")
+```

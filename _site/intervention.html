@@ -94,12 +94,13 @@ ul.task-list li input[type="checkbox"] {
           <div class="collapse navbar-collapse" id="navbarCollapse">
             <ul class="navbar-nav navbar-nav-scroll me-auto">
   <li class="nav-item">
-    <a class="nav-link" href="./index.html"> 
+    <a class="nav-link" href="./index.qmd"> 
 <span class="menu-text">Home</span></a>
   </li>  
   <li class="nav-item">
-    <a class="nav-link" href="./about.html"> 
-<span class="menu-text">About</span></a>
+    <span class="nav-link">
+<span class="menu-text">about.qmd</span>
+    </span>
   </li>  
   <li class="nav-item">
     <a class="nav-link" href="./validation.html"> 
@@ -108,6 +109,10 @@ ul.task-list li input[type="checkbox"] {
   <li class="nav-item">
     <a class="nav-link active" href="./intervention.html" aria-current="page"> 
 <span class="menu-text">Intervention impact</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="./stewardship.html"> 
+<span class="menu-text">CRE Risk Score Stewardship Analysis</span></a>
   </li>  
 </ul>
           </div> <!-- /navcollapse -->
@@ -125,7 +130,8 @@ ul.task-list li input[type="checkbox"] {
     <h2 id="toc-title">On this page</h2>
    
   <ul>
-  <li><a href="#score-trajectory" id="toc-score-trajectory" class="nav-link active" data-scroll-target="#score-trajectory">Score trajectory</a></li>
+  <li><a href="#swimlane-plot" id="toc-swimlane-plot" class="nav-link active" data-scroll-target="#swimlane-plot">Swimlane plot</a></li>
+  <li><a href="#score-trajectory" id="toc-score-trajectory" class="nav-link" data-scroll-target="#score-trajectory">Score trajectory</a></li>
   <li><a href="#score-driven-cre-treatment" id="toc-score-driven-cre-treatment" class="nav-link" data-scroll-target="#score-driven-cre-treatment">SCORE-driven CRE treatment</a></li>
   <li><a href="#score-driven-diagnostic-testing" id="toc-score-driven-diagnostic-testing" class="nav-link" data-scroll-target="#score-driven-diagnostic-testing">SCORE-driven diagnostic testing</a></li>
   </ul>
@@ -159,6 +165,33 @@ ul.task-list li input[type="checkbox"] {
 </header>
 
 
+<section id="swimlane-plot" class="level2">
+<h2 class="anchored" data-anchor-id="swimlane-plot">Swimlane plot</h2>
+<div class="cell" data-layout-align="center">
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="intervention_files/figure-html/unnamed-chunk-1-1.png" class="img-fluid quarto-figure quarto-figure-center figure-img" style="width:150.0%"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+===== SUMMARY STATISTICS =====</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 4 × 9
+  treatment_strategy  n_patients n_cre_infections n_deaths n_discharges
+  &lt;fct&gt;                    &lt;int&gt;            &lt;int&gt;    &lt;int&gt;        &lt;int&gt;
+1 No CRE Colonization       2493                2        3            6
+2 No Prophylaxis             522              116       39          363
+3 Prophylaxis                 96               32        6           58
+4 Pre-emptive Therapy         59               39        4           16
+# ℹ 4 more variables: mortality_180d_pct &lt;dbl&gt;, median_time_to_event &lt;dbl&gt;,
+#   cre_infection_rate &lt;dbl&gt;, death_rate &lt;dbl&gt;</code></pre>
+</div>
+</div>
+</section>
 <section id="score-trajectory" class="level2">
 <h2 class="anchored" data-anchor-id="score-trajectory">Score trajectory</h2>
 <div class="cell">
@@ -236,7 +269,7 @@ Patient trajectory summary:
 <div class="cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="intervention_files/figure-html/unnamed-chunk-3-1.png" class="img-fluid figure-img" width="672"></p>
+<p><img src="intervention_files/figure-html/unnamed-chunk-4-1.png" class="img-fluid figure-img" width="672"></p>
 </figure>
 </div>
 </div>
@@ -888,85 +921,6 @@ Note
 </ul>
 </div>
 </div>
-<div class="cell">
-<div class="cell-output cell-output-stdout">
-<pre><code>=== ROC Analysis Results ===</code></pre>
-</div>
-<div class="cell-output cell-output-stdout">
-<pre><code>AUC for max score: 0.725 </code></pre>
-</div>
-<div class="cell-output cell-output-stdout">
-<pre><code>95% CI: 0.639 - 0.81 </code></pre>
-</div>
-<div class="cell-output cell-output-stdout">
-<pre><code>Optimal cutpoint (Youden method):</code></pre>
-</div>
-<div class="cell-output cell-output-stdout">
-<pre><code>  Score threshold: 23.8 </code></pre>
-</div>
-<div class="cell-output cell-output-stdout">
-<pre><code>  Sensitivity: 60 %</code></pre>
-</div>
-<div class="cell-output cell-output-stdout">
-<pre><code>  Specificity: 80.6 %</code></pre>
-</div>
-<div class="cell-output-display">
-<div>
-<figure class="figure">
-<p><img src="intervention_files/figure-html/discrimination-analysis-fixed-1.png" class="img-fluid figure-img" width="768"></p>
-</figure>
-</div>
-</div>
-</div>
-<div class="cell">
-<div class="cell-output cell-output-stdout">
-<pre><code># A tibble: 4 × 4
-  primary_outcome     n avg_velocity avg_max_velocity
-  &lt;chr&gt;           &lt;int&gt;        &lt;dbl&gt;            &lt;dbl&gt;
-1 CRE Infection      44      Inf               Inf   
-2 Censored            2        0.606             1.25
-3 Death              11        2.87              5.53
-4 Discharge          81      Inf               Inf   </code></pre>
-</div>
-</div>
-<div class="cell">
-<div class="cell-output cell-output-stdout">
-<pre><code># A tibble: 4 × 5
-  risk_category     n n_cre cre_rate mortality_rate
-  &lt;fct&gt;         &lt;int&gt; &lt;int&gt;    &lt;dbl&gt;          &lt;dbl&gt;
-1 Low              48     8    0.167         0.0208
-2 Moderate         47    12    0.255         0.0851
-3 High             20     5    0.25          0.1   
-4 Very High        43    25    0.581         0.163 </code></pre>
-</div>
-<div class="cell-output cell-output-stdout">
-<pre><code># A tibble: 4 × 7
-  risk_category     n n_cre cre_rate mortality_rate   nnt recommendation        
-  &lt;fct&gt;         &lt;int&gt; &lt;int&gt;    &lt;dbl&gt;          &lt;dbl&gt; &lt;dbl&gt; &lt;chr&gt;                 
-1 Low              48     8    0.167         0.0208     6 Standard monitoring   
-2 Moderate         47    12    0.255         0.0851     4 Enhanced surveillance 
-3 High             20     5    0.25          0.1        4 Consider prophylaxis  
-4 Very High        43    25    0.581         0.163      2 Aggressive interventi…</code></pre>
-</div>
-</div>
-<div class="cell">
-<div class="cell-output cell-output-stdout">
-<pre><code>
-=== Bootstrap Validation Results (n= 100 ) ===</code></pre>
-</div>
-<div class="cell-output cell-output-stdout">
-<pre><code>AUC:  0.721  (95% CI:  0.647 - 0.78 )</code></pre>
-</div>
-<div class="cell-output cell-output-stdout">
-<pre><code>Optimal cutpoint:  23.2  (95% CI:  14.4 - 25.4 )</code></pre>
-</div>
-<div class="cell-output cell-output-stdout">
-<pre><code>Sensitivity:  0.621  (95% CI:  0.478 - 0.818 )</code></pre>
-</div>
-<div class="cell-output cell-output-stdout">
-<pre><code>Specificity:  0.792  (95% CI:  0.548 - 0.88 )</code></pre>
-</div>
-</div>
 
 
 </section>
@@ -1045,7 +999,7 @@ Note
     }
       var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
       var mailtoRegex = new RegExp(/^mailto:/);
-        var filterRegex = new RegExp('/' + window.location.host + '/');
+        var filterRegex = new RegExp("https:\/\/crecoolt\.org");
       var isInternal = (href) => {
           return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
       }

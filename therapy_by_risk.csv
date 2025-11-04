@@ -1,0 +1,4 @@
+"risk_category","n_total","n_therapy","pct_therapy","n_cre","cre_rate"
+"Low Risk (≤10)",48,4,8.3,8,16.7
+"Medium Risk (11-20)",46,4,8.7,12,26.1
+"High Risk (>20)",64,28,43.8,30,46.9

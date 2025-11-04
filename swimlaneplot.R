@@ -291,3 +291,4 @@ alternative_plot <- swimlane_plot /
   )
 
 ggsave("cre_analysis_alternative.png", alternative_plot, width = 16, height = 10, dpi = 300)
+
