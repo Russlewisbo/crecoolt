@@ -1,0 +1,25 @@
+
+---
+title: "CRE Infection Risk and Mortality in Liver Transplant Patients"
+subtitle: "Analysis of the CRECOOLT Study Dataset"
+author: "Data Analysis Report"
+date: "`r Sys.Date()`"
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    toc-location: left
+    code-fold: true
+    theme: cosmo
+    embed-resources: true
+execute:
+  warning: false
+  message: false
+---
+
+::: {.callout-note}
+This report was generated using AI under general human direction. At the time of generation, the contents have not been comprehensively reviewed by a human analyst.
+
+<!--
+To indicate human review: Delete the line above about contents not being reviewed, and replace this comment with:
+The contents have been

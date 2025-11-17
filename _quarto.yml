@@ -11,6 +11,7 @@ website:
       - validation.qmd
       - intervention.qmd
       - stewardship.qmd
+      - CRE_other.qmd
       
 
 format:
