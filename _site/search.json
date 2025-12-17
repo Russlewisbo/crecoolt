@@ -193,7 +193,7 @@
     "href": "CRE_infection_analysis_report-2.html",
     "title": "CRE Infection Risk and Mortality in Liver Transplant Patients",
     "section": "",
-    "text": "Note\n\n\n\nThis report was generated using AI under general human direction. At the time of generation, the contents have not been comprehensively reviewed by a human analyst."
+    "text": "NoteExecutive Summary\nThis report analyzes data from 692** of patients developed CRE infections post-transplant - CRE infection increases mortality risk by 3.6-fold - 71% of CRE infections occur within the first month post-transplant - Surgical site infections have the highest mortality (47%) - Infection type matters more than baseline patient characteristics for predicting outcomes"
   },
   {
     "objectID": "CRE_infection_analysis_report-2.html#executive-summary",
@@ -256,7 +256,7 @@
     "href": "CRE_infection_analysis_report-2.html#technical-notes",
     "title": "CRE Infection Risk and Mortality in Liver Transplant Patients",
     "section": "Technical Notes",
-    "text": "Technical Notes\nData Source: CRECOOLT study database (N=692 liver transplant patients)\nStatistical Methods:\n\nKaplan-Meier survival analysis with log-rank test\nDescriptive statistics and group comparisons\nRisk ratio calculations\n\nSoftware: R version 4.5.1, with tidyverse, survival, and survminer packages\nReport Generated: November 17, 2025"
+    "text": "Technical Notes\nData Source: CRECOOLT study database (N=692 liver transplant patients)\nStatistical Methods:\n\nKaplan-Meier survival analysis with log-rank test\nDescriptive statistics and group comparisons\nRisk ratio calculations\n\nSoftware: R version 4.5.1, with tidyverse, survival, and survminer packages\nReport Generated: December 17, 2025"
   },
   {
     "objectID": "crecoolt_cre_infection_analysis.html",

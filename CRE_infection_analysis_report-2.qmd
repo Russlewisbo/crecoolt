@@ -18,23 +18,10 @@ execute:
 ---
 
 ::: callout-note
-This report was generated using AI under general human direction. At the time of generation, the contents have not been comprehensively reviewed by a human analyst.
-
-```{=html}
-<!--
-To indicate human review: Delete the line above about contents not being reviewed, and replace this comment with:
-The contents have been reviewed and validated by [Your [ Role] on [Date].
--->
-```
+# Executive Summary
 :::
 
-## Executive Summary
-
-This report analyzes data from 692** of patients developed CRE infections post-transplant
-- CRE infection increases mortality risk by **3.6-fold**
-- **71%** of CRE infections occur within the first month post-transplant
-- **Surgical site infections** have the highest mortality (47%)
-- **Infection type matters more than baseline patient characteristics** for predicting outcomes
+This report analyzes data from 692\*\* of patients developed CRE infections post-transplant - CRE infection increases mortality risk by **3.6-fold** - **71%** of CRE infections occur within the first month post-transplant - **Surgical site infections** have the highest mortality (47%) - **Infection type matters more than baseline patient characteristics** for predicting outcomes
 
 ## Data Overview
 
@@ -58,11 +45,11 @@ n_variables <- ncol(CRECOOLT_overall)
 
 The CRECOOLT dataset contains **`r n_patients` unique patients** with **`r n_variables` variables** tracking:
 
-- Demographics and comorbidities
-- Transplant characteristics
-- CRE colonization and infection data
-- Antibiotic resistance patterns
-- Clinical outcomes and mortality
+-   Demographics and comorbidities
+-   Transplant characteristics
+-   CRE colonization and infection data
+-   Antibiotic resistance patterns
+-   Clinical outcomes and mortality
 
 ## CRE Infection Epidemiology
 
@@ -369,9 +356,9 @@ ggplot(plot_mort_source, aes(x = reorder(Source, -mortality), y = mortality, fil
 
 **Key Findings:**
 
-- **Surgical site infections** have the highest mortality (**`r highest_mort`%**)
-- **Respiratory infections** show delayed mortality pattern (42.4% overall, but only 18.2% at 90 days)
-- **Intra-abdominal infections** have the lowest mortality (**`r lowest_mort`%**)
+-   **Surgical site infections** have the highest mortality (**`r highest_mort`%**)
+-   **Respiratory infections** show delayed mortality pattern (42.4% overall, but only 18.2% at 90 days)
+-   **Intra-abdominal infections** have the lowest mortality (**`r lowest_mort`%**)
 
 ### Infection Sources: Survivors vs Non-Survivors
 
@@ -526,50 +513,50 @@ ggplot(char_summary, aes(x = mean_meld, y = mortality_rate)) +
 
 **The MELD Paradox:** Patients with similar disease severity (MELD scores) have vastly different outcomes depending on infection source:
 
-- **Surgical site** (MELD 27.0): 50% mortality
-- **Intra-abdominal** (MELD 26.9): 11.8% mortality
-- **Respiratory** (MELD 21.6): 55% mortality (highest, despite lowest MELD)
+-   **Surgical site** (MELD 27.0): 50% mortality
+-   **Intra-abdominal** (MELD 26.9): 11.8% mortality
+-   **Respiratory** (MELD 21.6): 55% mortality (highest, despite lowest MELD)
 
 ## Key Conclusions
 
 ### 1. CRE Infection is Highly Lethal
 
-- CRE infection increases mortality risk by **3.6-fold**
-- Only **22.6% of CRE-infected patients survive to 6 months**
-- The impact is immediate and severe, with most deaths in the first 90 days
+-   CRE infection increases mortality risk by **3.6-fold**
+-   Only **22.6% of CRE-infected patients survive to 6 months**
+-   The impact is immediate and severe, with most deaths in the first 90 days
 
 ### 2. Timing is Critical
 
-- **71% of infections occur within the first month** post-transplant
-- Median time to infection: **16 days**
-- This identifies a critical surveillance and prevention window
+-   **71% of infections occur within the first month** post-transplant
+-   Median time to infection: **16 days**
+-   This identifies a critical surveillance and prevention window
 
 ### 3. Infection Type Matters More Than Patient Characteristics
 
-- **Surgical site infections** have the highest mortality (47-50%)
-- **Respiratory infections** are deadly even in less severe patients (55% mortality)
-- **Intra-abdominal infections** have surprisingly good outcomes (11.8% mortality)
-- Pre-transplant MELD score does **NOT** predict CRE mortality
+-   **Surgical site infections** have the highest mortality (47-50%)
+-   **Respiratory infections** are deadly even in less severe patients (55% mortality)
+-   **Intra-abdominal infections** have surprisingly good outcomes (11.8% mortality)
+-   Pre-transplant MELD score does **NOT** predict CRE mortality
 
 ### 4. Clinical Implications
 
 **Prevention Priorities:**
 
-1. Focus on preventing **surgical site infections** in the perioperative period
-2. Implement aggressive respiratory care protocols
-3. Early detection and source control for intra-abdominal infections
+1.  Focus on preventing **surgical site infections** in the perioperative period
+2.  Implement aggressive respiratory care protocols
+3.  Early detection and source control for intra-abdominal infections
 
 **Surveillance Strategy:**
 
-- Intensify monitoring in the **first 30 days** post-transplant
-- Consider infection source-specific protocols
-- Early identification enables prompt intervention
+-   Intensify monitoring in the **first 30 days** post-transplant
+-   Consider infection source-specific protocols
+-   Early identification enables prompt intervention
 
 **Treatment Considerations:**
 
-- Infection source should guide treatment intensity
-- Aggressive source control for intra-abdominal infections appears highly effective
-- Respiratory CRE infections warrant special attention regardless of patient severity
+-   Infection source should guide treatment intensity
+-   Aggressive source control for intra-abdominal infections appears highly effective
+-   Respiratory CRE infections warrant special attention regardless of patient severity
 
 ## Technical Notes
 
@@ -577,11 +564,10 @@ ggplot(char_summary, aes(x = mean_meld, y = mortality_rate)) +
 
 **Statistical Methods:**
 
-- Kaplan-Meier survival analysis with log-rank test
-- Descriptive statistics and group comparisons
-- Risk ratio calculations
+-   Kaplan-Meier survival analysis with log-rank test
+-   Descriptive statistics and group comparisons
+-   Risk ratio calculations
 
 **Software:** R version 4.5.1, with tidyverse, survival, and survminer packages
 
 **Report Generated:** `r format(Sys.Date(), "%B %d, %Y")`
-

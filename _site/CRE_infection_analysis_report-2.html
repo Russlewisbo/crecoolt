@@ -2,12 +2,12 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
 
 <meta charset="utf-8">
-<meta name="generator" content="quarto-1.8.24">
+<meta name="generator" content="quarto-1.8.26">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 <meta name="author" content="Data Analysis Report">
-<meta name="dcterms.date" content="2025-11-17">
+<meta name="dcterms.date" content="2025-12-17">
 
 <title>CRE Infection Risk and Mortality in Liver Transplant Patients – crecoolt</title>
 <style>
@@ -74,10 +74,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <script src="site_libs/quarto-html/tippy.umd.min.js"></script>
 <script src="site_libs/quarto-html/anchor.min.js"></script>
 <link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="site_libs/quarto-html/quarto-syntax-highlighting-dc55a5b9e770e841cd82e46aadbfb9b0.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-587c61ba64f3a5504c4d52d930310e48.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="site_libs/bootstrap/bootstrap-e5d13d7b0b21ab1116f56c1f5f1be770.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<link href="site_libs/bootstrap/bootstrap-b0d1a0e5f4567b010f958fcf99e82b37.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -117,8 +117,6 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
       <div class="navbar-container container-fluid">
       <div class="navbar-brand-container mx-auto">
-    <a href="./index.html" class="navbar-brand navbar-brand-logo">
-    </a>
     <a class="navbar-brand" href="./index.html">
     <span class="navbar-title">crecoolt</span>
     </a>
@@ -169,8 +167,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <h2 id="toc-title">On this page</h2>
    
   <ul>
-  <li><a href="#executive-summary" id="toc-executive-summary" class="nav-link active" data-scroll-target="#executive-summary">Executive Summary</a></li>
-  <li><a href="#data-overview" id="toc-data-overview" class="nav-link" data-scroll-target="#data-overview">Data Overview</a></li>
+  <li><a href="#data-overview" id="toc-data-overview" class="nav-link active" data-scroll-target="#data-overview">Data Overview</a></li>
   <li><a href="#cre-infection-epidemiology" id="toc-cre-infection-epidemiology" class="nav-link" data-scroll-target="#cre-infection-epidemiology">CRE Infection Epidemiology</a>
   <ul class="collapse">
   <li><a href="#overall-infection-and-mortality-rates" id="toc-overall-infection-and-mortality-rates" class="nav-link" data-scroll-target="#overall-infection-and-mortality-rates">Overall Infection and Mortality Rates</a></li>
@@ -229,7 +226,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">November 17, 2025</p>
+      <p class="date">December 17, 2025</p>
     </div>
   </div>
   
@@ -241,27 +238,20 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </header>
 
 
-<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout callout-style-default callout-note callout-empty-content callout-titled">
 <div class="callout-header d-flex align-content-center">
 <div class="callout-icon-container">
 <i class="callout-icon"></i>
 </div>
 <div class="callout-title-container flex-fill">
-Note
+<span class="screen-reader-only">Note</span>Executive Summary
 </div>
 </div>
 <div class="callout-body-container callout-body">
-<p>This report was generated using AI under general human direction. At the time of generation, the contents have not been comprehensively reviewed by a human analyst.</p>
-<!--
-To indicate human review: Delete the line above about contents not being reviewed, and replace this comment with:
-The contents have been reviewed and validated by [Your [ Role] on [Date].
--->
+
 </div>
 </div>
-<section id="executive-summary" class="level2">
-<h2 class="anchored" data-anchor-id="executive-summary">Executive Summary</h2>
 <p>This report analyzes data from 692** of patients developed CRE infections post-transplant - CRE infection increases mortality risk by <strong>3.6-fold</strong> - <strong>71%</strong> of CRE infections occur within the first month post-transplant - <strong>Surgical site infections</strong> have the highest mortality (47%) - <strong>Infection type matters more than baseline patient characteristics</strong> for predicting outcomes</p>
-</section>
 <section id="data-overview" class="level2">
 <h2 class="anchored" data-anchor-id="data-overview">Data Overview</h2>
 <div class="cell">
@@ -1159,7 +1149,7 @@ The contents have been reviewed and validated by [Your [ Role] on [Date].
 <li>Risk ratio calculations</li>
 </ul>
 <p><strong>Software:</strong> R version 4.5.1, with tidyverse, survival, and survminer packages</p>
-<p><strong>Report Generated:</strong> November 17, 2025</p>
+<p><strong>Report Generated:</strong> December 17, 2025</p>
 
 
 </section>
@@ -1238,7 +1228,7 @@ The contents have been reviewed and validated by [Your [ Role] on [Date].
     }
       var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
       var mailtoRegex = new RegExp(/^mailto:/);
-        var filterRegex = new RegExp("https:\/\/crecoolt\.org");
+        var filterRegex = new RegExp('/' + window.location.host + '/');
       var isInternal = (href) => {
           return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
       }
