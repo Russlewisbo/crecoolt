@@ -12,7 +12,7 @@ execute:
   message: false
 ---
 
-```{r setup}
+```{r}
 #| label: setup
 #| include: false
 
@@ -37,7 +37,7 @@ steward_colors <- c(
 )
 ```
 
-```{r load-data}
+```{r}
 #| label: load-and-process-data
 #| include: false
 
@@ -106,7 +106,7 @@ all_therapy <- patient_data %>% filter(received_therapy == 1)
 
 ## Executive Summary
 
-```{r summary-stats}
+```{r}
 #| label: summary-statistics
 
 # Calculate key metrics
@@ -137,7 +137,7 @@ summary_data %>%
 
 ### Potential Overtreatment
 
-```{r overtreatment}
+```{r}
 #| label: overtreatment-analysis
 
 # Calculate overtreatment metrics
@@ -161,7 +161,7 @@ overtreatment_data %>%
 
 ### Missed Opportunities
 
-```{r undertreatment}
+```{r}
 #| label: undertreatment-analysis
 
 # Calculate undertreatment metrics
@@ -194,7 +194,7 @@ undertreatment_data %>%
 
 ## Therapy Allocation by Risk Category
 
-```{r therapy-by-risk}
+```{r}
 #| label: risk-category-analysis
 
 therapy_by_risk <- patient_data %>%
@@ -218,7 +218,7 @@ therapy_by_risk %>%
 
 ## Visualizations
 
-```{r fig1}
+```{r}
 #| label: fig-therapy-allocation
 #| fig-cap: "Therapy Utilization by Risk Category"
 #| fig-width: 8
@@ -247,7 +247,7 @@ ggplot(therapy_by_risk, aes(x = risk_category)) +
   theme_minimal()
 ```
 
-```{r fig2}
+```{r}
 #| label: fig-appropriateness
 #| fig-cap: "Therapy Appropriateness Classification"
 #| fig-width: 8

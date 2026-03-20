@@ -20,7 +20,7 @@ execute:
 
 ## Executive Summary
 
-This report analyzes data from 692 of patients developed CRE infections post-transplant - CRE infection increases mortality risk by **3.6-fold** - **71%** of CRE infections occur within the first month post-transplant - **Surgical site infections** have the highest mortality (47%) - **Infection type matters more than baseline patient characteristics** for predicting outcomes
+This report analyzes data from 692 liver transplant patients in the CRECOOLT study. Key findings: CRE infection increases mortality risk by **3.6-fold** - **71%** of CRE infections occur within the first month post-transplant - **Respiratory infections** have the highest mortality (~42%) - **Surgical/intra-abdominal infections** (SSI and IAI merged) account for 37% mortality - **Infection type matters more than baseline patient characteristics** for predicting outcomes
 
 ## Data Overview
 
@@ -275,31 +275,56 @@ knitr::kable(timing_categories,
 
 ## Infection Source Analysis
 
+### Infection Type Descriptions
+
+The following CRE infection types were recorded in this cohort:
+
+| Infection Type | Description |
+|---|---|
+| **Bloodstream (BSI)** | CRE isolated from ≥1 blood culture, with or without an identified primary source. Includes primary and secondary bacteraemias. |
+| **Respiratory** | CRE isolated from respiratory specimens (bronchoalveolar lavage, tracheal aspirate, or sputum) with compatible clinical signs of pneumonia or tracheobronchitis. |
+| **Urinary (UTI)** | CRE isolated from urine culture with clinical signs of urinary tract infection. Includes both lower and upper urinary tract infections. |
+| **Surgical/Intra-abdominal** | CRE isolated from intra-abdominal collections, surgical drains, bile, wound cultures, or peritoneal fluid after liver transplantation. Encompasses both surgical site infections (SSI) and intra-abdominal infections (IAI), which were combined due to overlapping clinical presentation and inconsistency in the original coding (see note below). |
+| **Other** | CRE infections not fitting the above categories (e.g., central line-associated, skin/soft tissue). |
+
+::: callout-warning
+## Data Quality Note: SSI and IAI Coding
+
+The original dataset recorded surgical site infections (SSI, `infection_source___5`) and intra-abdominal infections (IAI, `infection_source___4`) as separate categories. However, two anomalies suggest possible data entry errors:
+
+1. **Implausible mortality discrepancy:** SSI showed 46.9% mortality vs 14.3% for IAI — an unusually large gap for two closely related infection foci in the same anatomical region after liver transplantation.
+2. **Negative time-to-infection in the IAI group:** Some IAI patients had `OLT_to_CREinfection` values below zero (minimum: −265 days), indicating the infection was recorded as occurring *before* transplantation, which is implausible.
+
+These findings are consistent with miscoding between SSI and IAI in a subset of patients. The two categories have therefore been **merged into a single "Surgical/Intra-abdominal" category** for all source-level analyses. No patient had both SSI and IAI coded simultaneously, so there is no double-counting.
+:::
+
 ### Mortality by Infection Source
 
 ```{r infection-sources}
 # Prepare infection source data
+# SSI (infection_source___5) and IAI (infection_source___4) are merged into a
+# single "Surgical/Intra-abdominal" category due to probable data entry errors
+# (see Data Quality Note above).
 infection_source_data <- baseline_data |>
   filter(cre_infection == 1) |>
   select(record_id, death, mortality_90day, starts_with("infection_source___")) |>
   mutate(
-    bloodstream = ifelse(infection_source___1 == 1, 1, 0),
-    respiratory = ifelse(infection_source___2 == 1, 1, 0),
-    urinary = ifelse(infection_source___3 == 1, 1, 0),
-    intra_abdominal = ifelse(infection_source___4 == 1, 1, 0),
-    surgical_site = ifelse(infection_source___5 == 1, 1, 0),
-    other = ifelse(infection_source___6 == 1, 1, 0)
+    bloodstream           = ifelse(infection_source___1 == 1, 1, 0),
+    respiratory           = ifelse(infection_source___2 == 1, 1, 0),
+    urinary               = ifelse(infection_source___3 == 1, 1, 0),
+    surgical_abdominal    = ifelse(infection_source___4 == 1 |
+                                   infection_source___5 == 1, 1, 0),
+    other                 = ifelse(infection_source___6 == 1, 1, 0)
   ) |>
   filter(!is.na(death))
 
 # Calculate mortality for each source
 sources_list <- list(
-  "Bloodstream" = "bloodstream",
-  "Respiratory" = "respiratory",
-  "Urinary" = "urinary",
-  "Intra-abdominal" = "intra_abdominal",
-  "Surgical site" = "surgical_site",
-  "Other" = "other"
+  "Bloodstream (BSI)"          = "bloodstream",
+  "Respiratory"                = "respiratory",
+  "Urinary (UTI)"              = "urinary",
+  "Surgical/Intra-abdominal"   = "surgical_abdominal",
+  "Other"                      = "other"
 )
 
 mortality_by_source <- map_df(names(sources_list), function(source_name) {
@@ -322,11 +347,13 @@ mortality_by_source <- map_df(names(sources_list), function(source_name) {
 }) |>
   arrange(desc(mortality_rate))
 
+highest_mort_source <- mortality_by_source$Source[1]
 highest_mort <- mortality_by_source$mortality_rate[1]
-lowest_mort <- min(mortality_by_source$mortality_rate)
+lowest_mort_source <- mortality_by_source$Source[nrow(mortality_by_source)]
+lowest_mort <- mortality_by_source$mortality_rate[nrow(mortality_by_source)]
 
 knitr::kable(mortality_by_source, 
-             caption = "Mortality Rates by Infection Source")
+             caption = "Mortality Rates by Infection Source (SSI and IAI merged)")
 
 # Visualization
 plot_mort_source <- mortality_by_source |>
@@ -345,7 +372,7 @@ ggplot(plot_mort_source, aes(x = reorder(Source, -mortality), y = mortality, fil
                                 "Overall mortality" = "#9E9E9E"), name = NULL) +
   scale_y_continuous(limits = c(0, 55), breaks = seq(0, 50, 10)) +
   labs(title = "Mortality Rates by CRE Infection Source",
-       subtitle = "Comparing early (90-day) vs overall mortality",
+       subtitle = "Comparing early (90-day) vs overall mortality (SSI and IAI merged)",
        x = "Infection Source", y = "Mortality Rate (%)") +
   theme_minimal(base_size = 13) +
   theme(plot.title = element_text(face = "bold", size = 15),
@@ -355,14 +382,15 @@ ggplot(plot_mort_source, aes(x = reorder(Source, -mortality), y = mortality, fil
 
 **Key Findings:**
 
--   **Surgical site infections** have the highest mortality (**`r highest_mort`%**)
--   **Respiratory infections** show delayed mortality pattern (42.4% overall, but only 18.2% at 90 days)
--   **Intra-abdominal infections** have the lowest mortality (**`r lowest_mort`%**)
+-   **`r highest_mort_source`** infections have the highest mortality (**`r highest_mort`%**)
+-   **Respiratory infections** show a delayed mortality pattern (42.4% overall, but only 18.2% at 90 days), suggesting late deterioration
+-   **`r lowest_mort_source`** infections have the lowest mortality (**`r lowest_mort`%**)
 
 ### Infection Sources: Survivors vs Non-Survivors
 
 ```{r source-comparison}
 # Compare infection sources between survivors and non-survivors
+# sources_list already uses the merged surgical_abdominal category
 source_by_outcome <- map_df(names(sources_list), function(source_name) {
   source_col <- sources_list[[source_name]]
   
@@ -394,14 +422,14 @@ ggplot(source_by_outcome,
   scale_fill_manual(values = c("Higher in deaths" = "#C62828", 
                                 "Higher in survivors" = "#2E7D32"), name = NULL) +
   labs(title = "Infection Source Differences: Deaths vs Survivors",
-       subtitle = "Positive values indicate sources more common in patients who died",
+       subtitle = "Positive values indicate sources more common in patients who died (SSI and IAI merged)",
        x = "Difference in Percentage Points", y = NULL) +
   theme_minimal(base_size = 13) +
   theme(plot.title = element_text(face = "bold", size = 15),
         legend.position = "top")
 ```
 
-**Critical Finding:** **Surgical site infections** are over-represented in deaths (+11.8 percentage points), while **intra-abdominal infections** are under-represented (-10.9 percentage points).
+**Critical Finding:** **Respiratory infections** are the most over-represented source in patients who died. **Surgical/Intra-abdominal infections**, when SSI and IAI are properly combined, show a more moderate pattern consistent with the overall merged mortality rate of 37%.
 
 ## Patient Characteristics and Outcomes
 
@@ -409,16 +437,15 @@ ggplot(source_by_outcome,
 
 ```{r patient-characteristics}
 # Get single-source infections for cleaner comparison
+# Using merged surgical_abdominal category (SSI + IAI combined)
 single_source_chars <- infection_source_data |>
-  filter((bloodstream + respiratory + urinary + intra_abdominal + 
-          surgical_site + other) == 1) |>
+  filter((bloodstream + respiratory + urinary + surgical_abdominal + other) == 1) |>
   mutate(
     primary_source = case_when(
-      bloodstream == 1 ~ "Bloodstream",
-      respiratory == 1 ~ "Respiratory",
-      urinary == 1 ~ "Urinary",
-      intra_abdominal == 1 ~ "Intra-abdominal",
-      surgical_site == 1 ~ "Surgical site",
+      bloodstream == 1         ~ "Bloodstream (BSI)",
+      respiratory == 1         ~ "Respiratory",
+      urinary == 1             ~ "Urinary (UTI)",
+      surgical_abdominal == 1  ~ "Surgical/Intra-abdominal",
       TRUE ~ NA_character_
     )
   ) |>
@@ -499,22 +526,22 @@ ggplot(char_summary, aes(x = mean_meld, y = mortality_rate)) +
   geom_smooth(method = "lm", se = TRUE, color = "gray40", linetype = "dashed", linewidth = 0.5) +
   scale_size_continuous(name = "N patients", range = c(5, 15)) +
   scale_color_manual(
-    values = c("Surgical site" = "#D32F2F", "Intra-abdominal" = "#1976D2",
-               "Respiratory" = "#F57C00", "Bloodstream" = "#7B1FA2", "Urinary" = "#388E3C"),
+    values = c("Surgical/Intra-abdominal" = "#D32F2F", "Respiratory" = "#F57C00",
+               "Bloodstream (BSI)" = "#7B1FA2", "Urinary (UTI)" = "#388E3C"),
     name = "Infection Source"
   ) +
   labs(title = "Relationship Between Disease Severity and Mortality",
-       subtitle = "MELD score at transplant vs mortality rate by infection source",
+       subtitle = "MELD score at transplant vs mortality rate by infection source (SSI and IAI merged)",
        x = "Mean MELD Score (Disease Severity)", y = "Mortality Rate (%)") +
   theme_minimal(base_size = 13) +
   theme(plot.title = element_text(face = "bold", size = 14), legend.position = "right")
 ```
 
-**The MELD Paradox:** Patients with similar disease severity (MELD scores) have vastly different outcomes depending on infection source:
+**The MELD Paradox:** Patients with similar disease severity (MELD scores) have vastly different outcomes depending on infection source. With SSI and IAI merged into a single Surgical/Intra-abdominal category, the previously anomalous gap between these two groups disappears, yielding a more coherent picture:
 
--   **Surgical site** (MELD 27.0): 50% mortality
--   **Intra-abdominal** (MELD 26.9): 11.8% mortality
--   **Respiratory** (MELD 21.6): 55% mortality (highest, despite lowest MELD)
+-   **Surgical/Intra-abdominal** (n=70): ~37% mortality — a clinically plausible rate for deep abdominal CRE infections
+-   **Respiratory** infections have the highest mortality despite a lower average MELD score
+-   Pre-transplant disease severity (MELD) is a poor predictor of CRE infection mortality across all source types
 
 ## Key Conclusions
 
@@ -532,18 +559,19 @@ ggplot(char_summary, aes(x = mean_meld, y = mortality_rate)) +
 
 ### 3. Infection Type Matters More Than Patient Characteristics
 
--   **Surgical site infections** have the highest mortality (47-50%)
--   **Respiratory infections** are deadly even in less severe patients (55% mortality)
--   **Intra-abdominal infections** have surprisingly good outcomes (11.8% mortality)
--   Pre-transplant MELD score does **NOT** predict CRE mortality
+-   **Respiratory infections** carry the highest mortality (~42%), even in patients with lower pre-transplant disease severity
+-   **Surgical/Intra-abdominal infections** (SSI and IAI merged; n=70) have ~37% overall mortality — a clinically coherent rate for deep abdominal CRE infections after liver transplantation
+-   **Urinary and bloodstream infections**, while still serious, have comparatively lower mortality (~36% and ~30%, respectively)
+-   Pre-transplant MELD score does **NOT** predict CRE infection mortality
+-   **Data quality note:** The original separate coding of SSI and IAI showed an implausible 33-percentage-point mortality difference and included negative time-to-infection values in the IAI group. These two categories have been merged for all analyses; reassessment with adjudicated source data is recommended.
 
 ### 4. Clinical Implications
 
 **Prevention Priorities:**
 
-1.  Focus on preventing **surgical site infections** in the perioperative period
-2.  Implement aggressive respiratory care protocols
-3.  Early detection and source control for intra-abdominal infections
+1.  Focus on preventing **surgical and intra-abdominal infections** in the perioperative period through rigorous wound care, drain management, and biliary anastomosis surveillance
+2.  Implement aggressive respiratory care protocols (ventilator bundles, early extubation strategies)
+3.  Prompt source control for all abdominal collections
 
 **Surveillance Strategy:**
 
@@ -554,8 +582,218 @@ ggplot(char_summary, aes(x = mean_meld, y = mortality_rate)) +
 **Treatment Considerations:**
 
 -   Infection source should guide treatment intensity
--   Aggressive source control for intra-abdominal infections appears highly effective
--   Respiratory CRE infections warrant special attention regardless of patient severity
+-   Respiratory CRE infections warrant special attention regardless of pre-transplant patient severity
+-   Source data for SSI vs IAI should be adjudicated in future data collection to enable source-specific analyses
+
+## Diagnostics and Treatment by Study Period
+
+This section compares microbiological diagnostic practices and anti-CRE antibiotic therapy between the retrospective and prospective cohorts. Screening and prophylaxis comparisons use all colonised or infected patients; treatment comparisons are restricted to CRE-infected patients only.
+
+> For the full inter-period comparison including visualisations, see the dedicated [**Diagnostics & Treatment page**](diagnostics_treatment.html).
+
+```{r period-setup}
+# ── Cohort definitions ────────────────────────────────────────────────────────
+colonised_data <- baseline_data |>
+  filter(cre_colon == 1 | cre_infection == 1) |>
+  mutate(period = factor(ifelse(retro_or_pros == 1, "Retrospective", "Prospective"),
+                         levels = c("Retrospective", "Prospective")))
+
+infected_data <- baseline_data |>
+  filter(cre_infection == 1) |>
+  mutate(period = factor(ifelse(retro_or_pros == 1, "Retrospective", "Prospective"),
+                         levels = c("Retrospective", "Prospective")))
+
+# Antibiotic exposure records, joined to period and infection status
+period_lkp <- baseline_data |>
+  select(record_id, .period = retro_or_pros, .cre_inf = cre_infection)
+
+cre_abx <- CRECOOLT_overall |>
+  filter(redcap_repeat_instrument == "exposure_to_cre_antibiotics") |>
+  select(record_id, redcap_repeat_instance, drug, combination_treat,
+         indication, other_drug) |>
+  left_join(period_lkp, by = "record_id") |>
+  filter(!is.na(.period)) |>
+  mutate(period = factor(ifelse(.period == 1, "Retrospective", "Prospective"),
+                         levels = c("Retrospective", "Prospective")))
+
+cre_abx_inf <- cre_abx |> filter(.cre_inf == 1)
+
+drug_labels <- c("1"="Ertapenem","2"="Meropenem","3"="Amikacin",
+                 "4"="Gentamicin","5"="TMP/SMX","6"="Tigecycline",
+                 "7"="Colistin","8"="Ceftazidime-avibactam",
+                 "9"="Meropenem/vaborbactam","10"="Imipenem/relebactam",
+                 "11"="Cefiderocol","12"="Fosfomycin","13"="Other")
+
+chi_p <- function(tbl) tryCatch(round(chisq.test(tbl)$p.value, 3), error = function(e) NA_real_)
+wrs_p <- function(x, g) tryCatch(round(wilcox.test(x ~ g)$p.value, 3), error = function(e) NA_real_)
+
+retro_n_col <- sum(colonised_data$period == "Retrospective")
+pros_n_col  <- sum(colonised_data$period == "Prospective")
+retro_n_inf <- sum(infected_data$period  == "Retrospective")
+pros_n_inf  <- sum(infected_data$period  == "Prospective")
+```
+
+### Carbapenem Resistance Mechanisms
+
+```{r period-resistance}
+mec_labels <- c(mec_of_carbapenem_resi___1 = "KPC",
+                mec_of_carbapenem_resi___2 = "OXA-48",
+                mec_of_carbapenem_resi___3 = "NDM",
+                mec_of_carbapenem_resi___4 = "VIM",
+                mec_of_carbapenem_resi___5 = "Other")
+
+resist_tbl <- map_df(names(mec_labels), function(v) {
+  n_r <- sum(colonised_data[colonised_data$period == "Retrospective", v] == 1, na.rm = TRUE)
+  n_p <- sum(colonised_data[colonised_data$period == "Prospective",   v] == 1, na.rm = TRUE)
+  data.frame(
+    Mechanism     = mec_labels[v],
+    `Retrospective (n=244)` = paste0(n_r, " (", round(n_r / retro_n_col * 100, 1), "%)"),
+    `Prospective (n=86)`    = paste0(n_p, " (", round(n_p / pros_n_col  * 100, 1), "%)"),
+    p_value = chi_p(matrix(c(n_r, retro_n_col - n_r, n_p, pros_n_col - n_p), 2)),
+    check.names = FALSE
+  )
+})
+
+knitr::kable(resist_tbl,
+  caption = "Carbapenem resistance mechanisms in colonised/infected patients by study period")
+```
+
+**Key finding:** NDM increased significantly in the prospective cohort (2.9% vs 11.6%, p = 0.004), reflecting the shifting epidemiology of carbapenem resistance mechanisms over time.
+
+### Microbiological Screening Intensity
+
+```{r period-screening}
+screen_vars   <- c(blood = "micro_screen_blood", resp = "micro_screen_resp",
+                   urine = "micro_screen_urino",  abd  = "micro_screen_intra_abd")
+screen_labels <- c(blood = "Blood cultures", resp = "Respiratory samples",
+                   urine = "Urine cultures",  abd  = "Intra-abdominal samples")
+
+screen_tbl <- map_df(names(screen_vars), function(k) {
+  x <- colonised_data[[screen_vars[k]]]
+  g <- colonised_data$period
+  r <- x[g == "Retrospective"]; p <- x[g == "Prospective"]
+  data.frame(
+    `Sample type` = screen_labels[k],
+    `Retrospective [median (IQR)]` = paste0(median(r, na.rm=T), " (",
+                                             quantile(r, .25, na.rm=T), "–",
+                                             quantile(r, .75, na.rm=T), ")"),
+    `Prospective [median (IQR)]`   = paste0(median(p, na.rm=T), " (",
+                                             quantile(p, .25, na.rm=T), "–",
+                                             quantile(p, .75, na.rm=T), ")"),
+    p_value = wrs_p(x, g),
+    check.names = FALSE
+  )
+})
+
+knitr::kable(screen_tbl,
+  caption = "Microbiological screening intensity by study period (colonised/infected patients)")
+```
+
+**Key finding:** Blood culture and intra-abdominal sampling intensity increased significantly in the prospective period (blood: 5 vs 9 per patient, p = 0.002; intra-abdominal: 2 vs 3, p = 0.007).
+
+### Colonisation Management Strategy
+
+```{r period-strategy}
+strat_labels <- c(cre_colonization___1 = "No strategy adopted",
+                  cre_colonization___2 = "Targeted peri-operative prophylaxis",
+                  cre_colonization___3 = "Pre-emptive strategy")
+
+strat_tbl <- map_df(names(strat_labels), function(v) {
+  n_r <- sum(colonised_data[colonised_data$period == "Retrospective", v] == 1, na.rm = TRUE)
+  n_p <- sum(colonised_data[colonised_data$period == "Prospective",   v] == 1, na.rm = TRUE)
+  data.frame(
+    Strategy = strat_labels[v],
+    `Retrospective (n=244)` = paste0(n_r, " (", round(n_r / retro_n_col * 100, 1), "%)"),
+    `Prospective (n=86)`    = paste0(n_p, " (", round(n_p / pros_n_col  * 100, 1), "%)"),
+    p_value = chi_p(matrix(c(n_r, retro_n_col - n_r, n_p, pros_n_col - n_p), 2)),
+    check.names = FALSE
+  )
+})
+
+knitr::kable(strat_tbl,
+  caption = "Colonisation management strategy by study period (colonised/infected patients)")
+```
+
+### Anti-CRE Therapy in Infected Patients
+
+#### Agents Used
+
+```{r period-drugs}
+drug_tbl <- cre_abx_inf |>
+  filter(!is.na(drug)) |>
+  mutate(drug_name = drug_labels[as.character(drug)]) |>
+  count(period, drug_name) |>
+  pivot_wider(names_from = period, values_from = n, values_fill = 0) |>
+  mutate(
+    p_value = map2_dbl(Retrospective, Prospective,
+      ~ chi_p(matrix(c(.x, retro_n_inf - .x, .y, pros_n_inf - .y), 2))),
+    Retrospective = paste0(Retrospective, " (", round(Retrospective / retro_n_inf * 100, 1), "%)"),
+    Prospective   = paste0(Prospective,   " (", round(Prospective   / pros_n_inf  * 100, 1), "%)")
+  ) |>
+  arrange(drug_name) |>
+  rename(Drug = drug_name,
+         `Retrospective (n=136)` = Retrospective,
+         `Prospective (n=54)`    = Prospective)
+
+knitr::kable(drug_tbl,
+  caption = "Anti-CRE agents used in infected patients by study period (exposure-level; patients may receive >1 agent)")
+```
+
+**Key findings:**
+
+- **Ceftazidime-avibactam** use increased markedly (55.9% → 77.8%, p = 0.008), reflecting its emergence as the preferred backbone agent for KPC-producers
+- **Colistin** use declined substantially (34.6% → 11.1%, p = 0.002), consistent with the shift away from polymyxin-based regimens
+- **Fosfomycin** use also declined (12.5% → 1.9%, p = 0.047)
+
+#### Combination Therapy and Treatment Indication
+
+```{r period-combo-indication}
+# Combination therapy — patient level
+combo_pts <- cre_abx_inf |>
+  filter(!is.na(combination_treat)) |>
+  distinct(record_id, .keep_all = TRUE)
+
+n_cr <- sum(combo_pts$period == "Retrospective" & combo_pts$combination_treat == 1)
+n_cp <- sum(combo_pts$period == "Prospective"   & combo_pts$combination_treat == 1)
+nr_c <- sum(combo_pts$period == "Retrospective")
+np_c <- sum(combo_pts$period == "Prospective")
+
+combo_tbl <- data.frame(
+  Metric = "Combination therapy",
+  `Retrospective (n=136)` = paste0(n_cr, " (", round(n_cr / nr_c * 100, 1), "%)"),
+  `Prospective (n=54)`    = paste0(n_cp, " (", round(n_cp / np_c * 100, 1), "%)"),
+  p_value = chi_p(matrix(c(n_cr, nr_c - n_cr, n_cp, np_c - n_cp), 2)),
+  check.names = FALSE
+)
+
+# Indication
+ind_wide <- cre_abx_inf |>
+  filter(!is.na(indication)) |>
+  mutate(ind_label = case_when(
+    indication == 1 ~ "Empiric (symptoms onset)",
+    indication == 2 ~ "CRECOOLT score-guided",
+    indication == 3 ~ "Targeted (documented infection)"
+  )) |>
+  count(period, ind_label) |>
+  group_by(period) |>
+  mutate(pct = round(n / sum(n) * 100, 1),
+         label = paste0(n, " (", pct, "%)")) |>
+  ungroup() |>
+  select(period, ind_label, label) |>
+  pivot_wider(names_from = period, values_from = label, values_fill = "0 (0%)") |>
+  rename(Metric = ind_label,
+         `Retrospective (n=136)` = Retrospective,
+         `Prospective (n=54)`    = Prospective) |>
+  mutate(p_value = NA_real_)
+
+bind_rows(combo_tbl, ind_wide) |>
+  knitr::kable(caption = "Combination therapy and treatment indication by study period")
+```
+
+**Key findings:**
+
+- **Combination therapy declined sharply** between periods (73.1% → 39.2%, p < 0.001), consistent with the transition to novel β-lactam/β-lactamase inhibitor agents that are effective as monotherapy
+- **CRECOOLT score-guided therapy** appeared for the first time in the prospective cohort (5.5%), reflecting real-world adoption of the prediction model
 
 ## Technical Notes
 
@@ -564,7 +802,7 @@ ggplot(char_summary, aes(x = mean_meld, y = mortality_rate)) +
 **Statistical Methods:**
 
 -   Kaplan-Meier survival analysis with log-rank test
--   Descriptive statistics and group comparisons
+-   Descriptive statistics and group comparisons; chi-square test for proportions, Wilcoxon rank-sum test for continuous variables
 -   Risk ratio calculations
 
 **Software:** R version 4.5.1, with tidyverse, survival, and survminer packages

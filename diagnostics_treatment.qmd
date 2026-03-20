@@ -1,0 +1,843 @@
+---
+title: "Diagnostics and Treatment by Study Period"
+subtitle: "Retrospective vs Prospective Cohort — CRECOOLT Study"
+author: "Data Analysis Report"
+date: today
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    code-fold: true
+    theme: cosmo
+    fig-width: 10
+    fig-height: 6
+execute:
+  echo: true
+  warning: false
+  message: false
+---
+
+## Overview
+
+This report compares microbiological diagnostic practices, carbapenem resistance epidemiology, and anti-CRE antibiotic therapy between the **retrospective** (n = 521) and **prospective** (n = 171) cohorts of the CRECOOLT study.
+
+::: {.callout-note}
+## Scope
+
+- **Screening, resistance mechanisms, and prophylaxis/management strategy:** all colonised or infected patients (retrospective n = 244; prospective n = 86)
+- **Anti-CRE treatment comparisons:** CRE-infected patients only (retrospective n = 136; prospective n = 54)
+:::
+
+```{r setup}
+library(tidyverse)
+library(patchwork)
+
+# Load data
+CRECOOLT_overall <- read_csv("CRECOOLT_overall.csv", show_col_types = FALSE)
+baseline_data <- CRECOOLT_overall |> filter(is.na(redcap_repeat_instrument))
+
+# ── Cohort definitions ────────────────────────────────────────────────────────
+colonised_data <- baseline_data |>
+  filter(cre_colon == 1 | cre_infection == 1) |>
+  mutate(period = factor(ifelse(retro_or_pros == 1, "Retrospective", "Prospective"),
+                         levels = c("Retrospective", "Prospective")))
+
+infected_data <- baseline_data |>
+  filter(cre_infection == 1) |>
+  mutate(period = factor(ifelse(retro_or_pros == 1, "Retrospective", "Prospective"),
+                         levels = c("Retrospective", "Prospective")))
+
+# ── Antibiotic exposure data ──────────────────────────────────────────────────
+# Select only required columns before joining to avoid name collisions with
+# retro_or_pros / cre_infection in the repeated-instrument rows (which are NA)
+period_lkp <- baseline_data |>
+  select(record_id, .period = retro_or_pros, .cre_inf = cre_infection)
+
+cre_abx <- CRECOOLT_overall |>
+  filter(redcap_repeat_instrument == "exposure_to_cre_antibiotics") |>
+  select(record_id, redcap_repeat_instance, drug, combination_treat,
+         indication, other_drug) |>
+  left_join(period_lkp, by = "record_id") |>
+  filter(!is.na(.period)) |>
+  mutate(period = factor(ifelse(.period == 1, "Retrospective", "Prospective"),
+                         levels = c("Retrospective", "Prospective")))
+
+cre_abx_inf <- cre_abx |> filter(.cre_inf == 1)
+
+# ── Constants and helpers ─────────────────────────────────────────────────────
+drug_labels <- c(
+  "1" = "Ertapenem",        "2"  = "Meropenem",
+  "3" = "Amikacin",         "4"  = "Gentamicin",
+  "5" = "TMP/SMX",          "6"  = "Tigecycline",
+  "7" = "Colistin",         "8"  = "Ceftazidime-avibactam",
+  "9" = "Meropenem/vaborbactam", "10" = "Imipenem/relebactam",
+  "11" = "Cefiderocol",     "12" = "Fosfomycin",
+  "13" = "Other"
+)
+
+chi_p <- function(tbl) tryCatch(round(chisq.test(tbl)$p.value, 3), error = function(e) NA_real_)
+wrs_p <- function(x, g) tryCatch(round(wilcox.test(x ~ g)$p.value, 3), error = function(e) NA_real_)
+
+retro_n_col <- sum(colonised_data$period == "Retrospective")
+pros_n_col  <- sum(colonised_data$period == "Prospective")
+retro_n_inf <- sum(infected_data$period  == "Retrospective")
+pros_n_inf  <- sum(infected_data$period  == "Prospective")
+```
+
+## Carbapenem Resistance Mechanisms
+
+Resistance mechanisms were characterised from the CRE colonising strain in all colonised/infected patients.
+
+```{r resistance-table}
+mec_labels <- c(
+  mec_of_carbapenem_resi___1 = "KPC",
+  mec_of_carbapenem_resi___2 = "OXA-48",
+  mec_of_carbapenem_resi___3 = "NDM",
+  mec_of_carbapenem_resi___4 = "VIM",
+  mec_of_carbapenem_resi___5 = "Other"
+)
+
+resist_tbl <- map_df(names(mec_labels), function(v) {
+  n_r <- sum(colonised_data[colonised_data$period == "Retrospective", v] == 1, na.rm = TRUE)
+  n_p <- sum(colonised_data[colonised_data$period == "Prospective",   v] == 1, na.rm = TRUE)
+  data.frame(
+    Mechanism             = mec_labels[v],
+    `Retrospective (n=244)` = paste0(n_r, " (", round(n_r / retro_n_col * 100, 1), "%)"),
+    `Prospective (n=86)`    = paste0(n_p, " (", round(n_p / pros_n_col  * 100, 1), "%)"),
+    p_value = chi_p(matrix(c(n_r, retro_n_col - n_r, n_p, pros_n_col - n_p), 2)),
+    check.names = FALSE
+  )
+})
+
+knitr::kable(resist_tbl,
+  caption = "Carbapenem resistance mechanisms in colonised/infected patients by study period")
+```
+
+```{r resistance-plot, fig.cap="Carbapenem resistance mechanisms by study period"}
+resist_plot_data <- map_df(names(mec_labels), function(v) {
+  n_r <- sum(colonised_data[colonised_data$period == "Retrospective", v] == 1, na.rm = TRUE)
+  n_p <- sum(colonised_data[colonised_data$period == "Prospective",   v] == 1, na.rm = TRUE)
+  data.frame(
+    Mechanism = mec_labels[v],
+    Retrospective = n_r / retro_n_col * 100,
+    Prospective   = n_p / pros_n_col  * 100
+  )
+}) |>
+  pivot_longer(cols = c(Retrospective, Prospective),
+               names_to = "Period", values_to = "Percent") |>
+  mutate(Period = factor(Period, levels = c("Retrospective", "Prospective")))
+
+ggplot(resist_plot_data, aes(x = Mechanism, y = Percent, fill = Period)) +
+  geom_col(position = position_dodge(width = 0.75), width = 0.65) +
+  geom_text(aes(label = paste0(round(Percent, 1), "%")),
+            position = position_dodge(width = 0.75), vjust = -0.4, size = 3.5) +
+  scale_fill_manual(values = c("Retrospective" = "#1565C0", "Prospective" = "#E53935"),
+                    name = NULL) +
+  scale_y_continuous(limits = c(0, 85), breaks = seq(0, 80, 20)) +
+  labs(title = "Carbapenem Resistance Mechanisms by Study Period",
+       subtitle = "Colonised/infected patients (retrospective n=244; prospective n=86)",
+       x = "Resistance Mechanism", y = "Prevalence (%)") +
+  theme_minimal(base_size = 13) +
+  theme(plot.title = element_text(face = "bold", size = 15),
+        legend.position = "top")
+```
+
+**Key finding:** NDM increased significantly in the prospective cohort (2.9% → 11.6%, p = 0.004), suggesting a change in the predominant resistance epidemiology. KPC remained the most common mechanism in both periods.
+
+## Microbiological Screening Intensity
+
+Numbers of microbiological samples collected per patient during the follow-up period.
+
+```{r screening-table}
+screen_vars   <- c(blood = "micro_screen_blood",   resp  = "micro_screen_resp",
+                   urine = "micro_screen_urino",    abd   = "micro_screen_intra_abd")
+screen_labels <- c(blood = "Blood cultures",        resp  = "Respiratory samples",
+                   urine = "Urine cultures",         abd   = "Intra-abdominal samples")
+
+screen_tbl <- map_df(names(screen_vars), function(k) {
+  x <- colonised_data[[screen_vars[k]]]
+  g <- colonised_data$period
+  r <- x[g == "Retrospective"]; p <- x[g == "Prospective"]
+  data.frame(
+    `Sample type` = screen_labels[k],
+    `Retrospective [median (IQR)]` = paste0(
+      median(r, na.rm=T), " (", quantile(r, .25, na.rm=T), "–", quantile(r, .75, na.rm=T), ")"),
+    `Prospective [median (IQR)]` = paste0(
+      median(p, na.rm=T), " (", quantile(p, .25, na.rm=T), "–", quantile(p, .75, na.rm=T), ")"),
+    p_value = wrs_p(x, g),
+    check.names = FALSE
+  )
+})
+
+knitr::kable(screen_tbl,
+  caption = "Microbiological screening intensity by study period (colonised/infected patients)")
+```
+
+```{r screening-plot, fig.cap="Microbiological screening intensity by study period"}
+screen_plot <- map_df(names(screen_vars), function(k) {
+  df <- colonised_data[, c("period", screen_vars[k])]
+  names(df)[2] <- "n_samples"
+  df$sample <- screen_labels[k]
+  df
+}) |> filter(!is.na(n_samples))
+
+ggplot(screen_plot, aes(x = period, y = n_samples, fill = period)) +
+  geom_boxplot(outlier.shape = 21, outlier.size = 1.5, alpha = 0.8) +
+  facet_wrap(~sample, scales = "free_y", nrow = 1) +
+  scale_fill_manual(values = c("Retrospective" = "#1565C0", "Prospective" = "#E53935"),
+                    name = NULL) +
+  labs(title = "Microbiological Screening Intensity by Study Period",
+       subtitle = "Colonised/infected patients — number of samples per patient",
+       x = NULL, y = "Number of samples") +
+  theme_minimal(base_size = 12) +
+  theme(plot.title = element_text(face = "bold", size = 14),
+        legend.position = "none",
+        axis.text.x = element_text(angle = 20, hjust = 1))
+```
+
+**Key finding:** Blood culture and intra-abdominal sampling intensity increased significantly in the prospective period (blood: median 5 vs 9, p = 0.002; intra-abdominal: 2 vs 3, p = 0.007), likely reflecting more structured surveillance protocols in the prospective phase.
+
+## Colonisation Management Strategy
+
+```{r strategy-table}
+strat_labels <- c(
+  cre_colonization___1 = "No strategy adopted",
+  cre_colonization___2 = "Targeted peri-operative prophylaxis",
+  cre_colonization___3 = "Pre-emptive strategy"
+)
+
+strat_tbl <- map_df(names(strat_labels), function(v) {
+  n_r <- sum(colonised_data[colonised_data$period == "Retrospective", v] == 1, na.rm = TRUE)
+  n_p <- sum(colonised_data[colonised_data$period == "Prospective",   v] == 1, na.rm = TRUE)
+  data.frame(
+    Strategy              = strat_labels[v],
+    `Retrospective (n=244)` = paste0(n_r, " (", round(n_r / retro_n_col * 100, 1), "%)"),
+    `Prospective (n=86)`    = paste0(n_p, " (", round(n_p / pros_n_col  * 100, 1), "%)"),
+    p_value = chi_p(matrix(c(n_r, retro_n_col - n_r, n_p, pros_n_col - n_p), 2)),
+    check.names = FALSE
+  )
+})
+
+knitr::kable(strat_tbl,
+  caption = "Colonisation management strategy by study period (colonised/infected patients)")
+```
+
+```{r strategy-plot, fig.cap="Colonisation management strategy by study period", fig.height=5}
+strat_plot_data <- map_df(names(strat_labels), function(v) {
+  n_r <- sum(colonised_data[colonised_data$period == "Retrospective", v] == 1, na.rm = TRUE)
+  n_p <- sum(colonised_data[colonised_data$period == "Prospective",   v] == 1, na.rm = TRUE)
+  data.frame(
+    Strategy = strat_labels[v],
+    Retrospective = n_r / retro_n_col * 100,
+    Prospective   = n_p / pros_n_col  * 100
+  )
+}) |>
+  pivot_longer(cols = c(Retrospective, Prospective),
+               names_to = "Period", values_to = "Percent") |>
+  mutate(Period = factor(Period, levels = c("Retrospective", "Prospective")))
+
+ggplot(strat_plot_data, aes(x = reorder(Strategy, -Percent), y = Percent, fill = Period)) +
+  geom_col(position = position_dodge(width = 0.75), width = 0.65) +
+  geom_text(aes(label = paste0(round(Percent, 1), "%")),
+            position = position_dodge(width = 0.75), vjust = -0.4, size = 3.5) +
+  scale_fill_manual(values = c("Retrospective" = "#1565C0", "Prospective" = "#E53935"),
+                    name = NULL) +
+  scale_y_continuous(limits = c(0, 75), breaks = seq(0, 70, 10)) +
+  labs(title = "Colonisation Management Strategy by Study Period",
+       subtitle = "Colonised/infected patients",
+       x = NULL, y = "Percentage of patients (%)") +
+  theme_minimal(base_size = 13) +
+  theme(plot.title = element_text(face = "bold", size = 15),
+        legend.position = "top",
+        axis.text.x = element_text(angle = 20, hjust = 1))
+```
+
+## Anti-CRE Treatment in Infected Patients
+
+### Agents Used
+
+Exposure-level data: a single patient may have received more than one agent.
+
+```{r drugs-table}
+drug_tbl <- cre_abx_inf |>
+  filter(!is.na(drug)) |>
+  mutate(drug_name = drug_labels[as.character(drug)]) |>
+  count(period, drug_name) |>
+  pivot_wider(names_from = period, values_from = n, values_fill = 0) |>
+  mutate(
+    p_value = map2_dbl(Retrospective, Prospective,
+      ~ chi_p(matrix(c(.x, retro_n_inf - .x, .y, pros_n_inf - .y), 2))),
+    Retrospective = paste0(Retrospective, " (", round(Retrospective / retro_n_inf * 100, 1), "%)"),
+    Prospective   = paste0(Prospective,   " (", round(Prospective   / pros_n_inf  * 100, 1), "%)")
+  ) |>
+  arrange(drug_name) |>
+  rename(Drug = drug_name,
+         `Retrospective (n=136)` = Retrospective,
+         `Prospective (n=54)`    = Prospective)
+
+knitr::kable(drug_tbl,
+  caption = "Anti-CRE agents used in infected patients by study period (patients may receive >1 agent)")
+```
+
+```{r drugs-plot, fig.height=6, fig.cap="Anti-CRE drug use by study period (infected patients)"}
+drug_plot_data <- cre_abx_inf |>
+  filter(!is.na(drug)) |>
+  mutate(drug_name = drug_labels[as.character(drug)]) |>
+  count(period, drug_name) |>
+  mutate(pct = ifelse(period == "Retrospective",
+                      n / retro_n_inf * 100,
+                      n / pros_n_inf  * 100)) |>
+  filter(drug_name != "Other")
+
+# Highlight significantly changed drugs
+sig_drugs <- c("Ceftazidime-avibactam", "Colistin", "Fosfomycin")
+
+ggplot(drug_plot_data,
+       aes(x = reorder(drug_name, pct), y = pct, fill = period)) +
+  geom_col(position = position_dodge(width = 0.75), width = 0.65) +
+  geom_text(aes(label = paste0(round(pct, 0), "%")),
+            position = position_dodge(width = 0.75), hjust = -0.15, size = 3.2) +
+  scale_fill_manual(values = c("Retrospective" = "#1565C0", "Prospective" = "#E53935"),
+                    name = NULL) +
+  scale_y_continuous(limits = c(0, 95), breaks = seq(0, 90, 20)) +
+  coord_flip() +
+  labs(title = "Anti-CRE Drug Use by Study Period",
+       subtitle = "CRE-infected patients (retrospective n=136; prospective n=54)",
+       x = NULL, y = "% of infected patients receiving agent") +
+  theme_minimal(base_size = 13) +
+  theme(plot.title = element_text(face = "bold", size = 15),
+        legend.position = "top")
+```
+
+**Key findings:**
+
+- **Ceftazidime-avibactam** use increased markedly (55.9% → 77.8%, p = 0.008), reflecting its emergence as the preferred backbone agent for KPC-producers
+- **Colistin** use declined substantially (34.6% → 11.1%, p = 0.002), consistent with the shift away from polymyxin-based regimens given their toxicity profile
+- **Fosfomycin** use also declined (12.5% → 1.9%, p = 0.047), likely replaced by newer β-lactam/β-lactamase inhibitor combinations
+- **Meropenem** remained in common use in both periods (~68% vs 63%), typically as part of combination regimens or for susceptible isolates
+
+### Combination Therapy and Treatment Indication
+
+```{r combo-indication}
+# Combination therapy — patient level (first record per patient)
+combo_pts <- cre_abx_inf |>
+  filter(!is.na(combination_treat)) |>
+  distinct(record_id, .keep_all = TRUE)
+
+n_cr <- sum(combo_pts$period == "Retrospective" & combo_pts$combination_treat == 1)
+n_cp <- sum(combo_pts$period == "Prospective"   & combo_pts$combination_treat == 1)
+nr_c <- sum(combo_pts$period == "Retrospective")
+np_c <- sum(combo_pts$period == "Prospective")
+
+combo_row <- data.frame(
+  Metric                  = "Combination therapy",
+  `Retrospective (n=136)` = paste0(n_cr, " (", round(n_cr / nr_c * 100, 1), "%)"),
+  `Prospective (n=54)`    = paste0(n_cp, " (", round(n_cp / np_c * 100, 1), "%)"),
+  p_value = chi_p(matrix(c(n_cr, nr_c - n_cr, n_cp, np_c - n_cp), 2)),
+  check.names = FALSE
+)
+
+# Indication
+ind_wide <- cre_abx_inf |>
+  filter(!is.na(indication)) |>
+  mutate(ind_label = case_when(
+    indication == 1 ~ "Empiric (symptoms onset)",
+    indication == 2 ~ "CRECOOLT score-guided",
+    indication == 3 ~ "Targeted (documented infection)"
+  )) |>
+  count(period, ind_label) |>
+  group_by(period) |>
+  mutate(pct   = round(n / sum(n) * 100, 1),
+         label = paste0(n, " (", pct, "%)")) |>
+  ungroup() |>
+  select(period, ind_label, label) |>
+  pivot_wider(names_from = period, values_from = label, values_fill = "0 (0%)") |>
+  rename(Metric                  = ind_label,
+         `Retrospective (n=136)` = Retrospective,
+         `Prospective (n=54)`    = Prospective) |>
+  mutate(p_value = NA_real_)
+
+bind_rows(combo_row, ind_wide) |>
+  knitr::kable(caption = "Combination therapy and treatment indication by study period")
+```
+
+```{r combo-plot, fig.height=5, fig.cap="Combination therapy and indication by study period"}
+# Combination therapy bar
+combo_df <- data.frame(
+  Period    = c("Retrospective", "Prospective"),
+  Combo_pct = c(round(n_cr / nr_c * 100, 1), round(n_cp / np_c * 100, 1))
+) |> mutate(Period = factor(Period, levels = c("Retrospective", "Prospective")))
+
+p_combo <- ggplot(combo_df, aes(x = Period, y = Combo_pct, fill = Period)) +
+  geom_col(width = 0.5) +
+  geom_text(aes(label = paste0(Combo_pct, "%")), vjust = -0.5, size = 5, fontface = "bold") +
+  scale_fill_manual(values = c("Retrospective" = "#1565C0", "Prospective" = "#E53935")) +
+  scale_y_continuous(limits = c(0, 90), breaks = seq(0, 80, 20)) +
+  labs(title = "Combination Therapy", x = NULL, y = "% patients") +
+  theme_minimal(base_size = 13) +
+  theme(legend.position = "none", plot.title = element_text(face = "bold"))
+
+# Indication stacked bar
+ind_plot_data <- cre_abx_inf |>
+  filter(!is.na(indication)) |>
+  mutate(ind_label = case_when(
+    indication == 1 ~ "Empiric",
+    indication == 2 ~ "Score-guided",
+    indication == 3 ~ "Targeted"
+  )) |>
+  count(period, ind_label) |>
+  group_by(period) |>
+  mutate(pct = n / sum(n) * 100)
+
+p_ind <- ggplot(ind_plot_data, aes(x = period, y = pct, fill = ind_label)) +
+  geom_col(width = 0.5) +
+  geom_text(aes(label = paste0(round(pct, 0), "%")),
+            position = position_stack(vjust = 0.5), color = "white",
+            fontface = "bold", size = 4) +
+  scale_fill_manual(
+    values = c("Empiric" = "#EF6C00", "Score-guided" = "#2E7D32", "Targeted" = "#4527A0"),
+    name = "Indication") +
+  scale_y_continuous(breaks = seq(0, 100, 25)) +
+  labs(title = "Treatment Indication", x = NULL, y = "% antibiotic exposures") +
+  theme_minimal(base_size = 13) +
+  theme(plot.title = element_text(face = "bold"), legend.position = "right")
+
+p_combo | p_ind +
+  plot_annotation(
+    title    = "Treatment Patterns by Study Period",
+    subtitle = "CRE-infected patients"
+  )
+```
+
+**Key findings:**
+
+- **Combination therapy declined sharply** between periods (73.1% → 39.2%, p < 0.001), consistent with the transition to novel β-lactam/β-lactamase inhibitor agents that are effective as monotherapy
+- **CRECOOLT score-guided therapy** appeared for the first time in the prospective cohort (5.5%), reflecting real-world adoption of the prediction model in clinical decision-making
+
+## Summary
+
+```{r summary-table}
+summary_df <- data.frame(
+  Finding = c(
+    "NDM resistance mechanism",
+    "Blood culture intensity (median)",
+    "Intra-abdominal sampling (median)",
+    "Ceftazidime-avibactam use",
+    "Colistin use",
+    "Combination therapy"
+  ),
+  Retrospective = c("2.9%", "5 (IQR 2–11)", "2 (IQR 1–4)", "55.9%", "34.6%", "73.1%"),
+  Prospective   = c("11.6%", "9 (IQR 4–16)", "3 (IQR 1.75–6)", "77.8%", "11.1%", "39.2%"),
+  p_value       = c("0.004", "0.002", "0.007", "0.008", "0.002", "<0.001"),
+  Direction     = c("↑", "↑", "↑", "↑", "↓", "↓")
+)
+
+knitr::kable(summary_df,
+  caption = "Summary of statistically significant changes between study periods")
+```
+
+## Survival Analysis by CRE Therapy and Resistance Mechanism
+
+Kaplan-Meier survival curves from time of CRE infection to death, censored at hospital discharge or 90 days. Patients are classified by:
+
+- **Therapy group:** any exposure to ceftazidime-avibactam, meropenem-vaborbactam, or cefiderocol ("Novel BL/BLI") vs other agents
+- **Carbapenemase mechanism:** KPC vs Non-KPC (OXA-48, NDM, VIM, or other)
+
+```{r km-setup}
+library(survival)
+library(survminer)
+
+# ── JAMA-style theme ──────────────────────────────────────────────────────────
+jama_theme <- theme_classic(base_size = 11) +
+  theme(
+    plot.title         = element_text(face = "bold", size = 12, hjust = 0),
+    plot.subtitle      = element_text(size = 10, hjust = 0, color = "grey40"),
+    axis.title         = element_text(size = 10),
+    axis.text          = element_text(size = 9),
+    legend.title       = element_blank(),
+    legend.text        = element_text(size = 9),
+    legend.position    = "top",
+    legend.key.width   = unit(1.2, "cm"),
+    panel.grid.major.y = element_line(colour = "grey90", linewidth = 0.3),
+    strip.background   = element_blank(),
+    strip.text         = element_text(face = "bold")
+  )
+
+# ── Therapy classification per patient ───────────────────────────────────────
+# Novel BL/BLI = any exposure to ceftazidime-avibactam (8),
+#                meropenem-vaborbactam (9), or cefiderocol (11)
+therapy_per_patient <- cre_abx_inf |>
+  group_by(record_id) |>
+  summarise(
+    new_therapy  = any(drug %in% c(8, 9, 11), na.rm = TRUE),
+    combination  = any(combination_treat == 1, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+# ── Survival dataset ──────────────────────────────────────────────────────────
+surv_infected <- infected_data |>
+  left_join(therapy_per_patient, by = "record_id") |>
+  mutate(
+    surv_time = case_when(
+      !is.na(death_date) & !is.na(cre_infection_date) ~
+        as.numeric(death_date - cre_infection_date),
+      !is.na(discharge_date) & !is.na(cre_infection_date) ~
+        as.numeric(discharge_date - cre_infection_date),
+      TRUE ~ NA_real_
+    ),
+    surv_event = ifelse(death == 1, 1, 0),
+    surv_time  = ifelse(surv_time < 0, NA_real_, surv_time),
+
+    therapy_group = factor(
+      ifelse(new_therapy, "Novel BL/BLI", "Other therapies"),
+      levels = c("Novel BL/BLI", "Other therapies")
+    ),
+    combo_group = factor(
+      case_when(
+        new_therapy    ~ "Novel BL/BLI",
+        combination    ~ "Combination (other agents)",
+        TRUE           ~ "Monotherapy (other agents)"
+      ),
+      levels = c("Novel BL/BLI", "Combination (other agents)",
+                 "Monotherapy (other agents)")
+    ),
+    carbapenemase = case_when(
+      cre_isolate___1 == 1 ~ "KPC",
+      cre_isolate___2 == 1 ~ "OXA-48",
+      cre_isolate___3 == 1 ~ "VIM",
+      cre_isolate___4 == 1 ~ "NDM",
+      cre_isolate___5 == 1 ~ "Other/Unknown",
+      TRUE                 ~ "Not typed"
+    ),
+    carba_group = factor(
+      ifelse(carbapenemase == "KPC",
+             "KPC",
+             "Non-KPC (OXA-48/NDM/VIM/Other)"),
+      levels = c("KPC", "Non-KPC (OXA-48/NDM/VIM/Other)")
+    )
+  ) |>
+  filter(!is.na(surv_time), surv_time >= 0, !is.na(surv_event))
+```
+
+### Novel BL/BLI vs Other Therapies {#fig-km1}
+
+```{r km-plot1, fig.height=5.5, fig.cap="Kaplan-Meier survival curves: novel BL/BLI vs other therapies"}
+fit1 <- survfit(Surv(surv_time, surv_event) ~ therapy_group,
+                data = surv_infected)
+
+ggsurvplot(
+  fit1,
+  data              = surv_infected,
+  pval              = TRUE,
+  pval.size         = 3.5,
+  conf.int          = TRUE,
+  conf.int.alpha    = 0.12,
+  risk.table        = TRUE,
+  risk.table.height = 0.22,
+  risk.table.title  = "No. at risk",
+  risk.table.fontsize = 3,
+  xlab              = "Days from CRE Infection",
+  ylab              = "Overall Survival",
+  title             = "A  Novel BL/BLI vs Other Therapies",
+  subtitle          = "CRE-infected patients (n=165); censored at discharge or 90 days",
+  legend.labs       = c("Novel BL/BLI (CAZ-AVI / MER-VAB / CEF)",
+                        "Other therapies"),
+  palette           = c("#374E55", "#DF8F44"),
+  xlim              = c(0, 90),
+  break.x.by        = 15,
+  ylim              = c(0, 1),
+  surv.scale        = "percent",
+  ggtheme           = jama_theme,
+  tables.theme      = theme_cleantable()
+)
+```
+
+### Novel BL/BLI vs Combination vs Monotherapy {#fig-km2}
+
+```{r km-plot2, fig.height=6, fig.cap="Kaplan-Meier survival curves: novel BL/BLI vs combination vs monotherapy with other agents"}
+fit2 <- survfit(Surv(surv_time, surv_event) ~ combo_group,
+                data = surv_infected)
+
+ggsurvplot(
+  fit2,
+  data              = surv_infected,
+  pval              = TRUE,
+  pval.size         = 3.5,
+  conf.int          = TRUE,
+  conf.int.alpha    = 0.12,
+  risk.table        = TRUE,
+  risk.table.height = 0.25,
+  risk.table.title  = "No. at risk",
+  risk.table.fontsize = 3,
+  xlab              = "Days from CRE Infection",
+  ylab              = "Overall Survival",
+  title             = "B  Novel BL/BLI vs Combination vs Monotherapy",
+  subtitle          = "Combination and monotherapy groups exclude novel BL/BLI agents",
+  legend.labs       = c("Novel BL/BLI",
+                        "Combination (other agents)",
+                        "Monotherapy (other agents)"),
+  palette           = c("#374E55", "#DF8F44", "#B24745"),
+  xlim              = c(0, 90),
+  break.x.by        = 15,
+  ylim              = c(0, 1),
+  surv.scale        = "percent",
+  ggtheme           = jama_theme,
+  tables.theme      = theme_cleantable()
+)
+```
+
+### Survival by Carbapenemase Mechanism {#fig-km3}
+
+```{r km-plot3, fig.height=5.5, fig.cap="Kaplan-Meier survival curves by carbapenemase mechanism (KPC vs Non-KPC)"}
+surv_typed <- surv_infected |> filter(carbapenemase != "Not typed")
+fit3 <- survfit(Surv(surv_time, surv_event) ~ carba_group,
+                data = surv_typed)
+
+ggsurvplot(
+  fit3,
+  data              = surv_typed,
+  pval              = TRUE,
+  pval.size         = 3.5,
+  conf.int          = TRUE,
+  conf.int.alpha    = 0.12,
+  risk.table        = TRUE,
+  risk.table.height = 0.22,
+  risk.table.title  = "No. at risk",
+  risk.table.fontsize = 3,
+  xlab              = "Days from CRE Infection",
+  ylab              = "Overall Survival",
+  title             = "C  Survival by Carbapenemase Mechanism",
+  subtitle          = "Non-KPC includes OXA-48, NDM, VIM, and other mechanisms",
+  legend.labs       = c("KPC", "Non-KPC (OXA-48/NDM/VIM/Other)"),
+  palette           = c("#374E55", "#DF8F44"),
+  xlim              = c(0, 90),
+  break.x.by        = 15,
+  ylim              = c(0, 1),
+  surv.scale        = "percent",
+  ggtheme           = jama_theme,
+  tables.theme      = theme_cleantable()
+)
+```
+
+### Therapy Effect Stratified by Carbapenemase Mechanism {#fig-km4}
+
+```{r km-plot4, fig.height=6.5, fig.cap="Kaplan-Meier survival curves: therapy × carbapenemase interaction"}
+surv4 <- surv_infected |>
+  filter(carbapenemase != "Not typed") |>
+  mutate(
+    strata_label = factor(
+      paste0(therapy_group, "\n(", carba_group, ")"),
+      levels = c(
+        "Novel BL/BLI\n(KPC)",
+        "Novel BL/BLI\n(Non-KPC (OXA-48/NDM/VIM/Other))",
+        "Other therapies\n(KPC)",
+        "Other therapies\n(Non-KPC (OXA-48/NDM/VIM/Other))"
+      )
+    )
+  )
+
+fit4 <- survfit(Surv(surv_time, surv_event) ~ strata_label, data = surv4)
+
+ggsurvplot(
+  fit4,
+  data              = surv4,
+  pval              = TRUE,
+  pval.size         = 3.5,
+  conf.int          = TRUE,
+  conf.int.alpha    = 0.10,
+  risk.table        = TRUE,
+  risk.table.height = 0.28,
+  risk.table.title  = "No. at risk",
+  risk.table.fontsize = 2.8,
+  xlab              = "Days from CRE Infection",
+  ylab              = "Overall Survival",
+  title             = "D  Therapy Effect Stratified by Carbapenemase Mechanism",
+  subtitle          = "Novel BL/BLI vs other therapies within KPC and Non-KPC groups",
+  legend.labs       = c("Novel BL/BLI — KPC",
+                        "Novel BL/BLI — Non-KPC",
+                        "Other therapies — KPC",
+                        "Other therapies — Non-KPC"),
+  palette           = c("#374E55", "#80A0A8", "#DF8F44", "#F2C27A"),
+  xlim              = c(0, 90),
+  break.x.by        = 15,
+  ylim              = c(0, 1),
+  surv.scale        = "percent",
+  ggtheme           = jama_theme,
+  tables.theme      = theme_cleantable()
+)
+```
+
+::: callout-note
+## Interpretation Notes
+
+- **Novel BL/BLI** = ceftazidime-avibactam, meropenem-vaborbactam, or cefiderocol (any exposure during infection episode). Patients may also have received other agents concurrently.
+- **Time origin** = date of CRE infection; censored at hospital discharge or 90 days.
+- **Carbapenemase groups:** KPC (n=`r sum(surv_infected$carba_group=="KPC", na.rm=TRUE)`); Non-KPC (n=`r sum(surv_infected$carba_group=="Non-KPC (OXA-48/NDM/VIM/Other)", na.rm=TRUE)`); not typed (n=`r sum(surv_infected$carbapenemase=="Not typed", na.rm=TRUE)`, excluded from plots C and D).
+- These are **observational, unadjusted** survival curves. Differences may reflect confounding by infection severity, source, or era.
+:::
+
+## Adjusted Cox Proportional Hazards Model
+
+To account for potential confounding by study period, disease severity, age, and infection source, a multivariable Cox model was fitted with therapy group (Novel BL/BLI vs other) as the primary exposure.
+
+```{r cox-model}
+# ── Build model dataset ───────────────────────────────────────────────────────
+cox_data <- surv_infected |>
+  mutate(
+    infect_src = factor(
+      case_when(
+        infection_source___1 == 1                              ~ "Bloodstream",
+        infection_source___2 == 1                              ~ "Respiratory",
+        infection_source___3 == 1                              ~ "Urinary",
+        infection_source___4 == 1 | infection_source___5 == 1 ~ "Surgical/Abd",
+        infection_source___6 == 1                              ~ "Other",
+        TRUE                                                   ~ NA_character_
+      ),
+      levels = c("Bloodstream", "Respiratory", "Urinary", "Surgical/Abd", "Other")
+    ),
+    therapy_fac = relevel(factor(therapy_group), ref = "Other therapies"),
+    period_fac  = relevel(factor(period),         ref = "Retrospective"),
+    meld_s = as.numeric(scale(meld_score)),   # standardised (per SD)
+    age_s  = as.numeric(scale(age))
+  ) |>
+  filter(!is.na(meld_score), !is.na(infect_src))
+
+# ── Fit model ─────────────────────────────────────────────────────────────────
+cox_fit <- coxph(
+  Surv(surv_time, surv_event) ~
+    therapy_fac + period_fac + meld_s + age_s + infect_src,
+  data = cox_data
+)
+
+# ── Extract HR table ──────────────────────────────────────────────────────────
+cox_tbl <- broom::tidy(cox_fit, exponentiate = TRUE, conf.int = TRUE) |>
+  mutate(
+    label = recode(term,
+      "therapy_facNovel BL/BLI"    = "Novel BL/BLI vs Other",
+      "period_facProspective"      = "Prospective vs Retrospective",
+      "meld_s"                     = "MELD score (per SD)",
+      "age_s"                      = "Age (per SD)",
+      "infect_srcRespiratory"      = "Respiratory vs Bloodstream",
+      "infect_srcUrinary"          = "Urinary vs Bloodstream",
+      "infect_srcSurgical/Abd"     = "Surgical/Abd vs Bloodstream",
+      "infect_srcOther"            = "Other source vs Bloodstream"
+    ),
+    sig = ifelse(p.value < 0.05, "*", "")
+  ) |>
+  select(label, HR = estimate, `95% CI lower` = conf.low,
+         `95% CI upper` = conf.high, `p value` = p.value)
+
+knitr::kable(cox_tbl, digits = c(0, 2, 2, 2, 3),
+  caption = paste0("Adjusted Cox proportional hazards model: all-cause mortality ",
+                   "from CRE infection (n = ", nrow(cox_data),
+                   ", events = ", sum(cox_data$surv_event), ")"))
+```
+
+### Forest Plot {#fig-forest}
+
+```{r forest-plot, fig.height=5.5, fig.cap="Forest plot of adjusted hazard ratios from Cox proportional hazards model"}
+forest_data <- cox_tbl |>
+  rename(HR = HR, lower = `95% CI lower`, upper = `95% CI upper`, p = `p value`) |>
+  mutate(
+    label = factor(label, levels = rev(label)),
+    group = case_when(
+      grepl("Novel|Prospective", label) ~ "Primary",
+      grepl("MELD|Age", label)          ~ "Continuous",
+      TRUE                               ~ "Infection source"
+    ),
+    sig     = p < 0.05,
+    hr_text = sprintf("%.2f (%.2f\u2013%.2f)", HR, lower, upper),
+    p_text  = ifelse(p < 0.001, "<0.001",
+               ifelse(p < 0.01,  sprintf("%.3f", p),
+                                  sprintf("%.2f",  p)))
+  )
+
+ggplot(forest_data, aes(x = HR, y = label)) +
+  geom_vline(xintercept = 1, linetype = "dashed", colour = "grey50",
+             linewidth = 0.5) +
+  geom_errorbar(aes(xmin = lower, xmax = upper, colour = group),
+                orientation = "y", width = 0.25, linewidth = 0.7) +
+  geom_point(aes(colour = group, shape = sig), size = 3.5) +
+  # HR and p-value columns (positioned within scale range)
+  geom_text(aes(x = 20, label = hr_text),
+            hjust = 1, size = 3.0, family = "mono") +
+  geom_text(aes(x = 28, label = p_text),
+            hjust = 1, size = 3.0, family = "mono") +
+  # Column headers
+  annotate("text", x = 20, y = 9.35, label = "HR (95% CI)",
+           hjust = 1, size = 3.2, fontface = "bold") +
+  annotate("text", x = 28, y = 9.35, label = "p",
+           hjust = 1, size = 3.2, fontface = "bold") +
+  # Group dividers
+  annotate("segment", x = 0.12, xend = 5.5, y = 5.5, yend = 5.5,
+           colour = "grey80", linewidth = 0.3) +
+  annotate("segment", x = 0.12, xend = 5.5, y = 3.5, yend = 3.5,
+           colour = "grey80", linewidth = 0.3) +
+  # Vertical divider before text columns
+  annotate("segment", x = 6.5, xend = 6.5, y = 0.5, yend = 9,
+           colour = "grey70", linewidth = 0.3) +
+  # Group labels
+  annotate("text", x = 0.13, y = 8.75, label = "Treatment & Period",
+           hjust = 0, size = 2.9, fontface = "bold.italic", colour = "grey35") +
+  annotate("text", x = 0.13, y = 5.2,  label = "Patient characteristics",
+           hjust = 0, size = 2.9, fontface = "bold.italic", colour = "grey35") +
+  annotate("text", x = 0.13, y = 3.2,
+           label = "Infection source (ref: Bloodstream)",
+           hjust = 0, size = 2.9, fontface = "bold.italic", colour = "grey35") +
+  scale_x_continuous(
+    trans  = "log",
+    limits = c(0.12, 30),
+    breaks = c(0.25, 0.5, 1, 2, 4),
+    labels = c("0.25", "0.5", "1", "2", "4"),
+    name   = "Hazard Ratio (log scale)"
+  ) +
+  scale_colour_manual(
+    values = c("Primary"          = "#374E55",
+               "Continuous"       = "#DF8F44",
+               "Infection source" = "#B24745"),
+    guide = "none"
+  ) +
+  scale_shape_manual(
+    values = c("FALSE" = 16, "TRUE" = 18),
+    guide  = "none"
+  ) +
+  labs(
+    title    = "Adjusted Cox Proportional Hazards Model",
+    subtitle = paste0("Outcome: all-cause mortality from CRE infection",
+                      "  |  n = ", nrow(cox_data),
+                      ", events = ", sum(cox_data$surv_event)),
+    y = NULL
+  ) +
+  theme_classic(base_size = 11) +
+  theme(
+    plot.title         = element_text(face = "bold", size = 12),
+    plot.subtitle      = element_text(size = 9.5, colour = "grey40"),
+    axis.text.y        = element_text(size = 9.5),
+    axis.text.x        = element_text(size = 9),
+    axis.title.x       = element_text(size = 9.5),
+    panel.grid.major.x = element_line(colour = "grey92", linewidth = 0.3),
+    axis.line.y        = element_blank(),
+    axis.ticks.y       = element_blank()
+  )
+```
+
+::: callout-warning
+## Residual Confounding
+
+The prospective cohort period and novel BL/BLI use are correlated by design (novel agents became available over time). Even after adjustment, the HR for novel BL/BLI (HR `r sprintf("%.2f", cox_tbl$HR[cox_tbl$label == "Novel BL/BLI vs Other"])`, 95% CI `r sprintf("%.2f–%.2f", cox_tbl[["95% CI lower"]][cox_tbl$label == "Novel BL/BLI vs Other"], cox_tbl[["95% CI upper"]][cox_tbl$label == "Novel BL/BLI vs Other"])`) and the HR for prospective period both remain significant. This collinearity should be interpreted with caution; the two effects may not be fully separable in this dataset.
+:::
+
+## Technical Notes
+
+**Data Source:** CRECOOLT study database (N=692 liver transplant patients)
+
+**Statistical Methods:**
+
+- Chi-square test (or Fisher's exact test where cell counts < 5) for categorical variables
+- Wilcoxon rank-sum test for continuous screening counts
+- Antibiotic use proportions are exposure-level (patients may appear multiple times)
+- Combination therapy proportions are patient-level (first record per patient)
+
+**Software:** R version 4.5.1, with tidyverse and patchwork packages
+
+**Report Generated:** `r format(Sys.Date(), "%B %d, %Y")`

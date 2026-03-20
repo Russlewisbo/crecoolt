@@ -12,6 +12,7 @@ website:
       - intervention.qmd
       - stewardship.qmd
       - CRE_other.qmd
+      - diagnostics_treatment.qmd
       
 
 format:

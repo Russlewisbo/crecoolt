@@ -1,0 +1,11 @@
+{
+  "permission": {
+    "executeCode": {
+      "*": "allow"
+    },
+    "edit": {
+      "*.qmd": "allow",
+      "*.yml": "allow"
+    }
+  }
+}

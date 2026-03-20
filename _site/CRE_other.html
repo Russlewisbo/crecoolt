@@ -2,15 +2,18 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
 
 <meta charset="utf-8">
-<meta name="generator" content="quarto-1.8.24">
+<meta name="generator" content="quarto-1.9.35">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 <meta name="author" content="Data Analysis Report">
-<meta name="dcterms.date" content="2025-11-17">
+<meta name="dcterms.date" content="2026-03-20">
 
 <title>CRE Infection Risk and Mortality in Liver Transplant Patients – crecoolt</title>
 <style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
 div.columns{display: flex; gap: min(4vw, 1.5em);}
@@ -69,15 +72,14 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <meta name="quarto:offset" content="./">
 <script src="site_libs/quarto-html/quarto.js" type="module"></script>
 <script src="site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
-<script src="site_libs/quarto-html/axe/axe-check.js" type="module"></script>
 <script src="site_libs/quarto-html/popper.min.js"></script>
 <script src="site_libs/quarto-html/tippy.umd.min.js"></script>
 <script src="site_libs/quarto-html/anchor.min.js"></script>
 <link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="site_libs/quarto-html/quarto-syntax-highlighting-dc55a5b9e770e841cd82e46aadbfb9b0.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-46f66b053e56abd73bb6e954d61a315b.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="site_libs/bootstrap/bootstrap-e5d13d7b0b21ab1116f56c1f5f1be770.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<link href="site_libs/bootstrap/bootstrap-e226bf1f86b0b85bb66dda15b98e2e96.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -117,8 +119,6 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
       <div class="navbar-container container-fluid">
       <div class="navbar-brand-container mx-auto">
-    <a href="./index.html" class="navbar-brand navbar-brand-logo">
-    </a>
     <a class="navbar-brand" href="./index.html">
     <span class="navbar-title">crecoolt</span>
     </a>
@@ -152,6 +152,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <li class="nav-item">
     <a class="nav-link active" href="./CRE_other.html" aria-current="page"> 
 <span class="menu-text">CRE Infection Risk and Mortality in Liver Transplant Patients</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="./diagnostics_treatment.html"> 
+<span class="menu-text">Diagnostics and Treatment by Study Period</span></a>
   </li>  
 </ul>
           </div> <!-- /navcollapse -->
@@ -187,6 +191,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   </ul></li>
   <li><a href="#infection-source-analysis" id="toc-infection-source-analysis" class="nav-link" data-scroll-target="#infection-source-analysis">Infection Source Analysis</a>
   <ul class="collapse">
+  <li><a href="#infection-type-descriptions" id="toc-infection-type-descriptions" class="nav-link" data-scroll-target="#infection-type-descriptions">Infection Type Descriptions</a></li>
   <li><a href="#mortality-by-infection-source" id="toc-mortality-by-infection-source" class="nav-link" data-scroll-target="#mortality-by-infection-source">Mortality by Infection Source</a></li>
   <li><a href="#infection-sources-survivors-vs-non-survivors" id="toc-infection-sources-survivors-vs-non-survivors" class="nav-link" data-scroll-target="#infection-sources-survivors-vs-non-survivors">Infection Sources: Survivors vs Non-Survivors</a></li>
   </ul></li>
@@ -201,6 +206,13 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <li><a href="#timing-is-critical" id="toc-timing-is-critical" class="nav-link" data-scroll-target="#timing-is-critical">2. Timing is Critical</a></li>
   <li><a href="#infection-type-matters-more-than-patient-characteristics" id="toc-infection-type-matters-more-than-patient-characteristics" class="nav-link" data-scroll-target="#infection-type-matters-more-than-patient-characteristics">3. Infection Type Matters More Than Patient Characteristics</a></li>
   <li><a href="#clinical-implications" id="toc-clinical-implications" class="nav-link" data-scroll-target="#clinical-implications">4. Clinical Implications</a></li>
+  </ul></li>
+  <li><a href="#diagnostics-and-treatment-by-study-period" id="toc-diagnostics-and-treatment-by-study-period" class="nav-link" data-scroll-target="#diagnostics-and-treatment-by-study-period">Diagnostics and Treatment by Study Period</a>
+  <ul class="collapse">
+  <li><a href="#carbapenem-resistance-mechanisms" id="toc-carbapenem-resistance-mechanisms" class="nav-link" data-scroll-target="#carbapenem-resistance-mechanisms">Carbapenem Resistance Mechanisms</a></li>
+  <li><a href="#microbiological-screening-intensity" id="toc-microbiological-screening-intensity" class="nav-link" data-scroll-target="#microbiological-screening-intensity">Microbiological Screening Intensity</a></li>
+  <li><a href="#colonisation-management-strategy" id="toc-colonisation-management-strategy" class="nav-link" data-scroll-target="#colonisation-management-strategy">Colonisation Management Strategy</a></li>
+  <li><a href="#anti-cre-therapy-in-infected-patients" id="toc-anti-cre-therapy-in-infected-patients" class="nav-link" data-scroll-target="#anti-cre-therapy-in-infected-patients">Anti-CRE Therapy in Infected Patients</a></li>
   </ul></li>
   <li><a href="#technical-notes" id="toc-technical-notes" class="nav-link" data-scroll-target="#technical-notes">Technical Notes</a></li>
   </ul>
@@ -229,7 +241,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">November 17, 2025</p>
+      <p class="date">March 20, 2026</p>
     </div>
   </div>
   
@@ -243,7 +255,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 <section id="executive-summary" class="level2">
 <h2 class="anchored" data-anchor-id="executive-summary">Executive Summary</h2>
-<p>This report analyzes data from 692 of patients developed CRE infections post-transplant - CRE infection increases mortality risk by <strong>3.6-fold</strong> - <strong>71%</strong> of CRE infections occur within the first month post-transplant - <strong>Surgical site infections</strong> have the highest mortality (47%) - <strong>Infection type matters more than baseline patient characteristics</strong> for predicting outcomes</p>
+<p>This report analyzes data from 692 liver transplant patients in the CRECOOLT study. Key findings: CRE infection increases mortality risk by <strong>3.6-fold</strong> - <strong>71%</strong> of CRE infections occur within the first month post-transplant - <strong>Respiratory infections</strong> have the highest mortality (~42%) - <strong>Surgical/intra-abdominal infections</strong> (SSI and IAI merged) account for 37% mortality - <strong>Infection type matters more than baseline patient characteristics</strong> for predicting outcomes</p>
 </section>
 <section id="data-overview" class="level2">
 <h2 class="anchored" data-anchor-id="data-overview">Data Overview</h2>
@@ -726,71 +738,131 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </section>
 <section id="infection-source-analysis" class="level2">
 <h2 class="anchored" data-anchor-id="infection-source-analysis">Infection Source Analysis</h2>
+<section id="infection-type-descriptions" class="level3">
+<h3 class="anchored" data-anchor-id="infection-type-descriptions">Infection Type Descriptions</h3>
+<p>The following CRE infection types were recorded in this cohort:</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 50%">
+<col style="width: 50%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Infection Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><strong>Bloodstream (BSI)</strong></td>
+<td>CRE isolated from ≥1 blood culture, with or without an identified primary source. Includes primary and secondary bacteraemias.</td>
+</tr>
+<tr class="even">
+<td><strong>Respiratory</strong></td>
+<td>CRE isolated from respiratory specimens (bronchoalveolar lavage, tracheal aspirate, or sputum) with compatible clinical signs of pneumonia or tracheobronchitis.</td>
+</tr>
+<tr class="odd">
+<td><strong>Urinary (UTI)</strong></td>
+<td>CRE isolated from urine culture with clinical signs of urinary tract infection. Includes both lower and upper urinary tract infections.</td>
+</tr>
+<tr class="even">
+<td><strong>Surgical/Intra-abdominal</strong></td>
+<td>CRE isolated from intra-abdominal collections, surgical drains, bile, wound cultures, or peritoneal fluid after liver transplantation. Encompasses both surgical site infections (SSI) and intra-abdominal infections (IAI), which were combined due to overlapping clinical presentation and inconsistency in the original coding (see note below).</td>
+</tr>
+<tr class="odd">
+<td><strong>Other</strong></td>
+<td>CRE infections not fitting the above categories (e.g., central line-associated, skin/soft tissue).</td>
+</tr>
+</tbody>
+</table>
+<div class="callout callout-style-default callout-warning callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Warning</span>Data Quality Note: SSI and IAI Coding
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>The original dataset recorded surgical site infections (SSI, <code>infection_source___5</code>) and intra-abdominal infections (IAI, <code>infection_source___4</code>) as separate categories. However, two anomalies suggest possible data entry errors:</p>
+<ol type="1">
+<li><strong>Implausible mortality discrepancy:</strong> SSI showed 46.9% mortality vs 14.3% for IAI — an unusually large gap for two closely related infection foci in the same anatomical region after liver transplantation.</li>
+<li><strong>Negative time-to-infection in the IAI group:</strong> Some IAI patients had <code>OLT_to_CREinfection</code> values below zero (minimum: −265 days), indicating the infection was recorded as occurring <em>before</em> transplantation, which is implausible.</li>
+</ol>
+<p>These findings are consistent with miscoding between SSI and IAI in a subset of patients. The two categories have therefore been <strong>merged into a single “Surgical/Intra-abdominal” category</strong> for all source-level analyses. No patient had both SSI and IAI coded simultaneously, so there is no double-counting.</p>
+</div>
+</div>
+</section>
 <section id="mortality-by-infection-source" class="level3">
 <h3 class="anchored" data-anchor-id="mortality-by-infection-source">Mortality by Infection Source</h3>
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Prepare infection source data</span></span>
-<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>infection_source_data <span class="ot">&lt;-</span> baseline_data <span class="sc">|&gt;</span></span>
-<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(cre_infection <span class="sc">==</span> <span class="dv">1</span>) <span class="sc">|&gt;</span></span>
-<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(record_id, death, mortality_90day, <span class="fu">starts_with</span>(<span class="st">"infection_source___"</span>)) <span class="sc">|&gt;</span></span>
-<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
-<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">bloodstream =</span> <span class="fu">ifelse</span>(infection_source___1 <span class="sc">==</span> <span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">0</span>),</span>
-<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">respiratory =</span> <span class="fu">ifelse</span>(infection_source___2 <span class="sc">==</span> <span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">0</span>),</span>
-<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">urinary =</span> <span class="fu">ifelse</span>(infection_source___3 <span class="sc">==</span> <span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">0</span>),</span>
-<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">intra_abdominal =</span> <span class="fu">ifelse</span>(infection_source___4 <span class="sc">==</span> <span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">0</span>),</span>
-<span id="cb11-10"><a href="#cb11-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">surgical_site =</span> <span class="fu">ifelse</span>(infection_source___5 <span class="sc">==</span> <span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">0</span>),</span>
-<span id="cb11-11"><a href="#cb11-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">other =</span> <span class="fu">ifelse</span>(infection_source___6 <span class="sc">==</span> <span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">0</span>)</span>
-<span id="cb11-12"><a href="#cb11-12" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">|&gt;</span></span>
-<span id="cb11-13"><a href="#cb11-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="sc">!</span><span class="fu">is.na</span>(death))</span>
-<span id="cb11-14"><a href="#cb11-14" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb11-15"><a href="#cb11-15" aria-hidden="true" tabindex="-1"></a><span class="co"># Calculate mortality for each source</span></span>
-<span id="cb11-16"><a href="#cb11-16" aria-hidden="true" tabindex="-1"></a>sources_list <span class="ot">&lt;-</span> <span class="fu">list</span>(</span>
-<span id="cb11-17"><a href="#cb11-17" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Bloodstream"</span> <span class="ot">=</span> <span class="st">"bloodstream"</span>,</span>
-<span id="cb11-18"><a href="#cb11-18" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Respiratory"</span> <span class="ot">=</span> <span class="st">"respiratory"</span>,</span>
-<span id="cb11-19"><a href="#cb11-19" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Urinary"</span> <span class="ot">=</span> <span class="st">"urinary"</span>,</span>
-<span id="cb11-20"><a href="#cb11-20" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Intra-abdominal"</span> <span class="ot">=</span> <span class="st">"intra_abdominal"</span>,</span>
-<span id="cb11-21"><a href="#cb11-21" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Surgical site"</span> <span class="ot">=</span> <span class="st">"surgical_site"</span>,</span>
-<span id="cb11-22"><a href="#cb11-22" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Other"</span> <span class="ot">=</span> <span class="st">"other"</span></span>
-<span id="cb11-23"><a href="#cb11-23" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb11-24"><a href="#cb11-24" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb11-25"><a href="#cb11-25" aria-hidden="true" tabindex="-1"></a>mortality_by_source <span class="ot">&lt;-</span> <span class="fu">map_df</span>(<span class="fu">names</span>(sources_list), <span class="cf">function</span>(source_name) {</span>
-<span id="cb11-26"><a href="#cb11-26" aria-hidden="true" tabindex="-1"></a>  source_col <span class="ot">&lt;-</span> sources_list[[source_name]]</span>
-<span id="cb11-27"><a href="#cb11-27" aria-hidden="true" tabindex="-1"></a>  source_subset <span class="ot">&lt;-</span> infection_source_data <span class="sc">|&gt;</span></span>
-<span id="cb11-28"><a href="#cb11-28" aria-hidden="true" tabindex="-1"></a>    <span class="fu">filter</span>(<span class="fu">get</span>(source_col) <span class="sc">==</span> <span class="dv">1</span>)</span>
-<span id="cb11-29"><a href="#cb11-29" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb11-30"><a href="#cb11-30" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">nrow</span>(source_subset) <span class="sc">&gt;</span> <span class="dv">0</span>) {</span>
-<span id="cb11-31"><a href="#cb11-31" aria-hidden="true" tabindex="-1"></a>    <span class="fu">data.frame</span>(</span>
-<span id="cb11-32"><a href="#cb11-32" aria-hidden="true" tabindex="-1"></a>      <span class="at">Source =</span> source_name,</span>
-<span id="cb11-33"><a href="#cb11-33" aria-hidden="true" tabindex="-1"></a>      <span class="at">n_infections =</span> <span class="fu">nrow</span>(source_subset),</span>
-<span id="cb11-34"><a href="#cb11-34" aria-hidden="true" tabindex="-1"></a>      <span class="at">deaths =</span> <span class="fu">sum</span>(source_subset<span class="sc">$</span>death, <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
-<span id="cb11-35"><a href="#cb11-35" aria-hidden="true" tabindex="-1"></a>      <span class="at">mortality_rate =</span> <span class="fu">round</span>(<span class="fu">sum</span>(source_subset<span class="sc">$</span>death, <span class="at">na.rm =</span> <span class="cn">TRUE</span>) <span class="sc">/</span> </span>
-<span id="cb11-36"><a href="#cb11-36" aria-hidden="true" tabindex="-1"></a>                            <span class="fu">nrow</span>(source_subset) <span class="sc">*</span> <span class="dv">100</span>, <span class="dv">1</span>),</span>
-<span id="cb11-37"><a href="#cb11-37" aria-hidden="true" tabindex="-1"></a>      <span class="at">deaths_90d =</span> <span class="fu">sum</span>(source_subset<span class="sc">$</span>mortality_90day, <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
-<span id="cb11-38"><a href="#cb11-38" aria-hidden="true" tabindex="-1"></a>      <span class="at">mortality_90d_rate =</span> <span class="fu">round</span>(<span class="fu">sum</span>(source_subset<span class="sc">$</span>mortality_90day, <span class="at">na.rm =</span> <span class="cn">TRUE</span>) <span class="sc">/</span> </span>
-<span id="cb11-39"><a href="#cb11-39" aria-hidden="true" tabindex="-1"></a>                                <span class="fu">nrow</span>(source_subset) <span class="sc">*</span> <span class="dv">100</span>, <span class="dv">1</span>)</span>
-<span id="cb11-40"><a href="#cb11-40" aria-hidden="true" tabindex="-1"></a>    )</span>
-<span id="cb11-41"><a href="#cb11-41" aria-hidden="true" tabindex="-1"></a>  }</span>
-<span id="cb11-42"><a href="#cb11-42" aria-hidden="true" tabindex="-1"></a>}) <span class="sc">|&gt;</span></span>
-<span id="cb11-43"><a href="#cb11-43" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(<span class="fu">desc</span>(mortality_rate))</span>
-<span id="cb11-44"><a href="#cb11-44" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb11-45"><a href="#cb11-45" aria-hidden="true" tabindex="-1"></a>highest_mort <span class="ot">&lt;-</span> mortality_by_source<span class="sc">$</span>mortality_rate[<span class="dv">1</span>]</span>
-<span id="cb11-46"><a href="#cb11-46" aria-hidden="true" tabindex="-1"></a>lowest_mort <span class="ot">&lt;-</span> <span class="fu">min</span>(mortality_by_source<span class="sc">$</span>mortality_rate)</span>
-<span id="cb11-47"><a href="#cb11-47" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb11-48"><a href="#cb11-48" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(mortality_by_source, </span>
-<span id="cb11-49"><a href="#cb11-49" aria-hidden="true" tabindex="-1"></a>             <span class="at">caption =</span> <span class="st">"Mortality Rates by Infection Source"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a><span class="co"># SSI (infection_source___5) and IAI (infection_source___4) are merged into a</span></span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a><span class="co"># single "Surgical/Intra-abdominal" category due to probable data entry errors</span></span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a><span class="co"># (see Data Quality Note above).</span></span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>infection_source_data <span class="ot">&lt;-</span> baseline_data <span class="sc">|&gt;</span></span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(cre_infection <span class="sc">==</span> <span class="dv">1</span>) <span class="sc">|&gt;</span></span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(record_id, death, mortality_90day, <span class="fu">starts_with</span>(<span class="st">"infection_source___"</span>)) <span class="sc">|&gt;</span></span>
+<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">bloodstream           =</span> <span class="fu">ifelse</span>(infection_source___1 <span class="sc">==</span> <span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">0</span>),</span>
+<span id="cb11-10"><a href="#cb11-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">respiratory           =</span> <span class="fu">ifelse</span>(infection_source___2 <span class="sc">==</span> <span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">0</span>),</span>
+<span id="cb11-11"><a href="#cb11-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">urinary               =</span> <span class="fu">ifelse</span>(infection_source___3 <span class="sc">==</span> <span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">0</span>),</span>
+<span id="cb11-12"><a href="#cb11-12" aria-hidden="true" tabindex="-1"></a>    <span class="at">surgical_abdominal    =</span> <span class="fu">ifelse</span>(infection_source___4 <span class="sc">==</span> <span class="dv">1</span> <span class="sc">|</span></span>
+<span id="cb11-13"><a href="#cb11-13" aria-hidden="true" tabindex="-1"></a>                                   infection_source___5 <span class="sc">==</span> <span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">0</span>),</span>
+<span id="cb11-14"><a href="#cb11-14" aria-hidden="true" tabindex="-1"></a>    <span class="at">other                 =</span> <span class="fu">ifelse</span>(infection_source___6 <span class="sc">==</span> <span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">0</span>)</span>
+<span id="cb11-15"><a href="#cb11-15" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">|&gt;</span></span>
+<span id="cb11-16"><a href="#cb11-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="sc">!</span><span class="fu">is.na</span>(death))</span>
+<span id="cb11-17"><a href="#cb11-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-18"><a href="#cb11-18" aria-hidden="true" tabindex="-1"></a><span class="co"># Calculate mortality for each source</span></span>
+<span id="cb11-19"><a href="#cb11-19" aria-hidden="true" tabindex="-1"></a>sources_list <span class="ot">&lt;-</span> <span class="fu">list</span>(</span>
+<span id="cb11-20"><a href="#cb11-20" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Bloodstream (BSI)"</span>          <span class="ot">=</span> <span class="st">"bloodstream"</span>,</span>
+<span id="cb11-21"><a href="#cb11-21" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Respiratory"</span>                <span class="ot">=</span> <span class="st">"respiratory"</span>,</span>
+<span id="cb11-22"><a href="#cb11-22" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Urinary (UTI)"</span>              <span class="ot">=</span> <span class="st">"urinary"</span>,</span>
+<span id="cb11-23"><a href="#cb11-23" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Surgical/Intra-abdominal"</span>   <span class="ot">=</span> <span class="st">"surgical_abdominal"</span>,</span>
+<span id="cb11-24"><a href="#cb11-24" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Other"</span>                      <span class="ot">=</span> <span class="st">"other"</span></span>
+<span id="cb11-25"><a href="#cb11-25" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb11-26"><a href="#cb11-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-27"><a href="#cb11-27" aria-hidden="true" tabindex="-1"></a>mortality_by_source <span class="ot">&lt;-</span> <span class="fu">map_df</span>(<span class="fu">names</span>(sources_list), <span class="cf">function</span>(source_name) {</span>
+<span id="cb11-28"><a href="#cb11-28" aria-hidden="true" tabindex="-1"></a>  source_col <span class="ot">&lt;-</span> sources_list[[source_name]]</span>
+<span id="cb11-29"><a href="#cb11-29" aria-hidden="true" tabindex="-1"></a>  source_subset <span class="ot">&lt;-</span> infection_source_data <span class="sc">|&gt;</span></span>
+<span id="cb11-30"><a href="#cb11-30" aria-hidden="true" tabindex="-1"></a>    <span class="fu">filter</span>(<span class="fu">get</span>(source_col) <span class="sc">==</span> <span class="dv">1</span>)</span>
+<span id="cb11-31"><a href="#cb11-31" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb11-32"><a href="#cb11-32" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">nrow</span>(source_subset) <span class="sc">&gt;</span> <span class="dv">0</span>) {</span>
+<span id="cb11-33"><a href="#cb11-33" aria-hidden="true" tabindex="-1"></a>    <span class="fu">data.frame</span>(</span>
+<span id="cb11-34"><a href="#cb11-34" aria-hidden="true" tabindex="-1"></a>      <span class="at">Source =</span> source_name,</span>
+<span id="cb11-35"><a href="#cb11-35" aria-hidden="true" tabindex="-1"></a>      <span class="at">n_infections =</span> <span class="fu">nrow</span>(source_subset),</span>
+<span id="cb11-36"><a href="#cb11-36" aria-hidden="true" tabindex="-1"></a>      <span class="at">deaths =</span> <span class="fu">sum</span>(source_subset<span class="sc">$</span>death, <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb11-37"><a href="#cb11-37" aria-hidden="true" tabindex="-1"></a>      <span class="at">mortality_rate =</span> <span class="fu">round</span>(<span class="fu">sum</span>(source_subset<span class="sc">$</span>death, <span class="at">na.rm =</span> <span class="cn">TRUE</span>) <span class="sc">/</span> </span>
+<span id="cb11-38"><a href="#cb11-38" aria-hidden="true" tabindex="-1"></a>                            <span class="fu">nrow</span>(source_subset) <span class="sc">*</span> <span class="dv">100</span>, <span class="dv">1</span>),</span>
+<span id="cb11-39"><a href="#cb11-39" aria-hidden="true" tabindex="-1"></a>      <span class="at">deaths_90d =</span> <span class="fu">sum</span>(source_subset<span class="sc">$</span>mortality_90day, <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb11-40"><a href="#cb11-40" aria-hidden="true" tabindex="-1"></a>      <span class="at">mortality_90d_rate =</span> <span class="fu">round</span>(<span class="fu">sum</span>(source_subset<span class="sc">$</span>mortality_90day, <span class="at">na.rm =</span> <span class="cn">TRUE</span>) <span class="sc">/</span> </span>
+<span id="cb11-41"><a href="#cb11-41" aria-hidden="true" tabindex="-1"></a>                                <span class="fu">nrow</span>(source_subset) <span class="sc">*</span> <span class="dv">100</span>, <span class="dv">1</span>)</span>
+<span id="cb11-42"><a href="#cb11-42" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb11-43"><a href="#cb11-43" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb11-44"><a href="#cb11-44" aria-hidden="true" tabindex="-1"></a>}) <span class="sc">|&gt;</span></span>
+<span id="cb11-45"><a href="#cb11-45" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(<span class="fu">desc</span>(mortality_rate))</span>
+<span id="cb11-46"><a href="#cb11-46" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-47"><a href="#cb11-47" aria-hidden="true" tabindex="-1"></a>highest_mort_source <span class="ot">&lt;-</span> mortality_by_source<span class="sc">$</span>Source[<span class="dv">1</span>]</span>
+<span id="cb11-48"><a href="#cb11-48" aria-hidden="true" tabindex="-1"></a>highest_mort <span class="ot">&lt;-</span> mortality_by_source<span class="sc">$</span>mortality_rate[<span class="dv">1</span>]</span>
+<span id="cb11-49"><a href="#cb11-49" aria-hidden="true" tabindex="-1"></a>lowest_mort_source <span class="ot">&lt;-</span> mortality_by_source<span class="sc">$</span>Source[<span class="fu">nrow</span>(mortality_by_source)]</span>
+<span id="cb11-50"><a href="#cb11-50" aria-hidden="true" tabindex="-1"></a>lowest_mort <span class="ot">&lt;-</span> mortality_by_source<span class="sc">$</span>mortality_rate[<span class="fu">nrow</span>(mortality_by_source)]</span>
+<span id="cb11-51"><a href="#cb11-51" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-52"><a href="#cb11-52" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(mortality_by_source, </span>
+<span id="cb11-53"><a href="#cb11-53" aria-hidden="true" tabindex="-1"></a>             <span class="at">caption =</span> <span class="st">"Mortality Rates by Infection Source (SSI and IAI merged)"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output-display">
 <table class="caption-top table table-sm table-striped small">
-<caption>Mortality Rates by Infection Source</caption>
+<caption>Mortality Rates by Infection Source (SSI and IAI merged)</caption>
 <colgroup>
-<col style="width: 19%">
+<col style="width: 27%">
+<col style="width: 14%">
+<col style="width: 7%">
 <col style="width: 16%">
-<col style="width: 8%">
-<col style="width: 18%">
-<col style="width: 13%">
-<col style="width: 23%">
+<col style="width: 12%">
+<col style="width: 21%">
 </colgroup>
 <thead>
 <tr class="header">
@@ -804,14 +876,6 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </thead>
 <tbody>
 <tr class="odd">
-<td style="text-align: left;">Surgical site</td>
-<td style="text-align: right;">49</td>
-<td style="text-align: right;">23</td>
-<td style="text-align: right;">46.9</td>
-<td style="text-align: right;">20</td>
-<td style="text-align: right;">40.8</td>
-</tr>
-<tr class="even">
 <td style="text-align: left;">Respiratory</td>
 <td style="text-align: right;">33</td>
 <td style="text-align: right;">14</td>
@@ -819,8 +883,16 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <td style="text-align: right;">6</td>
 <td style="text-align: right;">18.2</td>
 </tr>
+<tr class="even">
+<td style="text-align: left;">Surgical/Intra-abdominal</td>
+<td style="text-align: right;">70</td>
+<td style="text-align: right;">26</td>
+<td style="text-align: right;">37.1</td>
+<td style="text-align: right;">23</td>
+<td style="text-align: right;">32.9</td>
+</tr>
 <tr class="odd">
-<td style="text-align: left;">Urinary</td>
+<td style="text-align: left;">Urinary (UTI)</td>
 <td style="text-align: right;">44</td>
 <td style="text-align: right;">16</td>
 <td style="text-align: right;">36.4</td>
@@ -828,7 +900,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <td style="text-align: right;">27.3</td>
 </tr>
 <tr class="even">
-<td style="text-align: left;">Bloodstream</td>
+<td style="text-align: left;">Bloodstream (BSI)</td>
 <td style="text-align: right;">56</td>
 <td style="text-align: right;">17</td>
 <td style="text-align: right;">30.4</td>
@@ -842,14 +914,6 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <td style="text-align: right;">27.3</td>
 <td style="text-align: right;">3</td>
 <td style="text-align: right;">27.3</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">Intra-abdominal</td>
-<td style="text-align: right;">21</td>
-<td style="text-align: right;">3</td>
-<td style="text-align: right;">14.3</td>
-<td style="text-align: right;">3</td>
-<td style="text-align: right;">14.3</td>
 </tr>
 </tbody>
 </table>
@@ -873,7 +937,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb12-15"><a href="#cb12-15" aria-hidden="true" tabindex="-1"></a>                                <span class="st">"Overall mortality"</span> <span class="ot">=</span> <span class="st">"#9E9E9E"</span>), <span class="at">name =</span> <span class="cn">NULL</span>) <span class="sc">+</span></span>
 <span id="cb12-16"><a href="#cb12-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_y_continuous</span>(<span class="at">limits =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">55</span>), <span class="at">breaks =</span> <span class="fu">seq</span>(<span class="dv">0</span>, <span class="dv">50</span>, <span class="dv">10</span>)) <span class="sc">+</span></span>
 <span id="cb12-17"><a href="#cb12-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"Mortality Rates by CRE Infection Source"</span>,</span>
-<span id="cb12-18"><a href="#cb12-18" aria-hidden="true" tabindex="-1"></a>       <span class="at">subtitle =</span> <span class="st">"Comparing early (90-day) vs overall mortality"</span>,</span>
+<span id="cb12-18"><a href="#cb12-18" aria-hidden="true" tabindex="-1"></a>       <span class="at">subtitle =</span> <span class="st">"Comparing early (90-day) vs overall mortality (SSI and IAI merged)"</span>,</span>
 <span id="cb12-19"><a href="#cb12-19" aria-hidden="true" tabindex="-1"></a>       <span class="at">x =</span> <span class="st">"Infection Source"</span>, <span class="at">y =</span> <span class="st">"Mortality Rate (%)"</span>) <span class="sc">+</span></span>
 <span id="cb12-20"><a href="#cb12-20" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>(<span class="at">base_size =</span> <span class="dv">13</span>) <span class="sc">+</span></span>
 <span id="cb12-21"><a href="#cb12-21" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">plot.title =</span> <span class="fu">element_text</span>(<span class="at">face =</span> <span class="st">"bold"</span>, <span class="at">size =</span> <span class="dv">15</span>),</span>
@@ -890,9 +954,9 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 <p><strong>Key Findings:</strong></p>
 <ul>
-<li><strong>Surgical site infections</strong> have the highest mortality (<strong>46.9%</strong>)</li>
-<li><strong>Respiratory infections</strong> show delayed mortality pattern (42.4% overall, but only 18.2% at 90 days)</li>
-<li><strong>Intra-abdominal infections</strong> have the lowest mortality (<strong>14.3%</strong>)</li>
+<li><strong>Respiratory</strong> infections have the highest mortality (<strong>42.4%</strong>)</li>
+<li><strong>Respiratory infections</strong> show a delayed mortality pattern (42.4% overall, but only 18.2% at 90 days), suggesting late deterioration</li>
+<li><strong>Other</strong> infections have the lowest mortality (<strong>27.3%</strong>)</li>
 </ul>
 </section>
 <section id="infection-sources-survivors-vs-non-survivors" class="level3">
@@ -901,42 +965,43 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <details class="code-fold">
 <summary>Code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Compare infection sources between survivors and non-survivors</span></span>
-<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>source_by_outcome <span class="ot">&lt;-</span> <span class="fu">map_df</span>(<span class="fu">names</span>(sources_list), <span class="cf">function</span>(source_name) {</span>
-<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>  source_col <span class="ot">&lt;-</span> sources_list[[source_name]]</span>
-<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>  survived_count <span class="ot">&lt;-</span> <span class="fu">sum</span>(infection_source_data<span class="sc">$</span>death <span class="sc">==</span> <span class="dv">0</span> <span class="sc">&amp;</span> </span>
-<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a>                       infection_source_data[[source_col]] <span class="sc">==</span> <span class="dv">1</span>, <span class="at">na.rm =</span> <span class="cn">TRUE</span>)</span>
-<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a>  survived_total <span class="ot">&lt;-</span> <span class="fu">sum</span>(infection_source_data<span class="sc">$</span>death <span class="sc">==</span> <span class="dv">0</span>, <span class="at">na.rm =</span> <span class="cn">TRUE</span>)</span>
-<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a>  died_count <span class="ot">&lt;-</span> <span class="fu">sum</span>(infection_source_data<span class="sc">$</span>death <span class="sc">==</span> <span class="dv">1</span> <span class="sc">&amp;</span> </span>
-<span id="cb13-10"><a href="#cb13-10" aria-hidden="true" tabindex="-1"></a>                    infection_source_data[[source_col]] <span class="sc">==</span> <span class="dv">1</span>, <span class="at">na.rm =</span> <span class="cn">TRUE</span>)</span>
-<span id="cb13-11"><a href="#cb13-11" aria-hidden="true" tabindex="-1"></a>  died_total <span class="ot">&lt;-</span> <span class="fu">sum</span>(infection_source_data<span class="sc">$</span>death <span class="sc">==</span> <span class="dv">1</span>, <span class="at">na.rm =</span> <span class="cn">TRUE</span>)</span>
-<span id="cb13-12"><a href="#cb13-12" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb13-13"><a href="#cb13-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">data.frame</span>(</span>
-<span id="cb13-14"><a href="#cb13-14" aria-hidden="true" tabindex="-1"></a>    <span class="at">Source =</span> source_name,</span>
-<span id="cb13-15"><a href="#cb13-15" aria-hidden="true" tabindex="-1"></a>    <span class="at">Survived_pct =</span> <span class="fu">round</span>(survived_count <span class="sc">/</span> survived_total <span class="sc">*</span> <span class="dv">100</span>, <span class="dv">1</span>),</span>
-<span id="cb13-16"><a href="#cb13-16" aria-hidden="true" tabindex="-1"></a>    <span class="at">Died_pct =</span> <span class="fu">round</span>(died_count <span class="sc">/</span> died_total <span class="sc">*</span> <span class="dv">100</span>, <span class="dv">1</span>)</span>
-<span id="cb13-17"><a href="#cb13-17" aria-hidden="true" tabindex="-1"></a>  )</span>
-<span id="cb13-18"><a href="#cb13-18" aria-hidden="true" tabindex="-1"></a>}) <span class="sc">|&gt;</span></span>
-<span id="cb13-19"><a href="#cb13-19" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">Difference =</span> Died_pct <span class="sc">-</span> Survived_pct) <span class="sc">|&gt;</span></span>
-<span id="cb13-20"><a href="#cb13-20" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(<span class="fu">desc</span>(Difference))</span>
-<span id="cb13-21"><a href="#cb13-21" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb13-22"><a href="#cb13-22" aria-hidden="true" tabindex="-1"></a><span class="co"># Diverging bar chart</span></span>
-<span id="cb13-23"><a href="#cb13-23" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(source_by_outcome, </span>
-<span id="cb13-24"><a href="#cb13-24" aria-hidden="true" tabindex="-1"></a>       <span class="fu">aes</span>(<span class="at">x =</span> Difference, <span class="at">y =</span> <span class="fu">reorder</span>(Source, Difference), </span>
-<span id="cb13-25"><a href="#cb13-25" aria-hidden="true" tabindex="-1"></a>           <span class="at">fill =</span> <span class="fu">ifelse</span>(Difference <span class="sc">&gt;</span> <span class="dv">0</span>, <span class="st">"Higher in deaths"</span>, <span class="st">"Higher in survivors"</span>))) <span class="sc">+</span></span>
-<span id="cb13-26"><a href="#cb13-26" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_col</span>(<span class="at">width =</span> <span class="fl">0.7</span>) <span class="sc">+</span></span>
-<span id="cb13-27"><a href="#cb13-27" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_vline</span>(<span class="at">xintercept =</span> <span class="dv">0</span>, <span class="at">color =</span> <span class="st">"black"</span>, <span class="at">linewidth =</span> <span class="fl">0.5</span>) <span class="sc">+</span></span>
-<span id="cb13-28"><a href="#cb13-28" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_text</span>(<span class="fu">aes</span>(<span class="at">label =</span> <span class="fu">sprintf</span>(<span class="st">"%+.1f%%"</span>, Difference)),</span>
-<span id="cb13-29"><a href="#cb13-29" aria-hidden="true" tabindex="-1"></a>            <span class="at">hjust =</span> <span class="fu">ifelse</span>(source_by_outcome<span class="sc">$</span>Difference <span class="sc">&gt;</span> <span class="dv">0</span>, <span class="sc">-</span><span class="fl">0.2</span>, <span class="fl">1.2</span>), <span class="at">size =</span> <span class="dv">4</span>) <span class="sc">+</span></span>
-<span id="cb13-30"><a href="#cb13-30" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_fill_manual</span>(<span class="at">values =</span> <span class="fu">c</span>(<span class="st">"Higher in deaths"</span> <span class="ot">=</span> <span class="st">"#C62828"</span>, </span>
-<span id="cb13-31"><a href="#cb13-31" aria-hidden="true" tabindex="-1"></a>                                <span class="st">"Higher in survivors"</span> <span class="ot">=</span> <span class="st">"#2E7D32"</span>), <span class="at">name =</span> <span class="cn">NULL</span>) <span class="sc">+</span></span>
-<span id="cb13-32"><a href="#cb13-32" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"Infection Source Differences: Deaths vs Survivors"</span>,</span>
-<span id="cb13-33"><a href="#cb13-33" aria-hidden="true" tabindex="-1"></a>       <span class="at">subtitle =</span> <span class="st">"Positive values indicate sources more common in patients who died"</span>,</span>
-<span id="cb13-34"><a href="#cb13-34" aria-hidden="true" tabindex="-1"></a>       <span class="at">x =</span> <span class="st">"Difference in Percentage Points"</span>, <span class="at">y =</span> <span class="cn">NULL</span>) <span class="sc">+</span></span>
-<span id="cb13-35"><a href="#cb13-35" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>(<span class="at">base_size =</span> <span class="dv">13</span>) <span class="sc">+</span></span>
-<span id="cb13-36"><a href="#cb13-36" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">plot.title =</span> <span class="fu">element_text</span>(<span class="at">face =</span> <span class="st">"bold"</span>, <span class="at">size =</span> <span class="dv">15</span>),</span>
-<span id="cb13-37"><a href="#cb13-37" aria-hidden="true" tabindex="-1"></a>        <span class="at">legend.position =</span> <span class="st">"top"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a><span class="co"># sources_list already uses the merged surgical_abdominal category</span></span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>source_by_outcome <span class="ot">&lt;-</span> <span class="fu">map_df</span>(<span class="fu">names</span>(sources_list), <span class="cf">function</span>(source_name) {</span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>  source_col <span class="ot">&lt;-</span> sources_list[[source_name]]</span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a>  survived_count <span class="ot">&lt;-</span> <span class="fu">sum</span>(infection_source_data<span class="sc">$</span>death <span class="sc">==</span> <span class="dv">0</span> <span class="sc">&amp;</span> </span>
+<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a>                       infection_source_data[[source_col]] <span class="sc">==</span> <span class="dv">1</span>, <span class="at">na.rm =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a>  survived_total <span class="ot">&lt;-</span> <span class="fu">sum</span>(infection_source_data<span class="sc">$</span>death <span class="sc">==</span> <span class="dv">0</span>, <span class="at">na.rm =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb13-10"><a href="#cb13-10" aria-hidden="true" tabindex="-1"></a>  died_count <span class="ot">&lt;-</span> <span class="fu">sum</span>(infection_source_data<span class="sc">$</span>death <span class="sc">==</span> <span class="dv">1</span> <span class="sc">&amp;</span> </span>
+<span id="cb13-11"><a href="#cb13-11" aria-hidden="true" tabindex="-1"></a>                    infection_source_data[[source_col]] <span class="sc">==</span> <span class="dv">1</span>, <span class="at">na.rm =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb13-12"><a href="#cb13-12" aria-hidden="true" tabindex="-1"></a>  died_total <span class="ot">&lt;-</span> <span class="fu">sum</span>(infection_source_data<span class="sc">$</span>death <span class="sc">==</span> <span class="dv">1</span>, <span class="at">na.rm =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb13-13"><a href="#cb13-13" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb13-14"><a href="#cb13-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">data.frame</span>(</span>
+<span id="cb13-15"><a href="#cb13-15" aria-hidden="true" tabindex="-1"></a>    <span class="at">Source =</span> source_name,</span>
+<span id="cb13-16"><a href="#cb13-16" aria-hidden="true" tabindex="-1"></a>    <span class="at">Survived_pct =</span> <span class="fu">round</span>(survived_count <span class="sc">/</span> survived_total <span class="sc">*</span> <span class="dv">100</span>, <span class="dv">1</span>),</span>
+<span id="cb13-17"><a href="#cb13-17" aria-hidden="true" tabindex="-1"></a>    <span class="at">Died_pct =</span> <span class="fu">round</span>(died_count <span class="sc">/</span> died_total <span class="sc">*</span> <span class="dv">100</span>, <span class="dv">1</span>)</span>
+<span id="cb13-18"><a href="#cb13-18" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb13-19"><a href="#cb13-19" aria-hidden="true" tabindex="-1"></a>}) <span class="sc">|&gt;</span></span>
+<span id="cb13-20"><a href="#cb13-20" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">Difference =</span> Died_pct <span class="sc">-</span> Survived_pct) <span class="sc">|&gt;</span></span>
+<span id="cb13-21"><a href="#cb13-21" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(<span class="fu">desc</span>(Difference))</span>
+<span id="cb13-22"><a href="#cb13-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-23"><a href="#cb13-23" aria-hidden="true" tabindex="-1"></a><span class="co"># Diverging bar chart</span></span>
+<span id="cb13-24"><a href="#cb13-24" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(source_by_outcome, </span>
+<span id="cb13-25"><a href="#cb13-25" aria-hidden="true" tabindex="-1"></a>       <span class="fu">aes</span>(<span class="at">x =</span> Difference, <span class="at">y =</span> <span class="fu">reorder</span>(Source, Difference), </span>
+<span id="cb13-26"><a href="#cb13-26" aria-hidden="true" tabindex="-1"></a>           <span class="at">fill =</span> <span class="fu">ifelse</span>(Difference <span class="sc">&gt;</span> <span class="dv">0</span>, <span class="st">"Higher in deaths"</span>, <span class="st">"Higher in survivors"</span>))) <span class="sc">+</span></span>
+<span id="cb13-27"><a href="#cb13-27" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_col</span>(<span class="at">width =</span> <span class="fl">0.7</span>) <span class="sc">+</span></span>
+<span id="cb13-28"><a href="#cb13-28" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_vline</span>(<span class="at">xintercept =</span> <span class="dv">0</span>, <span class="at">color =</span> <span class="st">"black"</span>, <span class="at">linewidth =</span> <span class="fl">0.5</span>) <span class="sc">+</span></span>
+<span id="cb13-29"><a href="#cb13-29" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_text</span>(<span class="fu">aes</span>(<span class="at">label =</span> <span class="fu">sprintf</span>(<span class="st">"%+.1f%%"</span>, Difference)),</span>
+<span id="cb13-30"><a href="#cb13-30" aria-hidden="true" tabindex="-1"></a>            <span class="at">hjust =</span> <span class="fu">ifelse</span>(source_by_outcome<span class="sc">$</span>Difference <span class="sc">&gt;</span> <span class="dv">0</span>, <span class="sc">-</span><span class="fl">0.2</span>, <span class="fl">1.2</span>), <span class="at">size =</span> <span class="dv">4</span>) <span class="sc">+</span></span>
+<span id="cb13-31"><a href="#cb13-31" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_fill_manual</span>(<span class="at">values =</span> <span class="fu">c</span>(<span class="st">"Higher in deaths"</span> <span class="ot">=</span> <span class="st">"#C62828"</span>, </span>
+<span id="cb13-32"><a href="#cb13-32" aria-hidden="true" tabindex="-1"></a>                                <span class="st">"Higher in survivors"</span> <span class="ot">=</span> <span class="st">"#2E7D32"</span>), <span class="at">name =</span> <span class="cn">NULL</span>) <span class="sc">+</span></span>
+<span id="cb13-33"><a href="#cb13-33" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"Infection Source Differences: Deaths vs Survivors"</span>,</span>
+<span id="cb13-34"><a href="#cb13-34" aria-hidden="true" tabindex="-1"></a>       <span class="at">subtitle =</span> <span class="st">"Positive values indicate sources more common in patients who died (SSI and IAI merged)"</span>,</span>
+<span id="cb13-35"><a href="#cb13-35" aria-hidden="true" tabindex="-1"></a>       <span class="at">x =</span> <span class="st">"Difference in Percentage Points"</span>, <span class="at">y =</span> <span class="cn">NULL</span>) <span class="sc">+</span></span>
+<span id="cb13-36"><a href="#cb13-36" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>(<span class="at">base_size =</span> <span class="dv">13</span>) <span class="sc">+</span></span>
+<span id="cb13-37"><a href="#cb13-37" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">plot.title =</span> <span class="fu">element_text</span>(<span class="at">face =</span> <span class="st">"bold"</span>, <span class="at">size =</span> <span class="dv">15</span>),</span>
+<span id="cb13-38"><a href="#cb13-38" aria-hidden="true" tabindex="-1"></a>        <span class="at">legend.position =</span> <span class="st">"top"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output-display">
 <div>
@@ -946,7 +1011,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 </div>
-<p><strong>Critical Finding:</strong> <strong>Surgical site infections</strong> are over-represented in deaths (+11.8 percentage points), while <strong>intra-abdominal infections</strong> are under-represented (-10.9 percentage points).</p>
+<p><strong>Critical Finding:</strong> <strong>Respiratory infections</strong> are the most over-represented source in patients who died. <strong>Surgical/Intra-abdominal infections</strong>, when SSI and IAI are properly combined, show a more moderate pattern consistent with the overall merged mortality rate of 37%.</p>
 </section>
 </section>
 <section id="patient-characteristics-and-outcomes" class="level2">
@@ -957,84 +1022,83 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <details class="code-fold">
 <summary>Code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Get single-source infections for cleaner comparison</span></span>
-<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>single_source_chars <span class="ot">&lt;-</span> infection_source_data <span class="sc">|&gt;</span></span>
-<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>((bloodstream <span class="sc">+</span> respiratory <span class="sc">+</span> urinary <span class="sc">+</span> intra_abdominal <span class="sc">+</span> </span>
-<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>          surgical_site <span class="sc">+</span> other) <span class="sc">==</span> <span class="dv">1</span>) <span class="sc">|&gt;</span></span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Using merged surgical_abdominal category (SSI + IAI combined)</span></span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>single_source_chars <span class="ot">&lt;-</span> infection_source_data <span class="sc">|&gt;</span></span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>((bloodstream <span class="sc">+</span> respiratory <span class="sc">+</span> urinary <span class="sc">+</span> surgical_abdominal <span class="sc">+</span> other) <span class="sc">==</span> <span class="dv">1</span>) <span class="sc">|&gt;</span></span>
 <span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
 <span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">primary_source =</span> <span class="fu">case_when</span>(</span>
-<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a>      bloodstream <span class="sc">==</span> <span class="dv">1</span> <span class="sc">~</span> <span class="st">"Bloodstream"</span>,</span>
-<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a>      respiratory <span class="sc">==</span> <span class="dv">1</span> <span class="sc">~</span> <span class="st">"Respiratory"</span>,</span>
-<span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a>      urinary <span class="sc">==</span> <span class="dv">1</span> <span class="sc">~</span> <span class="st">"Urinary"</span>,</span>
-<span id="cb14-10"><a href="#cb14-10" aria-hidden="true" tabindex="-1"></a>      intra_abdominal <span class="sc">==</span> <span class="dv">1</span> <span class="sc">~</span> <span class="st">"Intra-abdominal"</span>,</span>
-<span id="cb14-11"><a href="#cb14-11" aria-hidden="true" tabindex="-1"></a>      surgical_site <span class="sc">==</span> <span class="dv">1</span> <span class="sc">~</span> <span class="st">"Surgical site"</span>,</span>
-<span id="cb14-12"><a href="#cb14-12" aria-hidden="true" tabindex="-1"></a>      <span class="cn">TRUE</span> <span class="sc">~</span> <span class="cn">NA_character_</span></span>
-<span id="cb14-13"><a href="#cb14-13" aria-hidden="true" tabindex="-1"></a>    )</span>
-<span id="cb14-14"><a href="#cb14-14" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">|&gt;</span></span>
-<span id="cb14-15"><a href="#cb14-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(</span>
-<span id="cb14-16"><a href="#cb14-16" aria-hidden="true" tabindex="-1"></a>    baseline_data <span class="sc">|&gt;</span> <span class="fu">select</span>(record_id, age, gender, meld_score, cci, OLT_to_CREinfection),</span>
-<span id="cb14-17"><a href="#cb14-17" aria-hidden="true" tabindex="-1"></a>    <span class="at">by =</span> <span class="st">"record_id"</span></span>
-<span id="cb14-18"><a href="#cb14-18" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">|&gt;</span></span>
-<span id="cb14-19"><a href="#cb14-19" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="sc">!</span><span class="fu">is.na</span>(primary_source), primary_source <span class="sc">!=</span> <span class="st">"Other"</span>)</span>
-<span id="cb14-20"><a href="#cb14-20" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-21"><a href="#cb14-21" aria-hidden="true" tabindex="-1"></a><span class="co"># MELD score comparison</span></span>
-<span id="cb14-22"><a href="#cb14-22" aria-hidden="true" tabindex="-1"></a>meld_comparison <span class="ot">&lt;-</span> single_source_chars <span class="sc">|&gt;</span></span>
-<span id="cb14-23"><a href="#cb14-23" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="sc">!</span><span class="fu">is.na</span>(meld_score)) <span class="sc">|&gt;</span></span>
-<span id="cb14-24"><a href="#cb14-24" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(primary_source) <span class="sc">|&gt;</span></span>
-<span id="cb14-25"><a href="#cb14-25" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(<span class="at">n =</span> <span class="fu">n</span>(), <span class="at">mean_meld =</span> <span class="fu">round</span>(<span class="fu">mean</span>(meld_score), <span class="dv">1</span>), <span class="at">.groups =</span> <span class="st">"drop"</span>) <span class="sc">|&gt;</span></span>
-<span id="cb14-26"><a href="#cb14-26" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(<span class="fu">desc</span>(mean_meld))</span>
-<span id="cb14-27"><a href="#cb14-27" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-28"><a href="#cb14-28" aria-hidden="true" tabindex="-1"></a><span class="co"># Mortality rates</span></span>
-<span id="cb14-29"><a href="#cb14-29" aria-hidden="true" tabindex="-1"></a>mortality_single <span class="ot">&lt;-</span> single_source_chars <span class="sc">|&gt;</span></span>
-<span id="cb14-30"><a href="#cb14-30" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="sc">!</span><span class="fu">is.na</span>(death)) <span class="sc">|&gt;</span></span>
-<span id="cb14-31"><a href="#cb14-31" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(primary_source) <span class="sc">|&gt;</span></span>
-<span id="cb14-32"><a href="#cb14-32" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(<span class="at">n =</span> <span class="fu">n</span>(), </span>
-<span id="cb14-33"><a href="#cb14-33" aria-hidden="true" tabindex="-1"></a>            <span class="at">deaths =</span> <span class="fu">sum</span>(death),</span>
-<span id="cb14-34"><a href="#cb14-34" aria-hidden="true" tabindex="-1"></a>            <span class="at">mortality_rate =</span> <span class="fu">round</span>(<span class="fu">sum</span>(death) <span class="sc">/</span> <span class="fu">n</span>() <span class="sc">*</span> <span class="dv">100</span>, <span class="dv">1</span>),</span>
-<span id="cb14-35"><a href="#cb14-35" aria-hidden="true" tabindex="-1"></a>            <span class="at">.groups =</span> <span class="st">"drop"</span>)</span>
-<span id="cb14-36"><a href="#cb14-36" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-37"><a href="#cb14-37" aria-hidden="true" tabindex="-1"></a><span class="co"># Timing</span></span>
-<span id="cb14-38"><a href="#cb14-38" aria-hidden="true" tabindex="-1"></a>timing_comparison <span class="ot">&lt;-</span> single_source_chars <span class="sc">|&gt;</span></span>
-<span id="cb14-39"><a href="#cb14-39" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="sc">!</span><span class="fu">is.na</span>(OLT_to_CREinfection)) <span class="sc">|&gt;</span></span>
-<span id="cb14-40"><a href="#cb14-40" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(primary_source) <span class="sc">|&gt;</span></span>
-<span id="cb14-41"><a href="#cb14-41" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(<span class="at">n =</span> <span class="fu">n</span>(),</span>
-<span id="cb14-42"><a href="#cb14-42" aria-hidden="true" tabindex="-1"></a>            <span class="at">median_days =</span> <span class="fu">round</span>(<span class="fu">median</span>(OLT_to_CREinfection), <span class="dv">1</span>),</span>
-<span id="cb14-43"><a href="#cb14-43" aria-hidden="true" tabindex="-1"></a>            <span class="at">.groups =</span> <span class="st">"drop"</span>)</span>
-<span id="cb14-44"><a href="#cb14-44" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-45"><a href="#cb14-45" aria-hidden="true" tabindex="-1"></a><span class="co"># Combine for visualization</span></span>
-<span id="cb14-46"><a href="#cb14-46" aria-hidden="true" tabindex="-1"></a>char_summary <span class="ot">&lt;-</span> meld_comparison <span class="sc">|&gt;</span></span>
-<span id="cb14-47"><a href="#cb14-47" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(timing_comparison <span class="sc">|&gt;</span> <span class="fu">select</span>(primary_source, median_days), <span class="at">by =</span> <span class="st">"primary_source"</span>) <span class="sc">|&gt;</span></span>
-<span id="cb14-48"><a href="#cb14-48" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(mortality_single <span class="sc">|&gt;</span> <span class="fu">select</span>(primary_source, mortality_rate), <span class="at">by =</span> <span class="st">"primary_source"</span>)</span>
-<span id="cb14-49"><a href="#cb14-49" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-50"><a href="#cb14-50" aria-hidden="true" tabindex="-1"></a><span class="co"># Multi-panel plot</span></span>
-<span id="cb14-51"><a href="#cb14-51" aria-hidden="true" tabindex="-1"></a>p1 <span class="ot">&lt;-</span> <span class="fu">ggplot</span>(char_summary, <span class="fu">aes</span>(<span class="at">x =</span> <span class="fu">reorder</span>(primary_source, <span class="sc">-</span>mean_meld), <span class="at">y =</span> mean_meld)) <span class="sc">+</span></span>
-<span id="cb14-52"><a href="#cb14-52" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_col</span>(<span class="fu">aes</span>(<span class="at">fill =</span> mortality_rate), <span class="at">width =</span> <span class="fl">0.6</span>) <span class="sc">+</span></span>
-<span id="cb14-53"><a href="#cb14-53" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_text</span>(<span class="fu">aes</span>(<span class="at">label =</span> <span class="fu">round</span>(mean_meld, <span class="dv">1</span>)), <span class="at">vjust =</span> <span class="sc">-</span><span class="fl">0.5</span>, <span class="at">size =</span> <span class="fl">3.5</span>) <span class="sc">+</span></span>
-<span id="cb14-54"><a href="#cb14-54" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_fill_gradient</span>(<span class="at">low =</span> <span class="st">"#FFF9C4"</span>, <span class="at">high =</span> <span class="st">"#C62828"</span>, <span class="at">name =</span> <span class="st">"Mortality %"</span>, <span class="at">limits =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">60</span>)) <span class="sc">+</span></span>
-<span id="cb14-55"><a href="#cb14-55" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"MELD Score"</span>, <span class="at">x =</span> <span class="cn">NULL</span>, <span class="at">y =</span> <span class="st">"Mean MELD"</span>) <span class="sc">+</span></span>
-<span id="cb14-56"><a href="#cb14-56" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>(<span class="at">base_size =</span> <span class="dv">11</span>) <span class="sc">+</span></span>
-<span id="cb14-57"><a href="#cb14-57" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">axis.text.x =</span> <span class="fu">element_text</span>(<span class="at">angle =</span> <span class="dv">30</span>, <span class="at">hjust =</span> <span class="dv">1</span>), <span class="at">legend.position =</span> <span class="st">"none"</span>)</span>
-<span id="cb14-58"><a href="#cb14-58" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-59"><a href="#cb14-59" aria-hidden="true" tabindex="-1"></a>p2 <span class="ot">&lt;-</span> <span class="fu">ggplot</span>(char_summary, <span class="fu">aes</span>(<span class="at">x =</span> <span class="fu">reorder</span>(primary_source, <span class="sc">-</span>mean_meld), <span class="at">y =</span> median_days)) <span class="sc">+</span></span>
-<span id="cb14-60"><a href="#cb14-60" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_col</span>(<span class="fu">aes</span>(<span class="at">fill =</span> mortality_rate), <span class="at">width =</span> <span class="fl">0.6</span>) <span class="sc">+</span></span>
-<span id="cb14-61"><a href="#cb14-61" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_text</span>(<span class="fu">aes</span>(<span class="at">label =</span> <span class="fu">round</span>(median_days, <span class="dv">0</span>)), <span class="at">vjust =</span> <span class="sc">-</span><span class="fl">0.5</span>, <span class="at">size =</span> <span class="fl">3.5</span>) <span class="sc">+</span></span>
-<span id="cb14-62"><a href="#cb14-62" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_fill_gradient</span>(<span class="at">low =</span> <span class="st">"#FFF9C4"</span>, <span class="at">high =</span> <span class="st">"#C62828"</span>, <span class="at">name =</span> <span class="st">"Mortality %"</span>, <span class="at">limits =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">60</span>)) <span class="sc">+</span></span>
-<span id="cb14-63"><a href="#cb14-63" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"Time to Infection"</span>, <span class="at">x =</span> <span class="cn">NULL</span>, <span class="at">y =</span> <span class="st">"Median Days"</span>) <span class="sc">+</span></span>
-<span id="cb14-64"><a href="#cb14-64" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>(<span class="at">base_size =</span> <span class="dv">11</span>) <span class="sc">+</span></span>
-<span id="cb14-65"><a href="#cb14-65" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">axis.text.x =</span> <span class="fu">element_text</span>(<span class="at">angle =</span> <span class="dv">30</span>, <span class="at">hjust =</span> <span class="dv">1</span>), <span class="at">legend.position =</span> <span class="st">"none"</span>)</span>
-<span id="cb14-66"><a href="#cb14-66" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-67"><a href="#cb14-67" aria-hidden="true" tabindex="-1"></a>p3 <span class="ot">&lt;-</span> <span class="fu">ggplot</span>(char_summary, <span class="fu">aes</span>(<span class="at">x =</span> <span class="fu">reorder</span>(primary_source, <span class="sc">-</span>mean_meld), <span class="at">y =</span> mortality_rate)) <span class="sc">+</span></span>
-<span id="cb14-68"><a href="#cb14-68" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_col</span>(<span class="fu">aes</span>(<span class="at">fill =</span> mortality_rate), <span class="at">width =</span> <span class="fl">0.6</span>) <span class="sc">+</span></span>
-<span id="cb14-69"><a href="#cb14-69" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_text</span>(<span class="fu">aes</span>(<span class="at">label =</span> <span class="fu">paste0</span>(mortality_rate, <span class="st">"%"</span>)), <span class="at">vjust =</span> <span class="sc">-</span><span class="fl">0.5</span>, <span class="at">size =</span> <span class="fl">3.5</span>) <span class="sc">+</span></span>
-<span id="cb14-70"><a href="#cb14-70" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_fill_gradient</span>(<span class="at">low =</span> <span class="st">"#FFF9C4"</span>, <span class="at">high =</span> <span class="st">"#C62828"</span>, <span class="at">name =</span> <span class="st">"Mortality %"</span>, <span class="at">limits =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">60</span>)) <span class="sc">+</span></span>
-<span id="cb14-71"><a href="#cb14-71" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"Mortality Rate"</span>, <span class="at">x =</span> <span class="cn">NULL</span>, <span class="at">y =</span> <span class="st">"Mortality (%)"</span>) <span class="sc">+</span></span>
-<span id="cb14-72"><a href="#cb14-72" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>(<span class="at">base_size =</span> <span class="dv">11</span>) <span class="sc">+</span></span>
-<span id="cb14-73"><a href="#cb14-73" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">axis.text.x =</span> <span class="fu">element_text</span>(<span class="at">angle =</span> <span class="dv">30</span>, <span class="at">hjust =</span> <span class="dv">1</span>))</span>
-<span id="cb14-74"><a href="#cb14-74" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-75"><a href="#cb14-75" aria-hidden="true" tabindex="-1"></a>(p1 <span class="sc">|</span> p2 <span class="sc">|</span> p3) <span class="sc">+</span></span>
-<span id="cb14-76"><a href="#cb14-76" aria-hidden="true" tabindex="-1"></a>  <span class="fu">plot_annotation</span>(</span>
-<span id="cb14-77"><a href="#cb14-77" aria-hidden="true" tabindex="-1"></a>    <span class="at">title =</span> <span class="st">"Patient Characteristics by CRE Infection Source"</span>,</span>
-<span id="cb14-78"><a href="#cb14-78" aria-hidden="true" tabindex="-1"></a>    <span class="at">subtitle =</span> <span class="st">"Ordered by MELD score (disease severity) - Color intensity indicates mortality rate"</span></span>
-<span id="cb14-79"><a href="#cb14-79" aria-hidden="true" tabindex="-1"></a>  )</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a>      bloodstream <span class="sc">==</span> <span class="dv">1</span>         <span class="sc">~</span> <span class="st">"Bloodstream (BSI)"</span>,</span>
+<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a>      respiratory <span class="sc">==</span> <span class="dv">1</span>         <span class="sc">~</span> <span class="st">"Respiratory"</span>,</span>
+<span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a>      urinary <span class="sc">==</span> <span class="dv">1</span>             <span class="sc">~</span> <span class="st">"Urinary (UTI)"</span>,</span>
+<span id="cb14-10"><a href="#cb14-10" aria-hidden="true" tabindex="-1"></a>      surgical_abdominal <span class="sc">==</span> <span class="dv">1</span>  <span class="sc">~</span> <span class="st">"Surgical/Intra-abdominal"</span>,</span>
+<span id="cb14-11"><a href="#cb14-11" aria-hidden="true" tabindex="-1"></a>      <span class="cn">TRUE</span> <span class="sc">~</span> <span class="cn">NA_character_</span></span>
+<span id="cb14-12"><a href="#cb14-12" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb14-13"><a href="#cb14-13" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">|&gt;</span></span>
+<span id="cb14-14"><a href="#cb14-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(</span>
+<span id="cb14-15"><a href="#cb14-15" aria-hidden="true" tabindex="-1"></a>    baseline_data <span class="sc">|&gt;</span> <span class="fu">select</span>(record_id, age, gender, meld_score, cci, OLT_to_CREinfection),</span>
+<span id="cb14-16"><a href="#cb14-16" aria-hidden="true" tabindex="-1"></a>    <span class="at">by =</span> <span class="st">"record_id"</span></span>
+<span id="cb14-17"><a href="#cb14-17" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">|&gt;</span></span>
+<span id="cb14-18"><a href="#cb14-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="sc">!</span><span class="fu">is.na</span>(primary_source), primary_source <span class="sc">!=</span> <span class="st">"Other"</span>)</span>
+<span id="cb14-19"><a href="#cb14-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-20"><a href="#cb14-20" aria-hidden="true" tabindex="-1"></a><span class="co"># MELD score comparison</span></span>
+<span id="cb14-21"><a href="#cb14-21" aria-hidden="true" tabindex="-1"></a>meld_comparison <span class="ot">&lt;-</span> single_source_chars <span class="sc">|&gt;</span></span>
+<span id="cb14-22"><a href="#cb14-22" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="sc">!</span><span class="fu">is.na</span>(meld_score)) <span class="sc">|&gt;</span></span>
+<span id="cb14-23"><a href="#cb14-23" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(primary_source) <span class="sc">|&gt;</span></span>
+<span id="cb14-24"><a href="#cb14-24" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(<span class="at">n =</span> <span class="fu">n</span>(), <span class="at">mean_meld =</span> <span class="fu">round</span>(<span class="fu">mean</span>(meld_score), <span class="dv">1</span>), <span class="at">.groups =</span> <span class="st">"drop"</span>) <span class="sc">|&gt;</span></span>
+<span id="cb14-25"><a href="#cb14-25" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(<span class="fu">desc</span>(mean_meld))</span>
+<span id="cb14-26"><a href="#cb14-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-27"><a href="#cb14-27" aria-hidden="true" tabindex="-1"></a><span class="co"># Mortality rates</span></span>
+<span id="cb14-28"><a href="#cb14-28" aria-hidden="true" tabindex="-1"></a>mortality_single <span class="ot">&lt;-</span> single_source_chars <span class="sc">|&gt;</span></span>
+<span id="cb14-29"><a href="#cb14-29" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="sc">!</span><span class="fu">is.na</span>(death)) <span class="sc">|&gt;</span></span>
+<span id="cb14-30"><a href="#cb14-30" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(primary_source) <span class="sc">|&gt;</span></span>
+<span id="cb14-31"><a href="#cb14-31" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(<span class="at">n =</span> <span class="fu">n</span>(), </span>
+<span id="cb14-32"><a href="#cb14-32" aria-hidden="true" tabindex="-1"></a>            <span class="at">deaths =</span> <span class="fu">sum</span>(death),</span>
+<span id="cb14-33"><a href="#cb14-33" aria-hidden="true" tabindex="-1"></a>            <span class="at">mortality_rate =</span> <span class="fu">round</span>(<span class="fu">sum</span>(death) <span class="sc">/</span> <span class="fu">n</span>() <span class="sc">*</span> <span class="dv">100</span>, <span class="dv">1</span>),</span>
+<span id="cb14-34"><a href="#cb14-34" aria-hidden="true" tabindex="-1"></a>            <span class="at">.groups =</span> <span class="st">"drop"</span>)</span>
+<span id="cb14-35"><a href="#cb14-35" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-36"><a href="#cb14-36" aria-hidden="true" tabindex="-1"></a><span class="co"># Timing</span></span>
+<span id="cb14-37"><a href="#cb14-37" aria-hidden="true" tabindex="-1"></a>timing_comparison <span class="ot">&lt;-</span> single_source_chars <span class="sc">|&gt;</span></span>
+<span id="cb14-38"><a href="#cb14-38" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="sc">!</span><span class="fu">is.na</span>(OLT_to_CREinfection)) <span class="sc">|&gt;</span></span>
+<span id="cb14-39"><a href="#cb14-39" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(primary_source) <span class="sc">|&gt;</span></span>
+<span id="cb14-40"><a href="#cb14-40" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(<span class="at">n =</span> <span class="fu">n</span>(),</span>
+<span id="cb14-41"><a href="#cb14-41" aria-hidden="true" tabindex="-1"></a>            <span class="at">median_days =</span> <span class="fu">round</span>(<span class="fu">median</span>(OLT_to_CREinfection), <span class="dv">1</span>),</span>
+<span id="cb14-42"><a href="#cb14-42" aria-hidden="true" tabindex="-1"></a>            <span class="at">.groups =</span> <span class="st">"drop"</span>)</span>
+<span id="cb14-43"><a href="#cb14-43" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-44"><a href="#cb14-44" aria-hidden="true" tabindex="-1"></a><span class="co"># Combine for visualization</span></span>
+<span id="cb14-45"><a href="#cb14-45" aria-hidden="true" tabindex="-1"></a>char_summary <span class="ot">&lt;-</span> meld_comparison <span class="sc">|&gt;</span></span>
+<span id="cb14-46"><a href="#cb14-46" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(timing_comparison <span class="sc">|&gt;</span> <span class="fu">select</span>(primary_source, median_days), <span class="at">by =</span> <span class="st">"primary_source"</span>) <span class="sc">|&gt;</span></span>
+<span id="cb14-47"><a href="#cb14-47" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(mortality_single <span class="sc">|&gt;</span> <span class="fu">select</span>(primary_source, mortality_rate), <span class="at">by =</span> <span class="st">"primary_source"</span>)</span>
+<span id="cb14-48"><a href="#cb14-48" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-49"><a href="#cb14-49" aria-hidden="true" tabindex="-1"></a><span class="co"># Multi-panel plot</span></span>
+<span id="cb14-50"><a href="#cb14-50" aria-hidden="true" tabindex="-1"></a>p1 <span class="ot">&lt;-</span> <span class="fu">ggplot</span>(char_summary, <span class="fu">aes</span>(<span class="at">x =</span> <span class="fu">reorder</span>(primary_source, <span class="sc">-</span>mean_meld), <span class="at">y =</span> mean_meld)) <span class="sc">+</span></span>
+<span id="cb14-51"><a href="#cb14-51" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_col</span>(<span class="fu">aes</span>(<span class="at">fill =</span> mortality_rate), <span class="at">width =</span> <span class="fl">0.6</span>) <span class="sc">+</span></span>
+<span id="cb14-52"><a href="#cb14-52" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_text</span>(<span class="fu">aes</span>(<span class="at">label =</span> <span class="fu">round</span>(mean_meld, <span class="dv">1</span>)), <span class="at">vjust =</span> <span class="sc">-</span><span class="fl">0.5</span>, <span class="at">size =</span> <span class="fl">3.5</span>) <span class="sc">+</span></span>
+<span id="cb14-53"><a href="#cb14-53" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_fill_gradient</span>(<span class="at">low =</span> <span class="st">"#FFF9C4"</span>, <span class="at">high =</span> <span class="st">"#C62828"</span>, <span class="at">name =</span> <span class="st">"Mortality %"</span>, <span class="at">limits =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">60</span>)) <span class="sc">+</span></span>
+<span id="cb14-54"><a href="#cb14-54" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"MELD Score"</span>, <span class="at">x =</span> <span class="cn">NULL</span>, <span class="at">y =</span> <span class="st">"Mean MELD"</span>) <span class="sc">+</span></span>
+<span id="cb14-55"><a href="#cb14-55" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>(<span class="at">base_size =</span> <span class="dv">11</span>) <span class="sc">+</span></span>
+<span id="cb14-56"><a href="#cb14-56" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">axis.text.x =</span> <span class="fu">element_text</span>(<span class="at">angle =</span> <span class="dv">30</span>, <span class="at">hjust =</span> <span class="dv">1</span>), <span class="at">legend.position =</span> <span class="st">"none"</span>)</span>
+<span id="cb14-57"><a href="#cb14-57" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-58"><a href="#cb14-58" aria-hidden="true" tabindex="-1"></a>p2 <span class="ot">&lt;-</span> <span class="fu">ggplot</span>(char_summary, <span class="fu">aes</span>(<span class="at">x =</span> <span class="fu">reorder</span>(primary_source, <span class="sc">-</span>mean_meld), <span class="at">y =</span> median_days)) <span class="sc">+</span></span>
+<span id="cb14-59"><a href="#cb14-59" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_col</span>(<span class="fu">aes</span>(<span class="at">fill =</span> mortality_rate), <span class="at">width =</span> <span class="fl">0.6</span>) <span class="sc">+</span></span>
+<span id="cb14-60"><a href="#cb14-60" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_text</span>(<span class="fu">aes</span>(<span class="at">label =</span> <span class="fu">round</span>(median_days, <span class="dv">0</span>)), <span class="at">vjust =</span> <span class="sc">-</span><span class="fl">0.5</span>, <span class="at">size =</span> <span class="fl">3.5</span>) <span class="sc">+</span></span>
+<span id="cb14-61"><a href="#cb14-61" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_fill_gradient</span>(<span class="at">low =</span> <span class="st">"#FFF9C4"</span>, <span class="at">high =</span> <span class="st">"#C62828"</span>, <span class="at">name =</span> <span class="st">"Mortality %"</span>, <span class="at">limits =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">60</span>)) <span class="sc">+</span></span>
+<span id="cb14-62"><a href="#cb14-62" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"Time to Infection"</span>, <span class="at">x =</span> <span class="cn">NULL</span>, <span class="at">y =</span> <span class="st">"Median Days"</span>) <span class="sc">+</span></span>
+<span id="cb14-63"><a href="#cb14-63" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>(<span class="at">base_size =</span> <span class="dv">11</span>) <span class="sc">+</span></span>
+<span id="cb14-64"><a href="#cb14-64" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">axis.text.x =</span> <span class="fu">element_text</span>(<span class="at">angle =</span> <span class="dv">30</span>, <span class="at">hjust =</span> <span class="dv">1</span>), <span class="at">legend.position =</span> <span class="st">"none"</span>)</span>
+<span id="cb14-65"><a href="#cb14-65" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-66"><a href="#cb14-66" aria-hidden="true" tabindex="-1"></a>p3 <span class="ot">&lt;-</span> <span class="fu">ggplot</span>(char_summary, <span class="fu">aes</span>(<span class="at">x =</span> <span class="fu">reorder</span>(primary_source, <span class="sc">-</span>mean_meld), <span class="at">y =</span> mortality_rate)) <span class="sc">+</span></span>
+<span id="cb14-67"><a href="#cb14-67" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_col</span>(<span class="fu">aes</span>(<span class="at">fill =</span> mortality_rate), <span class="at">width =</span> <span class="fl">0.6</span>) <span class="sc">+</span></span>
+<span id="cb14-68"><a href="#cb14-68" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_text</span>(<span class="fu">aes</span>(<span class="at">label =</span> <span class="fu">paste0</span>(mortality_rate, <span class="st">"%"</span>)), <span class="at">vjust =</span> <span class="sc">-</span><span class="fl">0.5</span>, <span class="at">size =</span> <span class="fl">3.5</span>) <span class="sc">+</span></span>
+<span id="cb14-69"><a href="#cb14-69" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_fill_gradient</span>(<span class="at">low =</span> <span class="st">"#FFF9C4"</span>, <span class="at">high =</span> <span class="st">"#C62828"</span>, <span class="at">name =</span> <span class="st">"Mortality %"</span>, <span class="at">limits =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">60</span>)) <span class="sc">+</span></span>
+<span id="cb14-70"><a href="#cb14-70" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"Mortality Rate"</span>, <span class="at">x =</span> <span class="cn">NULL</span>, <span class="at">y =</span> <span class="st">"Mortality (%)"</span>) <span class="sc">+</span></span>
+<span id="cb14-71"><a href="#cb14-71" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>(<span class="at">base_size =</span> <span class="dv">11</span>) <span class="sc">+</span></span>
+<span id="cb14-72"><a href="#cb14-72" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">axis.text.x =</span> <span class="fu">element_text</span>(<span class="at">angle =</span> <span class="dv">30</span>, <span class="at">hjust =</span> <span class="dv">1</span>))</span>
+<span id="cb14-73"><a href="#cb14-73" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-74"><a href="#cb14-74" aria-hidden="true" tabindex="-1"></a>(p1 <span class="sc">|</span> p2 <span class="sc">|</span> p3) <span class="sc">+</span></span>
+<span id="cb14-75"><a href="#cb14-75" aria-hidden="true" tabindex="-1"></a>  <span class="fu">plot_annotation</span>(</span>
+<span id="cb14-76"><a href="#cb14-76" aria-hidden="true" tabindex="-1"></a>    <span class="at">title =</span> <span class="st">"Patient Characteristics by CRE Infection Source"</span>,</span>
+<span id="cb14-77"><a href="#cb14-77" aria-hidden="true" tabindex="-1"></a>    <span class="at">subtitle =</span> <span class="st">"Ordered by MELD score (disease severity) - Color intensity indicates mortality rate"</span></span>
+<span id="cb14-78"><a href="#cb14-78" aria-hidden="true" tabindex="-1"></a>  )</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output-display">
 <div>
@@ -1057,12 +1121,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_smooth</span>(<span class="at">method =</span> <span class="st">"lm"</span>, <span class="at">se =</span> <span class="cn">TRUE</span>, <span class="at">color =</span> <span class="st">"gray40"</span>, <span class="at">linetype =</span> <span class="st">"dashed"</span>, <span class="at">linewidth =</span> <span class="fl">0.5</span>) <span class="sc">+</span></span>
 <span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_size_continuous</span>(<span class="at">name =</span> <span class="st">"N patients"</span>, <span class="at">range =</span> <span class="fu">c</span>(<span class="dv">5</span>, <span class="dv">15</span>)) <span class="sc">+</span></span>
 <span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_color_manual</span>(</span>
-<span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">values =</span> <span class="fu">c</span>(<span class="st">"Surgical site"</span> <span class="ot">=</span> <span class="st">"#D32F2F"</span>, <span class="st">"Intra-abdominal"</span> <span class="ot">=</span> <span class="st">"#1976D2"</span>,</span>
-<span id="cb15-9"><a href="#cb15-9" aria-hidden="true" tabindex="-1"></a>               <span class="st">"Respiratory"</span> <span class="ot">=</span> <span class="st">"#F57C00"</span>, <span class="st">"Bloodstream"</span> <span class="ot">=</span> <span class="st">"#7B1FA2"</span>, <span class="st">"Urinary"</span> <span class="ot">=</span> <span class="st">"#388E3C"</span>),</span>
+<span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">values =</span> <span class="fu">c</span>(<span class="st">"Surgical/Intra-abdominal"</span> <span class="ot">=</span> <span class="st">"#D32F2F"</span>, <span class="st">"Respiratory"</span> <span class="ot">=</span> <span class="st">"#F57C00"</span>,</span>
+<span id="cb15-9"><a href="#cb15-9" aria-hidden="true" tabindex="-1"></a>               <span class="st">"Bloodstream (BSI)"</span> <span class="ot">=</span> <span class="st">"#7B1FA2"</span>, <span class="st">"Urinary (UTI)"</span> <span class="ot">=</span> <span class="st">"#388E3C"</span>),</span>
 <span id="cb15-10"><a href="#cb15-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">name =</span> <span class="st">"Infection Source"</span></span>
 <span id="cb15-11"><a href="#cb15-11" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
 <span id="cb15-12"><a href="#cb15-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"Relationship Between Disease Severity and Mortality"</span>,</span>
-<span id="cb15-13"><a href="#cb15-13" aria-hidden="true" tabindex="-1"></a>       <span class="at">subtitle =</span> <span class="st">"MELD score at transplant vs mortality rate by infection source"</span>,</span>
+<span id="cb15-13"><a href="#cb15-13" aria-hidden="true" tabindex="-1"></a>       <span class="at">subtitle =</span> <span class="st">"MELD score at transplant vs mortality rate by infection source (SSI and IAI merged)"</span>,</span>
 <span id="cb15-14"><a href="#cb15-14" aria-hidden="true" tabindex="-1"></a>       <span class="at">x =</span> <span class="st">"Mean MELD Score (Disease Severity)"</span>, <span class="at">y =</span> <span class="st">"Mortality Rate (%)"</span>) <span class="sc">+</span></span>
 <span id="cb15-15"><a href="#cb15-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>(<span class="at">base_size =</span> <span class="dv">13</span>) <span class="sc">+</span></span>
 <span id="cb15-16"><a href="#cb15-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">plot.title =</span> <span class="fu">element_text</span>(<span class="at">face =</span> <span class="st">"bold"</span>, <span class="at">size =</span> <span class="dv">14</span>), <span class="at">legend.position =</span> <span class="st">"right"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
@@ -1075,11 +1139,11 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 </div>
-<p><strong>The MELD Paradox:</strong> Patients with similar disease severity (MELD scores) have vastly different outcomes depending on infection source:</p>
+<p><strong>The MELD Paradox:</strong> Patients with similar disease severity (MELD scores) have vastly different outcomes depending on infection source. With SSI and IAI merged into a single Surgical/Intra-abdominal category, the previously anomalous gap between these two groups disappears, yielding a more coherent picture:</p>
 <ul>
-<li><strong>Surgical site</strong> (MELD 27.0): 50% mortality</li>
-<li><strong>Intra-abdominal</strong> (MELD 26.9): 11.8% mortality</li>
-<li><strong>Respiratory</strong> (MELD 21.6): 55% mortality (highest, despite lowest MELD)</li>
+<li><strong>Surgical/Intra-abdominal</strong> (n=70): ~37% mortality — a clinically plausible rate for deep abdominal CRE infections</li>
+<li><strong>Respiratory</strong> infections have the highest mortality despite a lower average MELD score</li>
+<li>Pre-transplant disease severity (MELD) is a poor predictor of CRE infection mortality across all source types</li>
 </ul>
 </section>
 </section>
@@ -1104,19 +1168,20 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="infection-type-matters-more-than-patient-characteristics" class="level3">
 <h3 class="anchored" data-anchor-id="infection-type-matters-more-than-patient-characteristics">3. Infection Type Matters More Than Patient Characteristics</h3>
 <ul>
-<li><strong>Surgical site infections</strong> have the highest mortality (47-50%)</li>
-<li><strong>Respiratory infections</strong> are deadly even in less severe patients (55% mortality)</li>
-<li><strong>Intra-abdominal infections</strong> have surprisingly good outcomes (11.8% mortality)</li>
-<li>Pre-transplant MELD score does <strong>NOT</strong> predict CRE mortality</li>
+<li><strong>Respiratory infections</strong> carry the highest mortality (~42%), even in patients with lower pre-transplant disease severity</li>
+<li><strong>Surgical/Intra-abdominal infections</strong> (SSI and IAI merged; n=70) have ~37% overall mortality — a clinically coherent rate for deep abdominal CRE infections after liver transplantation</li>
+<li><strong>Urinary and bloodstream infections</strong>, while still serious, have comparatively lower mortality (~36% and ~30%, respectively)</li>
+<li>Pre-transplant MELD score does <strong>NOT</strong> predict CRE infection mortality</li>
+<li><strong>Data quality note:</strong> The original separate coding of SSI and IAI showed an implausible 33-percentage-point mortality difference and included negative time-to-infection values in the IAI group. These two categories have been merged for all analyses; reassessment with adjudicated source data is recommended.</li>
 </ul>
 </section>
 <section id="clinical-implications" class="level3">
 <h3 class="anchored" data-anchor-id="clinical-implications">4. Clinical Implications</h3>
 <p><strong>Prevention Priorities:</strong></p>
 <ol type="1">
-<li>Focus on preventing <strong>surgical site infections</strong> in the perioperative period</li>
-<li>Implement aggressive respiratory care protocols</li>
-<li>Early detection and source control for intra-abdominal infections</li>
+<li>Focus on preventing <strong>surgical and intra-abdominal infections</strong> in the perioperative period through rigorous wound care, drain management, and biliary anastomosis surveillance</li>
+<li>Implement aggressive respiratory care protocols (ventilator bundles, early extubation strategies)</li>
+<li>Prompt source control for all abdominal collections</li>
 </ol>
 <p><strong>Surveillance Strategy:</strong></p>
 <ul>
@@ -1127,9 +1192,527 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <p><strong>Treatment Considerations:</strong></p>
 <ul>
 <li>Infection source should guide treatment intensity</li>
-<li>Aggressive source control for intra-abdominal infections appears highly effective</li>
-<li>Respiratory CRE infections warrant special attention regardless of patient severity</li>
+<li>Respiratory CRE infections warrant special attention regardless of pre-transplant patient severity</li>
+<li>Source data for SSI vs IAI should be adjudicated in future data collection to enable source-specific analyses</li>
 </ul>
+</section>
+</section>
+<section id="diagnostics-and-treatment-by-study-period" class="level2">
+<h2 class="anchored" data-anchor-id="diagnostics-and-treatment-by-study-period">Diagnostics and Treatment by Study Period</h2>
+<p>This section compares microbiological diagnostic practices and anti-CRE antibiotic therapy between the retrospective and prospective cohorts. Screening and prophylaxis comparisons use all colonised or infected patients; treatment comparisons are restricted to CRE-infected patients only.</p>
+<blockquote class="blockquote">
+<p>For the full inter-period comparison including visualisations, see the dedicated <a href="diagnostics_treatment.html"><strong>Diagnostics &amp; Treatment page</strong></a>.</p>
+</blockquote>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="co"># ── Cohort definitions ────────────────────────────────────────────────────────</span></span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>colonised_data <span class="ot">&lt;-</span> baseline_data <span class="sc">|&gt;</span></span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(cre_colon <span class="sc">==</span> <span class="dv">1</span> <span class="sc">|</span> cre_infection <span class="sc">==</span> <span class="dv">1</span>) <span class="sc">|&gt;</span></span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">period =</span> <span class="fu">factor</span>(<span class="fu">ifelse</span>(retro_or_pros <span class="sc">==</span> <span class="dv">1</span>, <span class="st">"Retrospective"</span>, <span class="st">"Prospective"</span>),</span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a>                         <span class="at">levels =</span> <span class="fu">c</span>(<span class="st">"Retrospective"</span>, <span class="st">"Prospective"</span>)))</span>
+<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a>infected_data <span class="ot">&lt;-</span> baseline_data <span class="sc">|&gt;</span></span>
+<span id="cb16-8"><a href="#cb16-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(cre_infection <span class="sc">==</span> <span class="dv">1</span>) <span class="sc">|&gt;</span></span>
+<span id="cb16-9"><a href="#cb16-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">period =</span> <span class="fu">factor</span>(<span class="fu">ifelse</span>(retro_or_pros <span class="sc">==</span> <span class="dv">1</span>, <span class="st">"Retrospective"</span>, <span class="st">"Prospective"</span>),</span>
+<span id="cb16-10"><a href="#cb16-10" aria-hidden="true" tabindex="-1"></a>                         <span class="at">levels =</span> <span class="fu">c</span>(<span class="st">"Retrospective"</span>, <span class="st">"Prospective"</span>)))</span>
+<span id="cb16-11"><a href="#cb16-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-12"><a href="#cb16-12" aria-hidden="true" tabindex="-1"></a><span class="co"># Antibiotic exposure records, joined to period and infection status</span></span>
+<span id="cb16-13"><a href="#cb16-13" aria-hidden="true" tabindex="-1"></a>period_lkp <span class="ot">&lt;-</span> baseline_data <span class="sc">|&gt;</span></span>
+<span id="cb16-14"><a href="#cb16-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(record_id, <span class="at">.period =</span> retro_or_pros, <span class="at">.cre_inf =</span> cre_infection)</span>
+<span id="cb16-15"><a href="#cb16-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-16"><a href="#cb16-16" aria-hidden="true" tabindex="-1"></a>cre_abx <span class="ot">&lt;-</span> CRECOOLT_overall <span class="sc">|&gt;</span></span>
+<span id="cb16-17"><a href="#cb16-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(redcap_repeat_instrument <span class="sc">==</span> <span class="st">"exposure_to_cre_antibiotics"</span>) <span class="sc">|&gt;</span></span>
+<span id="cb16-18"><a href="#cb16-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(record_id, redcap_repeat_instance, drug, combination_treat,</span>
+<span id="cb16-19"><a href="#cb16-19" aria-hidden="true" tabindex="-1"></a>         indication, other_drug) <span class="sc">|&gt;</span></span>
+<span id="cb16-20"><a href="#cb16-20" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(period_lkp, <span class="at">by =</span> <span class="st">"record_id"</span>) <span class="sc">|&gt;</span></span>
+<span id="cb16-21"><a href="#cb16-21" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="sc">!</span><span class="fu">is.na</span>(.period)) <span class="sc">|&gt;</span></span>
+<span id="cb16-22"><a href="#cb16-22" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">period =</span> <span class="fu">factor</span>(<span class="fu">ifelse</span>(.period <span class="sc">==</span> <span class="dv">1</span>, <span class="st">"Retrospective"</span>, <span class="st">"Prospective"</span>),</span>
+<span id="cb16-23"><a href="#cb16-23" aria-hidden="true" tabindex="-1"></a>                         <span class="at">levels =</span> <span class="fu">c</span>(<span class="st">"Retrospective"</span>, <span class="st">"Prospective"</span>)))</span>
+<span id="cb16-24"><a href="#cb16-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-25"><a href="#cb16-25" aria-hidden="true" tabindex="-1"></a>cre_abx_inf <span class="ot">&lt;-</span> cre_abx <span class="sc">|&gt;</span> <span class="fu">filter</span>(.cre_inf <span class="sc">==</span> <span class="dv">1</span>)</span>
+<span id="cb16-26"><a href="#cb16-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-27"><a href="#cb16-27" aria-hidden="true" tabindex="-1"></a>drug_labels <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"1"</span><span class="ot">=</span><span class="st">"Ertapenem"</span>,<span class="st">"2"</span><span class="ot">=</span><span class="st">"Meropenem"</span>,<span class="st">"3"</span><span class="ot">=</span><span class="st">"Amikacin"</span>,</span>
+<span id="cb16-28"><a href="#cb16-28" aria-hidden="true" tabindex="-1"></a>                 <span class="st">"4"</span><span class="ot">=</span><span class="st">"Gentamicin"</span>,<span class="st">"5"</span><span class="ot">=</span><span class="st">"TMP/SMX"</span>,<span class="st">"6"</span><span class="ot">=</span><span class="st">"Tigecycline"</span>,</span>
+<span id="cb16-29"><a href="#cb16-29" aria-hidden="true" tabindex="-1"></a>                 <span class="st">"7"</span><span class="ot">=</span><span class="st">"Colistin"</span>,<span class="st">"8"</span><span class="ot">=</span><span class="st">"Ceftazidime-avibactam"</span>,</span>
+<span id="cb16-30"><a href="#cb16-30" aria-hidden="true" tabindex="-1"></a>                 <span class="st">"9"</span><span class="ot">=</span><span class="st">"Meropenem/vaborbactam"</span>,<span class="st">"10"</span><span class="ot">=</span><span class="st">"Imipenem/relebactam"</span>,</span>
+<span id="cb16-31"><a href="#cb16-31" aria-hidden="true" tabindex="-1"></a>                 <span class="st">"11"</span><span class="ot">=</span><span class="st">"Cefiderocol"</span>,<span class="st">"12"</span><span class="ot">=</span><span class="st">"Fosfomycin"</span>,<span class="st">"13"</span><span class="ot">=</span><span class="st">"Other"</span>)</span>
+<span id="cb16-32"><a href="#cb16-32" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-33"><a href="#cb16-33" aria-hidden="true" tabindex="-1"></a>chi_p <span class="ot">&lt;-</span> <span class="cf">function</span>(tbl) <span class="fu">tryCatch</span>(<span class="fu">round</span>(<span class="fu">chisq.test</span>(tbl)<span class="sc">$</span>p.value, <span class="dv">3</span>), <span class="at">error =</span> <span class="cf">function</span>(e) <span class="cn">NA_real_</span>)</span>
+<span id="cb16-34"><a href="#cb16-34" aria-hidden="true" tabindex="-1"></a>wrs_p <span class="ot">&lt;-</span> <span class="cf">function</span>(x, g) <span class="fu">tryCatch</span>(<span class="fu">round</span>(<span class="fu">wilcox.test</span>(x <span class="sc">~</span> g)<span class="sc">$</span>p.value, <span class="dv">3</span>), <span class="at">error =</span> <span class="cf">function</span>(e) <span class="cn">NA_real_</span>)</span>
+<span id="cb16-35"><a href="#cb16-35" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-36"><a href="#cb16-36" aria-hidden="true" tabindex="-1"></a>retro_n_col <span class="ot">&lt;-</span> <span class="fu">sum</span>(colonised_data<span class="sc">$</span>period <span class="sc">==</span> <span class="st">"Retrospective"</span>)</span>
+<span id="cb16-37"><a href="#cb16-37" aria-hidden="true" tabindex="-1"></a>pros_n_col  <span class="ot">&lt;-</span> <span class="fu">sum</span>(colonised_data<span class="sc">$</span>period <span class="sc">==</span> <span class="st">"Prospective"</span>)</span>
+<span id="cb16-38"><a href="#cb16-38" aria-hidden="true" tabindex="-1"></a>retro_n_inf <span class="ot">&lt;-</span> <span class="fu">sum</span>(infected_data<span class="sc">$</span>period  <span class="sc">==</span> <span class="st">"Retrospective"</span>)</span>
+<span id="cb16-39"><a href="#cb16-39" aria-hidden="true" tabindex="-1"></a>pros_n_inf  <span class="ot">&lt;-</span> <span class="fu">sum</span>(infected_data<span class="sc">$</span>period  <span class="sc">==</span> <span class="st">"Prospective"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+</div>
+<section id="carbapenem-resistance-mechanisms" class="level3">
+<h3 class="anchored" data-anchor-id="carbapenem-resistance-mechanisms">Carbapenem Resistance Mechanisms</h3>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>mec_labels <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="at">mec_of_carbapenem_resi___1 =</span> <span class="st">"KPC"</span>,</span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>                <span class="at">mec_of_carbapenem_resi___2 =</span> <span class="st">"OXA-48"</span>,</span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a>                <span class="at">mec_of_carbapenem_resi___3 =</span> <span class="st">"NDM"</span>,</span>
+<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a>                <span class="at">mec_of_carbapenem_resi___4 =</span> <span class="st">"VIM"</span>,</span>
+<span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a>                <span class="at">mec_of_carbapenem_resi___5 =</span> <span class="st">"Other"</span>)</span>
+<span id="cb17-6"><a href="#cb17-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-7"><a href="#cb17-7" aria-hidden="true" tabindex="-1"></a>resist_tbl <span class="ot">&lt;-</span> <span class="fu">map_df</span>(<span class="fu">names</span>(mec_labels), <span class="cf">function</span>(v) {</span>
+<span id="cb17-8"><a href="#cb17-8" aria-hidden="true" tabindex="-1"></a>  n_r <span class="ot">&lt;-</span> <span class="fu">sum</span>(colonised_data[colonised_data<span class="sc">$</span>period <span class="sc">==</span> <span class="st">"Retrospective"</span>, v] <span class="sc">==</span> <span class="dv">1</span>, <span class="at">na.rm =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb17-9"><a href="#cb17-9" aria-hidden="true" tabindex="-1"></a>  n_p <span class="ot">&lt;-</span> <span class="fu">sum</span>(colonised_data[colonised_data<span class="sc">$</span>period <span class="sc">==</span> <span class="st">"Prospective"</span>,   v] <span class="sc">==</span> <span class="dv">1</span>, <span class="at">na.rm =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb17-10"><a href="#cb17-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">data.frame</span>(</span>
+<span id="cb17-11"><a href="#cb17-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">Mechanism     =</span> mec_labels[v],</span>
+<span id="cb17-12"><a href="#cb17-12" aria-hidden="true" tabindex="-1"></a>    <span class="st">`</span><span class="at">Retrospective (n=244)</span><span class="st">`</span> <span class="ot">=</span> <span class="fu">paste0</span>(n_r, <span class="st">" ("</span>, <span class="fu">round</span>(n_r <span class="sc">/</span> retro_n_col <span class="sc">*</span> <span class="dv">100</span>, <span class="dv">1</span>), <span class="st">"%)"</span>),</span>
+<span id="cb17-13"><a href="#cb17-13" aria-hidden="true" tabindex="-1"></a>    <span class="st">`</span><span class="at">Prospective (n=86)</span><span class="st">`</span>    <span class="ot">=</span> <span class="fu">paste0</span>(n_p, <span class="st">" ("</span>, <span class="fu">round</span>(n_p <span class="sc">/</span> pros_n_col  <span class="sc">*</span> <span class="dv">100</span>, <span class="dv">1</span>), <span class="st">"%)"</span>),</span>
+<span id="cb17-14"><a href="#cb17-14" aria-hidden="true" tabindex="-1"></a>    <span class="at">p_value =</span> <span class="fu">chi_p</span>(<span class="fu">matrix</span>(<span class="fu">c</span>(n_r, retro_n_col <span class="sc">-</span> n_r, n_p, pros_n_col <span class="sc">-</span> n_p), <span class="dv">2</span>)),</span>
+<span id="cb17-15"><a href="#cb17-15" aria-hidden="true" tabindex="-1"></a>    <span class="at">check.names =</span> <span class="cn">FALSE</span></span>
+<span id="cb17-16"><a href="#cb17-16" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb17-17"><a href="#cb17-17" aria-hidden="true" tabindex="-1"></a>})</span>
+<span id="cb17-18"><a href="#cb17-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-19"><a href="#cb17-19" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(resist_tbl,</span>
+<span id="cb17-20"><a href="#cb17-20" aria-hidden="true" tabindex="-1"></a>  <span class="at">caption =</span> <span class="st">"Carbapenem resistance mechanisms in colonised/infected patients by study period"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output-display">
+<table class="caption-top table table-sm table-striped small">
+<caption>Carbapenem resistance mechanisms in colonised/infected patients by study period</caption>
+<colgroup>
+<col style="width: 31%">
+<col style="width: 11%">
+<col style="width: 25%">
+<col style="width: 22%">
+<col style="width: 9%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;"></th>
+<th style="text-align: left;">Mechanism</th>
+<th style="text-align: left;">Retrospective (n=244)</th>
+<th style="text-align: left;">Prospective (n=86)</th>
+<th style="text-align: right;">p_value</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">mec_of_carbapenem_resi___1</td>
+<td style="text-align: left;">KPC</td>
+<td style="text-align: left;">170 (69.7%)</td>
+<td style="text-align: left;">54 (62.8%)</td>
+<td style="text-align: right;">0.298</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">mec_of_carbapenem_resi___2</td>
+<td style="text-align: left;">OXA-48</td>
+<td style="text-align: left;">16 (6.6%)</td>
+<td style="text-align: left;">6 (7%)</td>
+<td style="text-align: right;">1.000</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">mec_of_carbapenem_resi___3</td>
+<td style="text-align: left;">NDM</td>
+<td style="text-align: left;">7 (2.9%)</td>
+<td style="text-align: left;">10 (11.6%)</td>
+<td style="text-align: right;">0.004</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">mec_of_carbapenem_resi___4</td>
+<td style="text-align: left;">VIM</td>
+<td style="text-align: left;">6 (2.5%)</td>
+<td style="text-align: left;">3 (3.5%)</td>
+<td style="text-align: right;">0.905</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">mec_of_carbapenem_resi___5</td>
+<td style="text-align: left;">Other</td>
+<td style="text-align: left;">24 (9.8%)</td>
+<td style="text-align: left;">6 (7%)</td>
+<td style="text-align: right;">0.565</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<p><strong>Key finding:</strong> NDM increased significantly in the prospective cohort (2.9% vs 11.6%, p = 0.004), reflecting the shifting epidemiology of carbapenem resistance mechanisms over time.</p>
+</section>
+<section id="microbiological-screening-intensity" class="level3">
+<h3 class="anchored" data-anchor-id="microbiological-screening-intensity">Microbiological Screening Intensity</h3>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>screen_vars   <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="at">blood =</span> <span class="st">"micro_screen_blood"</span>, <span class="at">resp =</span> <span class="st">"micro_screen_resp"</span>,</span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>                   <span class="at">urine =</span> <span class="st">"micro_screen_urino"</span>,  <span class="at">abd  =</span> <span class="st">"micro_screen_intra_abd"</span>)</span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>screen_labels <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="at">blood =</span> <span class="st">"Blood cultures"</span>, <span class="at">resp =</span> <span class="st">"Respiratory samples"</span>,</span>
+<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a>                   <span class="at">urine =</span> <span class="st">"Urine cultures"</span>,  <span class="at">abd  =</span> <span class="st">"Intra-abdominal samples"</span>)</span>
+<span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-6"><a href="#cb18-6" aria-hidden="true" tabindex="-1"></a>screen_tbl <span class="ot">&lt;-</span> <span class="fu">map_df</span>(<span class="fu">names</span>(screen_vars), <span class="cf">function</span>(k) {</span>
+<span id="cb18-7"><a href="#cb18-7" aria-hidden="true" tabindex="-1"></a>  x <span class="ot">&lt;-</span> colonised_data[[screen_vars[k]]]</span>
+<span id="cb18-8"><a href="#cb18-8" aria-hidden="true" tabindex="-1"></a>  g <span class="ot">&lt;-</span> colonised_data<span class="sc">$</span>period</span>
+<span id="cb18-9"><a href="#cb18-9" aria-hidden="true" tabindex="-1"></a>  r <span class="ot">&lt;-</span> x[g <span class="sc">==</span> <span class="st">"Retrospective"</span>]; p <span class="ot">&lt;-</span> x[g <span class="sc">==</span> <span class="st">"Prospective"</span>]</span>
+<span id="cb18-10"><a href="#cb18-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">data.frame</span>(</span>
+<span id="cb18-11"><a href="#cb18-11" aria-hidden="true" tabindex="-1"></a>    <span class="st">`</span><span class="at">Sample type</span><span class="st">`</span> <span class="ot">=</span> screen_labels[k],</span>
+<span id="cb18-12"><a href="#cb18-12" aria-hidden="true" tabindex="-1"></a>    <span class="st">`</span><span class="at">Retrospective [median (IQR)]</span><span class="st">`</span> <span class="ot">=</span> <span class="fu">paste0</span>(<span class="fu">median</span>(r, <span class="at">na.rm=</span>T), <span class="st">" ("</span>,</span>
+<span id="cb18-13"><a href="#cb18-13" aria-hidden="true" tabindex="-1"></a>                                             <span class="fu">quantile</span>(r, .<span class="dv">25</span>, <span class="at">na.rm=</span>T), <span class="st">"–"</span>,</span>
+<span id="cb18-14"><a href="#cb18-14" aria-hidden="true" tabindex="-1"></a>                                             <span class="fu">quantile</span>(r, .<span class="dv">75</span>, <span class="at">na.rm=</span>T), <span class="st">")"</span>),</span>
+<span id="cb18-15"><a href="#cb18-15" aria-hidden="true" tabindex="-1"></a>    <span class="st">`</span><span class="at">Prospective [median (IQR)]</span><span class="st">`</span>   <span class="ot">=</span> <span class="fu">paste0</span>(<span class="fu">median</span>(p, <span class="at">na.rm=</span>T), <span class="st">" ("</span>,</span>
+<span id="cb18-16"><a href="#cb18-16" aria-hidden="true" tabindex="-1"></a>                                             <span class="fu">quantile</span>(p, .<span class="dv">25</span>, <span class="at">na.rm=</span>T), <span class="st">"–"</span>,</span>
+<span id="cb18-17"><a href="#cb18-17" aria-hidden="true" tabindex="-1"></a>                                             <span class="fu">quantile</span>(p, .<span class="dv">75</span>, <span class="at">na.rm=</span>T), <span class="st">")"</span>),</span>
+<span id="cb18-18"><a href="#cb18-18" aria-hidden="true" tabindex="-1"></a>    <span class="at">p_value =</span> <span class="fu">wrs_p</span>(x, g),</span>
+<span id="cb18-19"><a href="#cb18-19" aria-hidden="true" tabindex="-1"></a>    <span class="at">check.names =</span> <span class="cn">FALSE</span></span>
+<span id="cb18-20"><a href="#cb18-20" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb18-21"><a href="#cb18-21" aria-hidden="true" tabindex="-1"></a>})</span>
+<span id="cb18-22"><a href="#cb18-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-23"><a href="#cb18-23" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(screen_tbl,</span>
+<span id="cb18-24"><a href="#cb18-24" aria-hidden="true" tabindex="-1"></a>  <span class="at">caption =</span> <span class="st">"Microbiological screening intensity by study period (colonised/infected patients)"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output-display">
+<table class="caption-top table table-sm table-striped small">
+<caption>Microbiological screening intensity by study period (colonised/infected patients)</caption>
+<colgroup>
+<col style="width: 6%">
+<col style="width: 25%">
+<col style="width: 30%">
+<col style="width: 28%">
+<col style="width: 8%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;"></th>
+<th style="text-align: left;">Sample type</th>
+<th style="text-align: left;">Retrospective [median (IQR)]</th>
+<th style="text-align: left;">Prospective [median (IQR)]</th>
+<th style="text-align: right;">p_value</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">blood</td>
+<td style="text-align: left;">Blood cultures</td>
+<td style="text-align: left;">5 (2–11)</td>
+<td style="text-align: left;">9 (4–16)</td>
+<td style="text-align: right;">0.002</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">resp</td>
+<td style="text-align: left;">Respiratory samples</td>
+<td style="text-align: left;">0 (0–1)</td>
+<td style="text-align: left;">0 (0–1)</td>
+<td style="text-align: right;">0.373</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">urine</td>
+<td style="text-align: left;">Urine cultures</td>
+<td style="text-align: left;">2 (1–4)</td>
+<td style="text-align: left;">2.5 (1–4)</td>
+<td style="text-align: right;">0.090</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">abd</td>
+<td style="text-align: left;">Intra-abdominal samples</td>
+<td style="text-align: left;">2 (1–4)</td>
+<td style="text-align: left;">3 (1.75–6)</td>
+<td style="text-align: right;">0.007</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<p><strong>Key finding:</strong> Blood culture and intra-abdominal sampling intensity increased significantly in the prospective period (blood: 5 vs 9 per patient, p = 0.002; intra-abdominal: 2 vs 3, p = 0.007).</p>
+</section>
+<section id="colonisation-management-strategy" class="level3">
+<h3 class="anchored" data-anchor-id="colonisation-management-strategy">Colonisation Management Strategy</h3>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>strat_labels <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="at">cre_colonization___1 =</span> <span class="st">"No strategy adopted"</span>,</span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>                  <span class="at">cre_colonization___2 =</span> <span class="st">"Targeted peri-operative prophylaxis"</span>,</span>
+<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>                  <span class="at">cre_colonization___3 =</span> <span class="st">"Pre-emptive strategy"</span>)</span>
+<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-5"><a href="#cb19-5" aria-hidden="true" tabindex="-1"></a>strat_tbl <span class="ot">&lt;-</span> <span class="fu">map_df</span>(<span class="fu">names</span>(strat_labels), <span class="cf">function</span>(v) {</span>
+<span id="cb19-6"><a href="#cb19-6" aria-hidden="true" tabindex="-1"></a>  n_r <span class="ot">&lt;-</span> <span class="fu">sum</span>(colonised_data[colonised_data<span class="sc">$</span>period <span class="sc">==</span> <span class="st">"Retrospective"</span>, v] <span class="sc">==</span> <span class="dv">1</span>, <span class="at">na.rm =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb19-7"><a href="#cb19-7" aria-hidden="true" tabindex="-1"></a>  n_p <span class="ot">&lt;-</span> <span class="fu">sum</span>(colonised_data[colonised_data<span class="sc">$</span>period <span class="sc">==</span> <span class="st">"Prospective"</span>,   v] <span class="sc">==</span> <span class="dv">1</span>, <span class="at">na.rm =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb19-8"><a href="#cb19-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">data.frame</span>(</span>
+<span id="cb19-9"><a href="#cb19-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">Strategy =</span> strat_labels[v],</span>
+<span id="cb19-10"><a href="#cb19-10" aria-hidden="true" tabindex="-1"></a>    <span class="st">`</span><span class="at">Retrospective (n=244)</span><span class="st">`</span> <span class="ot">=</span> <span class="fu">paste0</span>(n_r, <span class="st">" ("</span>, <span class="fu">round</span>(n_r <span class="sc">/</span> retro_n_col <span class="sc">*</span> <span class="dv">100</span>, <span class="dv">1</span>), <span class="st">"%)"</span>),</span>
+<span id="cb19-11"><a href="#cb19-11" aria-hidden="true" tabindex="-1"></a>    <span class="st">`</span><span class="at">Prospective (n=86)</span><span class="st">`</span>    <span class="ot">=</span> <span class="fu">paste0</span>(n_p, <span class="st">" ("</span>, <span class="fu">round</span>(n_p <span class="sc">/</span> pros_n_col  <span class="sc">*</span> <span class="dv">100</span>, <span class="dv">1</span>), <span class="st">"%)"</span>),</span>
+<span id="cb19-12"><a href="#cb19-12" aria-hidden="true" tabindex="-1"></a>    <span class="at">p_value =</span> <span class="fu">chi_p</span>(<span class="fu">matrix</span>(<span class="fu">c</span>(n_r, retro_n_col <span class="sc">-</span> n_r, n_p, pros_n_col <span class="sc">-</span> n_p), <span class="dv">2</span>)),</span>
+<span id="cb19-13"><a href="#cb19-13" aria-hidden="true" tabindex="-1"></a>    <span class="at">check.names =</span> <span class="cn">FALSE</span></span>
+<span id="cb19-14"><a href="#cb19-14" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb19-15"><a href="#cb19-15" aria-hidden="true" tabindex="-1"></a>})</span>
+<span id="cb19-16"><a href="#cb19-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-17"><a href="#cb19-17" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(strat_tbl,</span>
+<span id="cb19-18"><a href="#cb19-18" aria-hidden="true" tabindex="-1"></a>  <span class="at">caption =</span> <span class="st">"Colonisation management strategy by study period (colonised/infected patients)"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output-display">
+<table class="caption-top table table-sm table-striped small">
+<caption>Colonisation management strategy by study period (colonised/infected patients)</caption>
+<colgroup>
+<col style="width: 19%">
+<col style="width: 33%">
+<col style="width: 20%">
+<col style="width: 17%">
+<col style="width: 7%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;"></th>
+<th style="text-align: left;">Strategy</th>
+<th style="text-align: left;">Retrospective (n=244)</th>
+<th style="text-align: left;">Prospective (n=86)</th>
+<th style="text-align: right;">p_value</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">cre_colonization___1</td>
+<td style="text-align: left;">No strategy adopted</td>
+<td style="text-align: left;">134 (54.9%)</td>
+<td style="text-align: left;">57 (66.3%)</td>
+<td style="text-align: right;">0.088</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">cre_colonization___2</td>
+<td style="text-align: left;">Targeted peri-operative prophylaxis</td>
+<td style="text-align: left;">74 (30.3%)</td>
+<td style="text-align: left;">20 (23.3%)</td>
+<td style="text-align: right;">0.267</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">cre_colonization___3</td>
+<td style="text-align: left;">Pre-emptive strategy</td>
+<td style="text-align: left;">37 (15.2%)</td>
+<td style="text-align: left;">11 (12.8%)</td>
+<td style="text-align: right;">0.720</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</section>
+<section id="anti-cre-therapy-in-infected-patients" class="level3">
+<h3 class="anchored" data-anchor-id="anti-cre-therapy-in-infected-patients">Anti-CRE Therapy in Infected Patients</h3>
+<section id="agents-used" class="level4">
+<h4 class="anchored" data-anchor-id="agents-used">Agents Used</h4>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb20"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>drug_tbl <span class="ot">&lt;-</span> cre_abx_inf <span class="sc">|&gt;</span></span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="sc">!</span><span class="fu">is.na</span>(drug)) <span class="sc">|&gt;</span></span>
+<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">drug_name =</span> drug_labels[<span class="fu">as.character</span>(drug)]) <span class="sc">|&gt;</span></span>
+<span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">count</span>(period, drug_name) <span class="sc">|&gt;</span></span>
+<span id="cb20-5"><a href="#cb20-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pivot_wider</span>(<span class="at">names_from =</span> period, <span class="at">values_from =</span> n, <span class="at">values_fill =</span> <span class="dv">0</span>) <span class="sc">|&gt;</span></span>
+<span id="cb20-6"><a href="#cb20-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb20-7"><a href="#cb20-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">p_value =</span> <span class="fu">map2_dbl</span>(Retrospective, Prospective,</span>
+<span id="cb20-8"><a href="#cb20-8" aria-hidden="true" tabindex="-1"></a>      <span class="sc">~</span> <span class="fu">chi_p</span>(<span class="fu">matrix</span>(<span class="fu">c</span>(.x, retro_n_inf <span class="sc">-</span> .x, .y, pros_n_inf <span class="sc">-</span> .y), <span class="dv">2</span>))),</span>
+<span id="cb20-9"><a href="#cb20-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">Retrospective =</span> <span class="fu">paste0</span>(Retrospective, <span class="st">" ("</span>, <span class="fu">round</span>(Retrospective <span class="sc">/</span> retro_n_inf <span class="sc">*</span> <span class="dv">100</span>, <span class="dv">1</span>), <span class="st">"%)"</span>),</span>
+<span id="cb20-10"><a href="#cb20-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">Prospective   =</span> <span class="fu">paste0</span>(Prospective,   <span class="st">" ("</span>, <span class="fu">round</span>(Prospective   <span class="sc">/</span> pros_n_inf  <span class="sc">*</span> <span class="dv">100</span>, <span class="dv">1</span>), <span class="st">"%)"</span>)</span>
+<span id="cb20-11"><a href="#cb20-11" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">|&gt;</span></span>
+<span id="cb20-12"><a href="#cb20-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(drug_name) <span class="sc">|&gt;</span></span>
+<span id="cb20-13"><a href="#cb20-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="at">Drug =</span> drug_name,</span>
+<span id="cb20-14"><a href="#cb20-14" aria-hidden="true" tabindex="-1"></a>         <span class="st">`</span><span class="at">Retrospective (n=136)</span><span class="st">`</span> <span class="ot">=</span> Retrospective,</span>
+<span id="cb20-15"><a href="#cb20-15" aria-hidden="true" tabindex="-1"></a>         <span class="st">`</span><span class="at">Prospective (n=54)</span><span class="st">`</span>    <span class="ot">=</span> Prospective)</span>
+<span id="cb20-16"><a href="#cb20-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-17"><a href="#cb20-17" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(drug_tbl,</span>
+<span id="cb20-18"><a href="#cb20-18" aria-hidden="true" tabindex="-1"></a>  <span class="at">caption =</span> <span class="st">"Anti-CRE agents used in infected patients by study period (exposure-level; patients may receive &gt;1 agent)"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output-display">
+<table class="caption-top table table-sm table-striped small">
+<caption>Anti-CRE agents used in infected patients by study period (exposure-level; patients may receive &gt;1 agent)</caption>
+<colgroup>
+<col style="width: 30%">
+<col style="width: 30%">
+<col style="width: 26%">
+<col style="width: 11%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">Drug</th>
+<th style="text-align: left;">Retrospective (n=136)</th>
+<th style="text-align: left;">Prospective (n=54)</th>
+<th style="text-align: right;">p_value</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">Amikacin</td>
+<td style="text-align: left;">34 (25%)</td>
+<td style="text-align: left;">7 (13%)</td>
+<td style="text-align: right;">0.104</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Cefiderocol</td>
+<td style="text-align: left;">6 (4.4%)</td>
+<td style="text-align: left;">1 (1.9%)</td>
+<td style="text-align: right;">0.676</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Ceftazidime-avibactam</td>
+<td style="text-align: left;">76 (55.9%)</td>
+<td style="text-align: left;">42 (77.8%)</td>
+<td style="text-align: right;">0.008</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Colistin</td>
+<td style="text-align: left;">47 (34.6%)</td>
+<td style="text-align: left;">6 (11.1%)</td>
+<td style="text-align: right;">0.002</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Ertapenem</td>
+<td style="text-align: left;">5 (3.7%)</td>
+<td style="text-align: left;">0 (0%)</td>
+<td style="text-align: right;">0.355</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Fosfomycin</td>
+<td style="text-align: left;">17 (12.5%)</td>
+<td style="text-align: left;">1 (1.9%)</td>
+<td style="text-align: right;">0.047</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Gentamicin</td>
+<td style="text-align: left;">8 (5.9%)</td>
+<td style="text-align: left;">0 (0%)</td>
+<td style="text-align: right;">0.155</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Meropenem</td>
+<td style="text-align: left;">92 (67.6%)</td>
+<td style="text-align: left;">34 (63%)</td>
+<td style="text-align: right;">0.656</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Meropenem/vaborbactam</td>
+<td style="text-align: left;">4 (2.9%)</td>
+<td style="text-align: left;">5 (9.3%)</td>
+<td style="text-align: right;">0.141</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Other</td>
+<td style="text-align: left;">17 (12.5%)</td>
+<td style="text-align: left;">14 (25.9%)</td>
+<td style="text-align: right;">0.041</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">TMP/SMX</td>
+<td style="text-align: left;">3 (2.2%)</td>
+<td style="text-align: left;">0 (0%)</td>
+<td style="text-align: right;">0.649</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Tigecycline</td>
+<td style="text-align: left;">51 (37.5%)</td>
+<td style="text-align: left;">18 (33.3%)</td>
+<td style="text-align: right;">0.710</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<p><strong>Key findings:</strong></p>
+<ul>
+<li><strong>Ceftazidime-avibactam</strong> use increased markedly (55.9% → 77.8%, p = 0.008), reflecting its emergence as the preferred backbone agent for KPC-producers</li>
+<li><strong>Colistin</strong> use declined substantially (34.6% → 11.1%, p = 0.002), consistent with the shift away from polymyxin-based regimens</li>
+<li><strong>Fosfomycin</strong> use also declined (12.5% → 1.9%, p = 0.047)</li>
+</ul>
+</section>
+<section id="combination-therapy-and-treatment-indication" class="level4">
+<h4 class="anchored" data-anchor-id="combination-therapy-and-treatment-indication">Combination Therapy and Treatment Indication</h4>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb21"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Combination therapy — patient level</span></span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a>combo_pts <span class="ot">&lt;-</span> cre_abx_inf <span class="sc">|&gt;</span></span>
+<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="sc">!</span><span class="fu">is.na</span>(combination_treat)) <span class="sc">|&gt;</span></span>
+<span id="cb21-4"><a href="#cb21-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">distinct</span>(record_id, <span class="at">.keep_all =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb21-5"><a href="#cb21-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-6"><a href="#cb21-6" aria-hidden="true" tabindex="-1"></a>n_cr <span class="ot">&lt;-</span> <span class="fu">sum</span>(combo_pts<span class="sc">$</span>period <span class="sc">==</span> <span class="st">"Retrospective"</span> <span class="sc">&amp;</span> combo_pts<span class="sc">$</span>combination_treat <span class="sc">==</span> <span class="dv">1</span>)</span>
+<span id="cb21-7"><a href="#cb21-7" aria-hidden="true" tabindex="-1"></a>n_cp <span class="ot">&lt;-</span> <span class="fu">sum</span>(combo_pts<span class="sc">$</span>period <span class="sc">==</span> <span class="st">"Prospective"</span>   <span class="sc">&amp;</span> combo_pts<span class="sc">$</span>combination_treat <span class="sc">==</span> <span class="dv">1</span>)</span>
+<span id="cb21-8"><a href="#cb21-8" aria-hidden="true" tabindex="-1"></a>nr_c <span class="ot">&lt;-</span> <span class="fu">sum</span>(combo_pts<span class="sc">$</span>period <span class="sc">==</span> <span class="st">"Retrospective"</span>)</span>
+<span id="cb21-9"><a href="#cb21-9" aria-hidden="true" tabindex="-1"></a>np_c <span class="ot">&lt;-</span> <span class="fu">sum</span>(combo_pts<span class="sc">$</span>period <span class="sc">==</span> <span class="st">"Prospective"</span>)</span>
+<span id="cb21-10"><a href="#cb21-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-11"><a href="#cb21-11" aria-hidden="true" tabindex="-1"></a>combo_tbl <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
+<span id="cb21-12"><a href="#cb21-12" aria-hidden="true" tabindex="-1"></a>  <span class="at">Metric =</span> <span class="st">"Combination therapy"</span>,</span>
+<span id="cb21-13"><a href="#cb21-13" aria-hidden="true" tabindex="-1"></a>  <span class="st">`</span><span class="at">Retrospective (n=136)</span><span class="st">`</span> <span class="ot">=</span> <span class="fu">paste0</span>(n_cr, <span class="st">" ("</span>, <span class="fu">round</span>(n_cr <span class="sc">/</span> nr_c <span class="sc">*</span> <span class="dv">100</span>, <span class="dv">1</span>), <span class="st">"%)"</span>),</span>
+<span id="cb21-14"><a href="#cb21-14" aria-hidden="true" tabindex="-1"></a>  <span class="st">`</span><span class="at">Prospective (n=54)</span><span class="st">`</span>    <span class="ot">=</span> <span class="fu">paste0</span>(n_cp, <span class="st">" ("</span>, <span class="fu">round</span>(n_cp <span class="sc">/</span> np_c <span class="sc">*</span> <span class="dv">100</span>, <span class="dv">1</span>), <span class="st">"%)"</span>),</span>
+<span id="cb21-15"><a href="#cb21-15" aria-hidden="true" tabindex="-1"></a>  <span class="at">p_value =</span> <span class="fu">chi_p</span>(<span class="fu">matrix</span>(<span class="fu">c</span>(n_cr, nr_c <span class="sc">-</span> n_cr, n_cp, np_c <span class="sc">-</span> n_cp), <span class="dv">2</span>)),</span>
+<span id="cb21-16"><a href="#cb21-16" aria-hidden="true" tabindex="-1"></a>  <span class="at">check.names =</span> <span class="cn">FALSE</span></span>
+<span id="cb21-17"><a href="#cb21-17" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb21-18"><a href="#cb21-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-19"><a href="#cb21-19" aria-hidden="true" tabindex="-1"></a><span class="co"># Indication</span></span>
+<span id="cb21-20"><a href="#cb21-20" aria-hidden="true" tabindex="-1"></a>ind_wide <span class="ot">&lt;-</span> cre_abx_inf <span class="sc">|&gt;</span></span>
+<span id="cb21-21"><a href="#cb21-21" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="sc">!</span><span class="fu">is.na</span>(indication)) <span class="sc">|&gt;</span></span>
+<span id="cb21-22"><a href="#cb21-22" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">ind_label =</span> <span class="fu">case_when</span>(</span>
+<span id="cb21-23"><a href="#cb21-23" aria-hidden="true" tabindex="-1"></a>    indication <span class="sc">==</span> <span class="dv">1</span> <span class="sc">~</span> <span class="st">"Empiric (symptoms onset)"</span>,</span>
+<span id="cb21-24"><a href="#cb21-24" aria-hidden="true" tabindex="-1"></a>    indication <span class="sc">==</span> <span class="dv">2</span> <span class="sc">~</span> <span class="st">"CRECOOLT score-guided"</span>,</span>
+<span id="cb21-25"><a href="#cb21-25" aria-hidden="true" tabindex="-1"></a>    indication <span class="sc">==</span> <span class="dv">3</span> <span class="sc">~</span> <span class="st">"Targeted (documented infection)"</span></span>
+<span id="cb21-26"><a href="#cb21-26" aria-hidden="true" tabindex="-1"></a>  )) <span class="sc">|&gt;</span></span>
+<span id="cb21-27"><a href="#cb21-27" aria-hidden="true" tabindex="-1"></a>  <span class="fu">count</span>(period, ind_label) <span class="sc">|&gt;</span></span>
+<span id="cb21-28"><a href="#cb21-28" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(period) <span class="sc">|&gt;</span></span>
+<span id="cb21-29"><a href="#cb21-29" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">pct =</span> <span class="fu">round</span>(n <span class="sc">/</span> <span class="fu">sum</span>(n) <span class="sc">*</span> <span class="dv">100</span>, <span class="dv">1</span>),</span>
+<span id="cb21-30"><a href="#cb21-30" aria-hidden="true" tabindex="-1"></a>         <span class="at">label =</span> <span class="fu">paste0</span>(n, <span class="st">" ("</span>, pct, <span class="st">"%)"</span>)) <span class="sc">|&gt;</span></span>
+<span id="cb21-31"><a href="#cb21-31" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ungroup</span>() <span class="sc">|&gt;</span></span>
+<span id="cb21-32"><a href="#cb21-32" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(period, ind_label, label) <span class="sc">|&gt;</span></span>
+<span id="cb21-33"><a href="#cb21-33" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pivot_wider</span>(<span class="at">names_from =</span> period, <span class="at">values_from =</span> label, <span class="at">values_fill =</span> <span class="st">"0 (0%)"</span>) <span class="sc">|&gt;</span></span>
+<span id="cb21-34"><a href="#cb21-34" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="at">Metric =</span> ind_label,</span>
+<span id="cb21-35"><a href="#cb21-35" aria-hidden="true" tabindex="-1"></a>         <span class="st">`</span><span class="at">Retrospective (n=136)</span><span class="st">`</span> <span class="ot">=</span> Retrospective,</span>
+<span id="cb21-36"><a href="#cb21-36" aria-hidden="true" tabindex="-1"></a>         <span class="st">`</span><span class="at">Prospective (n=54)</span><span class="st">`</span>    <span class="ot">=</span> Prospective) <span class="sc">|&gt;</span></span>
+<span id="cb21-37"><a href="#cb21-37" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">p_value =</span> <span class="cn">NA_real_</span>)</span>
+<span id="cb21-38"><a href="#cb21-38" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-39"><a href="#cb21-39" aria-hidden="true" tabindex="-1"></a><span class="fu">bind_rows</span>(combo_tbl, ind_wide) <span class="sc">|&gt;</span></span>
+<span id="cb21-40"><a href="#cb21-40" aria-hidden="true" tabindex="-1"></a>  knitr<span class="sc">::</span><span class="fu">kable</span>(<span class="at">caption =</span> <span class="st">"Combination therapy and treatment indication by study period"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output-display">
+<table class="caption-top table table-sm table-striped small">
+<caption>Combination therapy and treatment indication by study period</caption>
+<colgroup>
+<col style="width: 39%">
+<col style="width: 27%">
+<col style="width: 23%">
+<col style="width: 9%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">Metric</th>
+<th style="text-align: left;">Retrospective (n=136)</th>
+<th style="text-align: left;">Prospective (n=54)</th>
+<th style="text-align: right;">p_value</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">Combination therapy</td>
+<td style="text-align: left;">98 (73.1%)</td>
+<td style="text-align: left;">20 (39.2%)</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Empiric (symptoms onset)</td>
+<td style="text-align: left;">147 (41.5%)</td>
+<td style="text-align: left;">42 (32.8%)</td>
+<td style="text-align: right;">NA</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Targeted (documented infection)</td>
+<td style="text-align: left;">207 (58.5%)</td>
+<td style="text-align: left;">79 (61.7%)</td>
+<td style="text-align: right;">NA</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">CRECOOLT score-guided</td>
+<td style="text-align: left;">0 (0%)</td>
+<td style="text-align: left;">7 (5.5%)</td>
+<td style="text-align: right;">NA</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<p><strong>Key findings:</strong></p>
+<ul>
+<li><strong>Combination therapy declined sharply</strong> between periods (73.1% → 39.2%, p &lt; 0.001), consistent with the transition to novel β-lactam/β-lactamase inhibitor agents that are effective as monotherapy</li>
+<li><strong>CRECOOLT score-guided therapy</strong> appeared for the first time in the prospective cohort (5.5%), reflecting real-world adoption of the prediction model</li>
+</ul>
+</section>
 </section>
 </section>
 <section id="technical-notes" class="level2">
@@ -1138,11 +1721,11 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <p><strong>Statistical Methods:</strong></p>
 <ul>
 <li>Kaplan-Meier survival analysis with log-rank test</li>
-<li>Descriptive statistics and group comparisons</li>
+<li>Descriptive statistics and group comparisons; chi-square test for proportions, Wilcoxon rank-sum test for continuous variables</li>
 <li>Risk ratio calculations</li>
 </ul>
 <p><strong>Software:</strong> R version 4.5.1, with tidyverse, survival, and survminer packages</p>
-<p><strong>Report Generated:</strong> November 17, 2025</p>
+<p><strong>Report Generated:</strong> March 20, 2026</p>
 
 
 </section>
