@@ -517,6 +517,33 @@ surv_infected <- infected_data |>
     )
   ) |>
   filter(!is.na(surv_time), surv_time >= 0, !is.na(surv_event))
+
+# ── Cox model dataset and fit (built here so all downstream chunks can use it)
+cox_data <- surv_infected |>
+  mutate(
+    infect_src = factor(
+      case_when(
+        infection_source___1 == 1                              ~ "Bloodstream",
+        infection_source___2 == 1                              ~ "Respiratory",
+        infection_source___3 == 1                              ~ "Urinary",
+        infection_source___4 == 1 | infection_source___5 == 1 ~ "Surgical/Abd",
+        infection_source___6 == 1                              ~ "Other",
+        TRUE                                                   ~ NA_character_
+      ),
+      levels = c("Bloodstream","Respiratory","Urinary","Surgical/Abd","Other")
+    ),
+    therapy_fac = relevel(factor(therapy_group), ref = "Other therapies"),
+    period_fac  = relevel(factor(period),         ref = "Retrospective"),
+    meld_s      = as.numeric(scale(meld_score)),
+    age_s       = as.numeric(scale(age))
+  ) |>
+  filter(!is.na(meld_score), !is.na(infect_src))
+
+cox_fit <- coxph(
+  Surv(surv_time, surv_event) ~
+    therapy_fac + period_fac + meld_s + age_s + infect_src,
+  data = cox_data
+)
 ```
 
 ### Novel BL/BLI vs Other Therapies {#fig-km1}
@@ -676,38 +703,263 @@ ggsurvplot(
 - These are **observational, unadjusted** survival curves. Differences may reflect confounding by infection severity, source, or era.
 :::
 
+## Unadjusted Survival by Study Period
+
+Kaplan-Meier curves comparing overall survival from time of CRE infection between the retrospective and prospective cohorts. This contextualises the therapy-effect curves above by showing the underlying difference in outcomes across the two study periods.
+
+```{r km-period, fig.width=9, fig.height=5.5, fig.cap="Unadjusted Kaplan-Meier survival curves by study period (retrospective vs prospective cohort). Shaded bands = 95% confidence intervals. Percentages at right = unadjusted 90-day survival. Log-rank p-value shown."}
+library(patchwork)
+
+pal_period <- c("Retrospective" = "#374E55", "Prospective" = "#DF8F44")
+
+# ── KM fit ────────────────────────────────────────────────────────────────────
+fit_period <- survfit(Surv(surv_time, surv_event) ~ period,
+                      data = surv_infected)
+
+# ── Tidy to long form ─────────────────────────────────────────────────────────
+km_df <- bind_rows(
+  tibble(time = 0, surv = 1, lower = 1, upper = 1,
+         period = factor(c("Retrospective", "Prospective"),
+                         levels = c("Retrospective", "Prospective"))),
+  tibble(
+    time   = fit_period$time,
+    surv   = fit_period$surv,
+    lower  = fit_period$lower,
+    upper  = fit_period$upper,
+    period = factor(
+      rep(c("Retrospective", "Prospective"), fit_period$strata),
+      levels = c("Retrospective", "Prospective")
+    )
+  )
+)
+
+# ── Risk table ────────────────────────────────────────────────────────────────
+risk_period <- map_df(seq(0, 90, 15), function(t) {
+  surv_infected |>
+    group_by(period) |>
+    summarise(at_risk = sum(surv_time >= t, na.rm = TRUE), .groups = "drop") |>
+    mutate(time = t)
+})
+
+# ── Log-rank p-value ──────────────────────────────────────────────────────────
+lr      <- survdiff(Surv(surv_time, surv_event) ~ period, data = surv_infected)
+lr_pval <- 1 - pchisq(lr$chisq, df = 1)
+p_label <- ifelse(lr_pval < 0.001, "p < 0.001",
+            ifelse(lr_pval < 0.01,  sprintf("p = %.3f", lr_pval),
+                                    sprintf("p = %.2f",  lr_pval)))
+
+# ── 90-day endpoint labels ────────────────────────────────────────────────────
+surv_90_p <- km_df |>
+  filter(time <= 90) |>
+  group_by(period) |>
+  slice_tail(n = 1) |>
+  mutate(label = paste0(round(surv * 100, 1), "%"))
+
+# ── Main curve ────────────────────────────────────────────────────────────────
+p_period_km <- ggplot(km_df, aes(x = time, y = surv * 100,
+                                  colour = period, fill = period)) +
+  geom_ribbon(aes(ymin = lower * 100, ymax = upper * 100),
+              alpha = 0.12, colour = NA) +
+  geom_step(linewidth = 0.85) +
+  geom_text(data = surv_90_p,
+            aes(x = 92, y = surv * 100, label = label, colour = period),
+            hjust = 0, vjust = -0.7, size = 3.2, fontface = "bold",
+            show.legend = FALSE) +
+  annotate("text", x = 3, y = 18, label = p_label,
+           hjust = 0, size = 3.5, colour = "grey25") +
+  geom_hline(yintercept = 50, linetype = "dotted",
+             colour = "grey70", linewidth = 0.4) +
+  scale_colour_manual(values = pal_period, name = NULL) +
+  scale_fill_manual(values   = pal_period, name = NULL) +
+  scale_x_continuous(limits = c(0, 100), breaks = seq(0, 90, 15),
+                     expand = expansion(mult = c(0, 0.01))) +
+  scale_y_continuous(limits = c(0, 105), breaks = seq(0, 100, 25),
+                     labels = function(x) paste0(x, "%"),
+                     expand = expansion(mult = c(0, 0))) +
+  labs(
+    title    = "Unadjusted Survival by Study Period",
+    subtitle = "CRE-infected patients — retrospective vs prospective cohort",
+    x = "Days from CRE Infection",
+    y = "Survival Probability"
+  ) +
+  theme_classic(base_size = 12) +
+  theme(
+    plot.title         = element_text(face = "bold", size = 13),
+    plot.subtitle      = element_text(size = 9, colour = "grey40"),
+    legend.position    = c(0.22, 0.18),
+    legend.background  = element_rect(fill = alpha("white", 0.8), colour = NA),
+    legend.key.width   = unit(1.4, "cm"),
+    legend.text        = element_text(size = 10),
+    axis.text          = element_text(size = 10),
+    axis.title         = element_text(size = 10),
+    panel.grid.major.y = element_line(colour = "grey92", linewidth = 0.3),
+    plot.margin        = margin(8, 60, 0, 8)
+  ) +
+  coord_cartesian(clip = "off")
+
+# ── Risk table ────────────────────────────────────────────────────────────────
+p_risk_period <- ggplot(risk_period,
+                         aes(x = time, y = fct_rev(period), label = at_risk)) +
+  geom_text(aes(colour = period), size = 3.2) +
+  scale_colour_manual(values = pal_period, guide = "none") +
+  scale_x_continuous(limits = c(0, 100), breaks = seq(0, 90, 15)) +
+  labs(x = NULL, y = NULL, title = "No. at risk") +
+  theme_classic(base_size = 10) +
+  theme(
+    plot.title  = element_text(size = 9, face = "bold", colour = "grey30",
+                               margin = margin(b = 2)),
+    axis.text.x = element_blank(),
+    axis.ticks  = element_blank(),
+    axis.line   = element_blank(),
+    axis.text.y = element_text(size = 9),
+    panel.grid  = element_blank(),
+    plot.margin = margin(0, 60, 4, 8)
+  )
+
+p_period_km / p_risk_period + plot_layout(heights = c(5, 1))
+```
+
+::: callout-note
+The prospective cohort has markedly worse unadjusted survival (90-day: `r surv_90_p$label[surv_90_p$period == "Prospective"]` vs `r surv_90_p$label[surv_90_p$period == "Retrospective"]`). This likely reflects both shorter follow-up time in the prospective cohort and a higher proportion of patients with novel BL/BLI therapy (which, despite better outcomes, is enriched among more severely ill patients referred during the prospective period). The adjusted curves below account for these differences.
+:::
+
+### Adjusted Survival by Study Period {#fig-adj-period}
+
+Survival curves from the full Cox model holding therapy group (other therapies), MELD score, and infection source at their reference/mean values — isolating the independent effect of study period on survival.
+
+```{r adj-period-km, fig.width=9, fig.height=5.5, fig.cap="Adjusted survival curves by study period from Cox proportional hazards model. Covariates held at: other therapies (reference), mean MELD score, mean age, bloodstream infection source. Shaded bands = 95% confidence intervals."}
+# cox_data and cox_fit built in km-setup chunk
+
+# ── Newdata: two rows varying only period ─────────────────────────────────────
+covariate_means_period <- cox_data |>
+  summarise(
+    meld_s      = mean(meld_s,  na.rm = TRUE),
+    age_s       = mean(age_s,   na.rm = TRUE),
+    therapy_fac = "Other therapies",
+    infect_src  = "Bloodstream"
+  )
+
+newdata_period <- bind_rows(
+  covariate_means_period |> mutate(period_fac = "Retrospective"),
+  covariate_means_period |> mutate(period_fac = "Prospective")
+) |>
+  mutate(
+    therapy_fac = factor(therapy_fac,
+                         levels = c("Other therapies", "Novel BL/BLI")),
+    period_fac  = factor(period_fac,
+                         levels = c("Retrospective", "Prospective")),
+    infect_src  = factor(infect_src,
+                         levels = c("Bloodstream","Respiratory","Urinary",
+                                    "Surgical/Abd","Other"))
+  )
+
+# ── Adjusted survfit ──────────────────────────────────────────────────────────
+adj_period_fit <- survfit(cox_fit, newdata = newdata_period)
+
+adj_period_df <- bind_rows(
+  tibble(time = 0, surv = 1, lower = 1, upper = 1,
+         period = factor(c("Retrospective","Prospective"),
+                         levels = c("Retrospective","Prospective"))),
+  map_df(1:2, function(i) {
+    tibble(
+      time   = adj_period_fit$time,
+      surv   = adj_period_fit$surv[, i],
+      lower  = adj_period_fit$lower[, i],
+      upper  = adj_period_fit$upper[, i],
+      period = c("Retrospective","Prospective")[i]
+    )
+  }) |>
+    mutate(period = factor(period, levels = c("Retrospective","Prospective")))
+)
+
+# ── 90-day endpoint labels ────────────────────────────────────────────────────
+surv_90_adj_p <- adj_period_df |>
+  filter(time <= 90) |>
+  group_by(period) |>
+  slice_tail(n = 1) |>
+  mutate(label = paste0(round(surv * 100, 1), "%"))
+
+pal_period <- c("Retrospective" = "#374E55", "Prospective" = "#DF8F44")
+
+# ── Main curve ────────────────────────────────────────────────────────────────
+p_adj_period_km <- ggplot(adj_period_df,
+                           aes(x = time, y = surv * 100,
+                               colour = period, fill = period)) +
+  geom_ribbon(aes(ymin = lower * 100, ymax = upper * 100),
+              alpha = 0.12, colour = NA) +
+  geom_step(linewidth = 0.85) +
+  geom_text(data = surv_90_adj_p,
+            aes(x = 92, y = surv * 100, label = label, colour = period),
+            hjust = 0, vjust = -0.7, size = 3.2, fontface = "bold",
+            show.legend = FALSE) +
+  geom_hline(yintercept = 50, linetype = "dotted",
+             colour = "grey70", linewidth = 0.4) +
+  scale_colour_manual(values = pal_period, name = NULL) +
+  scale_fill_manual(values   = pal_period, name = NULL) +
+  scale_x_continuous(limits = c(0, 100), breaks = seq(0, 90, 15),
+                     expand = expansion(mult = c(0, 0.01))) +
+  scale_y_continuous(limits = c(0, 105), breaks = seq(0, 100, 25),
+                     labels = function(x) paste0(x, "%"),
+                     expand = expansion(mult = c(0, 0))) +
+  labs(
+    title    = "Adjusted Survival by Study Period",
+    subtitle = paste0(
+      "Cox model adjusted for therapy group, MELD score, age, and infection source\n",
+      "Covariates held at: other therapies (reference), mean MELD & age, bloodstream source"
+    ),
+    x = "Days from CRE Infection",
+    y = "Survival Probability"
+  ) +
+  theme_classic(base_size = 12) +
+  theme(
+    plot.title         = element_text(face = "bold", size = 13),
+    plot.subtitle      = element_text(size = 9, colour = "grey40",
+                                      lineheight = 1.3),
+    legend.position    = c(0.22, 0.18),
+    legend.background  = element_rect(fill = alpha("white", 0.8), colour = NA),
+    legend.key.width   = unit(1.4, "cm"),
+    legend.text        = element_text(size = 10),
+    axis.text          = element_text(size = 10),
+    axis.title         = element_text(size = 10),
+    panel.grid.major.y = element_line(colour = "grey92", linewidth = 0.3),
+    plot.margin        = margin(8, 60, 0, 8)
+  ) +
+  coord_cartesian(clip = "off")
+
+# ── Risk table (observed counts) ─────────────────────────────────────────────
+p_risk_adj_p <- ggplot(risk_period,
+                        aes(x = time, y = fct_rev(period), label = at_risk)) +
+  geom_text(aes(colour = period), size = 3.2) +
+  scale_colour_manual(values = pal_period, guide = "none") +
+  scale_x_continuous(limits = c(0, 100), breaks = seq(0, 90, 15)) +
+  labs(x = NULL, y = NULL, title = "No. at risk") +
+  theme_classic(base_size = 10) +
+  theme(
+    plot.title  = element_text(size = 9, face = "bold", colour = "grey30",
+                               margin = margin(b = 2)),
+    axis.text.x = element_blank(),
+    axis.ticks  = element_blank(),
+    axis.line   = element_blank(),
+    axis.text.y = element_text(size = 9),
+    panel.grid  = element_blank(),
+    plot.margin = margin(0, 60, 4, 8)
+  )
+
+p_adj_period_km / p_risk_adj_p + plot_layout(heights = c(5, 1))
+```
+
+::: callout-warning
+## Interpreting the adjusted period curves
+
+After adjusting for therapy type, MELD score, age, and infection source, the prospective period still shows substantially lower survival (90-day: **`r surv_90_adj_p$label[surv_90_adj_p$period == "Prospective"]`** vs **`r surv_90_adj_p$label[surv_90_adj_p$period == "Retrospective"]`**). This suggests the period effect is not fully explained by the measured covariates — unmeasured factors such as patient frailty, post-transplant complications, or centre-level changes in practice may contribute. The wide confidence interval for the prospective group reflects the smaller sample size (n = 46).
+:::
+
 ## Adjusted Cox Proportional Hazards Model
 
 To account for potential confounding by study period, disease severity, age, and infection source, a multivariable Cox model was fitted with therapy group (Novel BL/BLI vs other) as the primary exposure.
 
 ```{r cox-model}
-# ── Build model dataset ───────────────────────────────────────────────────────
-cox_data <- surv_infected |>
-  mutate(
-    infect_src = factor(
-      case_when(
-        infection_source___1 == 1                              ~ "Bloodstream",
-        infection_source___2 == 1                              ~ "Respiratory",
-        infection_source___3 == 1                              ~ "Urinary",
-        infection_source___4 == 1 | infection_source___5 == 1 ~ "Surgical/Abd",
-        infection_source___6 == 1                              ~ "Other",
-        TRUE                                                   ~ NA_character_
-      ),
-      levels = c("Bloodstream", "Respiratory", "Urinary", "Surgical/Abd", "Other")
-    ),
-    therapy_fac = relevel(factor(therapy_group), ref = "Other therapies"),
-    period_fac  = relevel(factor(period),         ref = "Retrospective"),
-    meld_s = as.numeric(scale(meld_score)),   # standardised (per SD)
-    age_s  = as.numeric(scale(age))
-  ) |>
-  filter(!is.na(meld_score), !is.na(infect_src))
-
-# ── Fit model ─────────────────────────────────────────────────────────────────
-cox_fit <- coxph(
-  Surv(surv_time, surv_event) ~
-    therapy_fac + period_fac + meld_s + age_s + infect_src,
-  data = cox_data
-)
+# cox_data and cox_fit are built in km-setup; here we just extract the HR table
 
 # ── Extract HR table ──────────────────────────────────────────────────────────
 cox_tbl <- broom::tidy(cox_fit, exponentiate = TRUE, conf.int = TRUE) |>
