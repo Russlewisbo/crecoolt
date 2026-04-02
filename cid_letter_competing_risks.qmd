@@ -1,0 +1,20 @@
+---
+title: "Competing risks and the causal interpretation of targeted prophylaxis in CRE-colonised liver transplant recipients"
+subtitle: "Letter to the Editor — *Clinical Infectious Diseases*"
+date: "April 2, 2026"
+format:
+  html:
+    toc: false
+    number-sections: false
+  docx:
+    reference-doc: null
+    number-sections: false
+execute:
+  echo: false
+  message: false
+  warning: false
+---
+
+::: callout-note
+This report
+:::

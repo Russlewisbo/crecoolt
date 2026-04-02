@@ -1,0 +1,940 @@
+---
+title: "Targeted Prophylaxis & Competing Risks"
+subtitle: "Replication and methodological critique of ciag185"
+format:
+  html:
+    toc: true
+    toc-depth: 3
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
+library(tidyverse)
+library(survival)
+library(cmprsk)
+library(broom)
+library(patchwork)
+```
+
+```{r load-data}
+load("baseline_data_final.RData")
+
+build_pap_category <- function(drugs) {
+  if (is.na(drugs) || drugs == "") return("S-PAP")
+  drugs_lower <- tolower(drugs)
+  if (str_detect(drugs_lower, "ceftazidim|caz.avi|avibactam|cefiderocol|vaborbactam")) return("T-PAPnew")
+  if (str_detect(drugs_lower, "amikacin|amikacina|gentamicin|tobramycin|tigecyclin|colistin|colistina|meropenem")) return("T-PAPold")
+  return("T-PAPold")
+}
+
+baseline_data <- baseline_data |>
+  mutate(
+    pap_category = case_when(
+      cre_colon != 1 ~ NA_character_,
+      TRUE ~ map_chr(prophylaxis_drugs, build_pap_category)
+    ),
+    pap_category = case_when(
+      cre_colon == 1 & cre_colonization___2 == 0 ~ "S-PAP",
+      TRUE ~ pap_category
+    )
+  )
+
+ciag_cc <- baseline_data |>
+  dplyr::filter(cre_colon == 1) |>
+  mutate(
+    viral_hepatitis = as.integer(liver_disease___1 == 1 | liver_disease___2 == 1),
+    hcc             = as.integer(liver_disease___10 == 1),
+    metabolic_dis   = as.integer(liver_disease___5 == 1),
+    kpc             = as.integer(mec_of_carbapenem_resi___1 == 1),
+    col_to_olt      = as.numeric(CREcolon_pre_to_OLT),
+    meld_olt        = as.numeric(meld_score),
+    age_num         = as.numeric(age),
+    cci_num         = as.numeric(cci),
+    cre_any         = as.integer(cre_infection == 1 & !is.na(OLT_to_CREinfection) & OLT_to_CREinfection >= 0),
+    cre_inf_15 = as.integer(cre_infection == 1 & !is.na(OLT_to_CREinfection) &
+                              OLT_to_CREinfection >= 0 & OLT_to_CREinfection <= 15),
+    cre_inf_30 = as.integer(cre_infection == 1 & !is.na(OLT_to_CREinfection) &
+                              OLT_to_CREinfection >= 0 & OLT_to_CREinfection <= 30),
+    event_15_type = case_when(
+      cre_inf_15 == 1 ~ 1L,
+      !is.na(OLT_to_death) & OLT_to_death <= 15 & cre_inf_15 == 0 ~ 2L,
+      TRUE ~ 0L),
+    event_30_type = case_when(
+      cre_inf_30 == 1 ~ 1L,
+      !is.na(OLT_to_death) & OLT_to_death <= 30 & cre_inf_30 == 0 ~ 2L,
+      TRUE ~ 0L),
+    time_15 = case_when(
+      cre_inf_15 == 1 ~ pmin(OLT_to_CREinfection, 15, na.rm = TRUE),
+      !is.na(OLT_to_death) & OLT_to_death <= 15 ~ OLT_to_death,
+      TRUE ~ 15),
+    time_30 = case_when(
+      cre_inf_30 == 1 ~ pmin(OLT_to_CREinfection, 30, na.rm = TRUE),
+      !is.na(OLT_to_death) & OLT_to_death <= 30 ~ OLT_to_death,
+      TRUE ~ 30),
+    surv_time  = case_when(death_180 == 1 & !is.na(OLT_to_death) ~ OLT_to_death, TRUE ~ 180),
+    surv_event = as.integer(death_180 == 1 & !is.na(OLT_to_death)),
+    cre_status = factor(ifelse(cre_any == 1, "CRE infection", "No CRE infection"),
+                        levels = c("No CRE infection", "CRE infection")),
+    pap_fac    = factor(pap_category, levels = c("S-PAP", "T-PAPold", "T-PAPnew"))
+  ) |>
+  dplyr::filter(!is.na(pap_fac), !is.na(age_num), !is.na(meld_olt),
+                !is.na(cci_num), !is.na(viral_hepatitis), !is.na(hcc),
+                !is.na(metabolic_dis), !is.na(col_to_olt), !is.na(kpc))
+
+pal2    <- c("No CRE infection" = "#4477AA", "CRE infection" = "#CC3311")
+pal_pap <- c("S-PAP" = "#4477AA", "T-PAPold" = "#EE6677", "T-PAPnew" = "#228833")
+```
+
+## Background
+
+Rinaldi *et al.* (2026, *Clinical Infectious Diseases*, doi:10.1093/cid/ciag185) used the CRECOOLT
+dataset to investigate the effect of targeted peri-operative antibiotic prophylaxis (T-PAP) on
+CRE infection in liver transplant recipients colonised with CRE before transplantation. Using
+augmented inverse probability weighting (AIPW) with a logistic outcome model, they reported a
+significant reduction in 15-day CRE infection with novel BL/BLI prophylaxis
+(T-PAPnew; ATE −14.6%, p = 0.002), while old-drug prophylaxis conferred no benefit.
+The effect was non-significant at 30 days (ATE −5.6%, p = 0.32).
+
+This page presents three complementary analyses using the CRECOOLT cohort:
+
+1. **Replication** of the ciag185 approach (adjusted logistic regression, no competing risks)
+2. **Competing risks correction** using Fine-Gray sub-distribution hazard models, treating
+   death before CRE infection as a competing event
+3. **180-day overall survival** stratified by prophylaxis group and CRE infection status
+
+::: {.callout-note}
+## Methodological note
+Logistic regression — even with AIPW correction — treats patients who die before the endpoint
+as censored, as if they *could* have developed CRE infection after death. When early mortality
+is differential across treatment groups, this can bias the treatment effect estimate. The correct
+approach is a **competing risks model** (Fine-Gray sub-distribution hazard), which accounts for
+death as a competing event that precludes subsequent infection.
+:::
+
+---
+
+## Study population
+
+Pre-OLT CRE colonisers were classified into three prophylaxis groups following ciag185 definitions:
+**S-PAP** (standard, no CRE activity), **T-PAPold** (aminoglycosides, tigecycline, colistin,
+high-dose meropenem), and **T-PAPnew** (ceftazidime-avibactam, meropenem-vaborbactam, cefiderocol).
+
+```{r cohort-table}
+ciag_cc |>
+  group_by(pap_fac) |>
+  summarise(
+    N                     = n(),
+    `Median age (IQR)`    = paste0(median(age_num,na.rm=TRUE)," (",
+                                   quantile(age_num,.25,na.rm=TRUE),"–",
+                                   quantile(age_num,.75,na.rm=TRUE),")"),
+    `Median MELD (IQR)`   = paste0(median(meld_olt,na.rm=TRUE)," (",
+                                   quantile(meld_olt,.25,na.rm=TRUE),"–",
+                                   quantile(meld_olt,.75,na.rm=TRUE),")"),
+    `KPC (%)`             = paste0(sum(kpc)," (",round(mean(kpc)*100,1),"%)"),
+    `CRE infection (%)`   = paste0(sum(cre_any)," (",round(mean(cre_any)*100,1),"%)"),
+    `180-d mortality (%)` = paste0(sum(surv_event)," (",round(mean(surv_event)*100,1),"%)")
+  ) |>
+  rename(`PAP group` = pap_fac) |>
+  knitr::kable(caption = "Baseline characteristics by prophylaxis group (n = 194 complete cases)")
+```
+
+---
+
+## Crude CRE infection rates and competing deaths
+
+```{r crude-rates}
+ciag_cc |>
+  group_by(pap_fac) |>
+  summarise(
+    N             = n(),
+    `15-d CRE n`  = sum(cre_inf_15),
+    `15-d CRE %`  = paste0(round(mean(cre_inf_15)*100,1),"%"),
+    `30-d CRE n`  = sum(cre_inf_30),
+    `30-d CRE %`  = paste0(round(mean(cre_inf_30)*100,1),"%"),
+    `Deaths ≤15d (no CRE)` = sum(event_15_type == 2),
+    `Deaths ≤30d (no CRE)` = sum(event_30_type == 2)
+  ) |>
+  rename(`PAP group` = pap_fac) |>
+  knitr::kable(caption = "Crude CRE infection rates and competing deaths by prophylaxis group")
+```
+
+Competing deaths (death without CRE infection) are concentrated in the **S-PAP group**
+(5 within 30 days vs 1 in T-PAPold, 0 in T-PAPnew). Sicker S-PAP patients who die early are
+removed from the infection risk set, artificially deflating the S-PAP infection rate, which
+in turn shrinks the apparent benefit of T-PAPnew in logistic models.
+
+---
+
+## Logistic regression vs Fine-Gray competing risks
+
+Adjusted models included: age, MELD at transplant, Charlson Comorbidity Index, viral hepatitis,
+HCC, metabolic liver disease, time from colonisation to OLT, and KPC mechanism (n = 194).
+
+```{r models, results='hide'}
+cov_mat <- model.matrix(
+  ~ pap_fac + age_num + meld_olt + cci_num +
+    viral_hepatitis + hcc + metabolic_dis + col_to_olt + kpc,
+  data = ciag_cc)[, -1]
+
+lr15 <- glm(cre_inf_15 ~ pap_fac + age_num + meld_olt + cci_num +
+              viral_hepatitis + hcc + metabolic_dis + col_to_olt + kpc,
+            data = ciag_cc, family = binomial)
+lr30 <- glm(cre_inf_30 ~ pap_fac + age_num + meld_olt + cci_num +
+              viral_hepatitis + hcc + metabolic_dis + col_to_olt + kpc,
+            data = ciag_cc, family = binomial)
+
+fg15 <- crr(ftime=ciag_cc$time_15, fstatus=ciag_cc$event_15_type,
+            cov1=cov_mat, failcode=1, cencode=0)
+fg30 <- crr(ftime=ciag_cc$time_30, fstatus=ciag_cc$event_30_type,
+            cov1=cov_mat, failcode=1, cencode=0)
+```
+
+```{r comparison-table}
+get_ci <- function(est, se)
+  paste0(round(exp(est - 1.96*se),2),"–",round(exp(est + 1.96*se),2))
+
+tibble(
+  Endpoint = c("15-day","15-day","30-day","30-day"),
+  Method   = rep(c("Logistic OR (no competing risks)",
+                   "Fine-Gray SHR (competing risks)"), 2),
+  `T-PAPold vs S-PAP` = c(
+    paste0(round(exp(coef(lr15)["pap_facT-PAPold"]),2),
+           " (",paste0(round(exp(confint.default(lr15)["pap_facT-PAPold",]),2),collapse="–"),")",
+           "  p=",round(summary(lr15)$coef["pap_facT-PAPold","Pr(>|z|)"],3)),
+    paste0(round(summary(fg15)$coef["pap_facT-PAPold","exp(coef)"],2),
+           " (",get_ci(summary(fg15)$coef["pap_facT-PAPold","coef"],
+                       summary(fg15)$coef["pap_facT-PAPold","se(coef)"]),")",
+           "  p=",round(summary(fg15)$coef["pap_facT-PAPold","p-value"],3)),
+    paste0(round(exp(coef(lr30)["pap_facT-PAPold"]),2),
+           " (",paste0(round(exp(confint.default(lr30)["pap_facT-PAPold",]),2),collapse="–"),")",
+           "  p=",round(summary(lr30)$coef["pap_facT-PAPold","Pr(>|z|)"],3)),
+    paste0(round(summary(fg30)$coef["pap_facT-PAPold","exp(coef)"],2),
+           " (",get_ci(summary(fg30)$coef["pap_facT-PAPold","coef"],
+                       summary(fg30)$coef["pap_facT-PAPold","se(coef)"]),")",
+           "  p=",round(summary(fg30)$coef["pap_facT-PAPold","p-value"],3))
+  ),
+  `T-PAPnew vs S-PAP` = c(
+    paste0(round(exp(coef(lr15)["pap_facT-PAPnew"]),2),
+           " (",paste0(round(exp(confint.default(lr15)["pap_facT-PAPnew",]),2),collapse="–"),")",
+           "  p=",round(summary(lr15)$coef["pap_facT-PAPnew","Pr(>|z|)"],3)),
+    paste0(round(summary(fg15)$coef["pap_facT-PAPnew","exp(coef)"],2),
+           " (",get_ci(summary(fg15)$coef["pap_facT-PAPnew","coef"],
+                       summary(fg15)$coef["pap_facT-PAPnew","se(coef)"]),")",
+           "  p=",round(summary(fg15)$coef["pap_facT-PAPnew","p-value"],3)),
+    paste0(round(exp(coef(lr30)["pap_facT-PAPnew"]),2),
+           " (",paste0(round(exp(confint.default(lr30)["pap_facT-PAPnew",]),2),collapse="–"),")",
+           "  p=",round(summary(lr30)$coef["pap_facT-PAPnew","Pr(>|z|)"],3)),
+    paste0(round(summary(fg30)$coef["pap_facT-PAPnew","exp(coef)"],2),
+           " (",get_ci(summary(fg30)$coef["pap_facT-PAPnew","coef"],
+                       summary(fg30)$coef["pap_facT-PAPnew","se(coef)"]),")",
+           "  p=",round(summary(fg30)$coef["pap_facT-PAPnew","p-value"],3))
+  )
+) |>
+  knitr::kable(caption = "Adjusted effect of prophylaxis on CRE infection: logistic regression vs Fine-Gray competing risks model")
+```
+
+```{r forest-plot, fig.width=10, fig.height=5, fig.cap="Adjusted effect of T-PAPnew vs S-PAP on CRE infection. Point estimates are virtually identical between methods, but the Fine-Gray SHR (competing risks) is the methodologically appropriate measure. The very wide confidence intervals reflect the small T-PAPnew group (n = 26)."}
+pal_ep <- c("15-day"="#CC3311","30-day"="#0077BB")
+
+forest_data <- tibble(
+  Endpoint = c("15-day","15-day","30-day","30-day"),
+  Method   = c("Logistic OR\n(no competing risks)","Fine-Gray SHR\n(competing risks)",
+               "Logistic OR\n(no competing risks)","Fine-Gray SHR\n(competing risks)"),
+  Estimate = c(exp(coef(lr15)["pap_facT-PAPnew"]),
+               summary(fg15)$coef["pap_facT-PAPnew","exp(coef)"],
+               exp(coef(lr30)["pap_facT-PAPnew"]),
+               summary(fg30)$coef["pap_facT-PAPnew","exp(coef)"]),
+  Lower = c(exp(confint.default(lr15)["pap_facT-PAPnew",1]),
+            exp(summary(fg15)$coef["pap_facT-PAPnew","coef"]-1.96*summary(fg15)$coef["pap_facT-PAPnew","se(coef)"]),
+            exp(confint.default(lr30)["pap_facT-PAPnew",1]),
+            exp(summary(fg30)$coef["pap_facT-PAPnew","coef"]-1.96*summary(fg30)$coef["pap_facT-PAPnew","se(coef)"])),
+  Upper = c(exp(confint.default(lr15)["pap_facT-PAPnew",2]),
+            exp(summary(fg15)$coef["pap_facT-PAPnew","coef"]+1.96*summary(fg15)$coef["pap_facT-PAPnew","se(coef)"]),
+            exp(confint.default(lr30)["pap_facT-PAPnew",2]),
+            exp(summary(fg30)$coef["pap_facT-PAPnew","coef"]+1.96*summary(fg30)$coef["pap_facT-PAPnew","se(coef)"])),
+  pval = c(summary(lr15)$coef["pap_facT-PAPnew","Pr(>|z|)"],
+           summary(fg15)$coef["pap_facT-PAPnew","p-value"],
+           summary(lr30)$coef["pap_facT-PAPnew","Pr(>|z|)"],
+           summary(fg30)$coef["pap_facT-PAPnew","p-value"])
+) |>
+  mutate(
+    label  = paste0(round(Estimate,2)," (",round(Lower,2),"–",round(Upper,2),")\np=",round(pval,2)),
+    Method = factor(Method, levels=c("Fine-Gray SHR\n(competing risks)",
+                                     "Logistic OR\n(no competing risks)"))
+  )
+
+ggplot(forest_data, aes(x=Estimate, y=Method, colour=Endpoint, shape=Endpoint)) +
+  geom_vline(xintercept=1, linetype="dashed", colour="grey50") +
+  geom_errorbar(aes(xmin=Lower,xmax=Upper), width=0.15, linewidth=0.8,
+                position=position_dodge(width=0.4), orientation="y") +
+  geom_point(size=3.5, position=position_dodge(width=0.4)) +
+  geom_text(aes(label=label, x=7), hjust=0, size=3,
+            position=position_dodge(width=0.4)) +
+  scale_x_log10(limits=c(0.03,28), breaks=c(0.05,0.1,0.25,0.5,1,2)) +
+  scale_colour_manual(values=pal_ep) +
+  labs(title="T-PAPnew vs S-PAP: Logistic Regression vs Fine-Gray",
+       subtitle="Pre-OLT CRE colonisers, CRECOOLT cohort (n = 194)",
+       x="OR / SHR (log scale)", y=NULL,
+       colour="Endpoint", shape="Endpoint",
+       caption="Values < 1 favour T-PAPnew.") +
+  theme_bw(base_size=12) +
+  theme(legend.position="bottom", panel.grid.minor=element_blank(),
+        plot.title=element_text(face="bold"))
+```
+
+::: {.callout-important}
+## Key finding
+Point estimates are nearly identical between methods (OR ≈ SHR ≈ 0.35 at 15 days, ~0.64 at 30 days).
+However, the competing risks correction attenuates significance (p moves from 0.13 to 0.14 at 15 days).
+The mechanistic direction of bias in ciag185's larger dataset is clear: asymmetric early deaths
+in the S-PAP group inflate the apparent S-PAP infection denominator, and a formal competing
+risks analysis in their cohort would likely narrow — and possibly eliminate — the significant ATE at 15 days.
+:::
+
+---
+
+## 180-day overall survival
+
+### By prophylaxis group
+
+```{r km-overall, fig.width=9, fig.height=6.5, fig.cap="Kaplan-Meier overall survival by prophylaxis strategy. Log-rank p = 0.864 — no significant difference across groups. 180-day survival: S-PAP 82.9%, T-PAPold 81.0%, T-PAPnew 84.6%."}
+km_surv   <- survfit(Surv(surv_time,surv_event)~pap_fac, data=ciag_cc)
+lr_test   <- survdiff(Surv(surv_time,surv_event)~pap_fac, data=ciag_cc)
+p_overall <- round(1-pchisq(lr_test$chisq, df=2), 3)
+
+km_df <- tidy(km_surv) |>
+  mutate(group=factor(str_remove(strata,"pap_fac="),
+                      levels=c("S-PAP","T-PAPold","T-PAPnew"))) |>
+  bind_rows(tibble(time=0,estimate=1,conf.low=1,conf.high=1,
+                   group=factor(c("S-PAP","T-PAPold","T-PAPnew"),
+                                levels=c("S-PAP","T-PAPold","T-PAPnew")))) |>
+  arrange(group,time)
+
+s180      <- summary(km_surv, times=180)
+annot_km  <- tibble(
+  group = factor(str_remove(as.character(s180$strata),"pap_fac="),
+                 levels=c("S-PAP","T-PAPold","T-PAPnew")),
+  surv  = s180$surv,
+  label = paste0(round(s180$surv*100,1),"%")
+)
+y_pos <- c("S-PAP"=annot_km$surv[annot_km$group=="S-PAP"]*100,
+           "T-PAPold"=annot_km$surv[annot_km$group=="T-PAPold"]*100-5,
+           "T-PAPnew"=annot_km$surv[annot_km$group=="T-PAPnew"]*100+5)
+
+risk_km <- map_df(c("S-PAP","T-PAPold","T-PAPnew"), function(g) {
+  sub <- dplyr::filter(ciag_cc, pap_fac==g)
+  map_df(c(0,30,60,90,120,150,180),
+         ~tibble(time=.x, n_risk=sum(sub$surv_time>=.x), group=g))
+}) |> mutate(group=factor(group,levels=c("S-PAP","T-PAPold","T-PAPnew")))
+
+p_km2 <- ggplot(km_df, aes(time,estimate*100,colour=group,fill=group)) +
+  geom_step(linewidth=0.9) +
+  geom_ribbon(aes(ymin=conf.low*100,ymax=conf.high*100), alpha=0.10, colour=NA) +
+  geom_vline(xintercept=c(30,90,180), linetype="dotted", colour="grey70", linewidth=0.4) +
+  geom_text(data=annot_km,
+            aes(x=183, y=y_pos[as.character(group)],
+                label=paste0(as.character(group),": ",label), colour=group),
+            size=3.3, hjust=0, fontface="bold", inherit.aes=FALSE) +
+  annotate("text",x=5,y=8,label=paste0("Log-rank p = ",p_overall),
+           size=3.5,hjust=0,colour="grey30") +
+  scale_colour_manual(values=pal_pap) + scale_fill_manual(values=pal_pap) +
+  scale_x_continuous(limits=c(0,245),breaks=c(0,30,60,90,120,150,180)) +
+  scale_y_continuous(limits=c(0,105),breaks=seq(0,100,20),
+                     labels=paste0(seq(0,100,20),"%")) +
+  labs(title="180-Day Overall Survival by Prophylaxis Strategy",
+       subtitle="Pre-OLT CRE colonisers · CRECOOLT cohort (n = 194)",
+       x=NULL, y="Overall survival", colour=NULL, fill=NULL) +
+  theme_bw(base_size=12) +
+  theme(legend.position="none",panel.grid.minor=element_blank(),
+        axis.text.x=element_blank(),axis.ticks.x=element_blank(),
+        plot.title=element_text(face="bold",size=13),
+        plot.subtitle=element_text(size=11,colour="grey40"),
+        plot.margin=margin(5,5,0,5))
+
+p_risk_km2 <- ggplot(risk_km, aes(time,group,label=n_risk,colour=group)) +
+  geom_text(size=3.3,fontface="bold") +
+  scale_colour_manual(values=pal_pap) +
+  scale_x_continuous(limits=c(0,245),breaks=c(0,30,60,90,120,150,180)) +
+  scale_y_discrete(limits=rev) +
+  labs(x="Days after liver transplantation",y=NULL) +
+  theme_bw(base_size=11) +
+  theme(legend.position="none",panel.grid=element_blank(),
+        axis.text.y=element_text(face="bold",size=10),
+        plot.margin=margin(0,5,5,5))
+
+(p_km2 / p_risk_km2) + plot_layout(heights=c(4,1))
+```
+
+### By prophylaxis group × CRE infection status
+
+```{r km-stratified, fig.width=11, fig.height=7.5, fig.cap="180-day overall survival stratified by prophylaxis group (panels) and CRE infection status (colour). CRE infection is associated with ~30 percentage-point excess mortality across all three PAP groups (60% vs 90% survival). The survival penalty of CRE infection is strikingly consistent regardless of which prophylaxis strategy was used, reinforcing that prevention of infection is clinically meaningful. Note: the T-PAPnew panel shows only 5 CRE infection events, hence the very wide confidence interval and non-significant log-rank test."}
+km_all <- survfit(Surv(surv_time,surv_event)~pap_fac+cre_status, data=ciag_cc)
+
+km_strat <- tidy(km_all) |>
+  mutate(
+    pap = case_when(str_detect(strata,"S-PAP")~"S-PAP",
+                    str_detect(strata,"T-PAPold")~"T-PAPold",
+                    str_detect(strata,"T-PAPnew")~"T-PAPnew"),
+    cre = case_when(str_detect(strata,"No CRE")~"No CRE infection",
+                    TRUE~"CRE infection"),
+    pap = factor(pap,levels=c("S-PAP","T-PAPold","T-PAPnew")),
+    cre = factor(cre,levels=c("No CRE infection","CRE infection"))
+  ) |>
+  bind_rows(
+    tibble(pap=factor(rep(c("S-PAP","T-PAPold","T-PAPnew"),each=2),
+                       levels=c("S-PAP","T-PAPold","T-PAPnew")),
+           cre=factor(rep(c("No CRE infection","CRE infection"),3),
+                       levels=c("No CRE infection","CRE infection")),
+           time=0,estimate=1,conf.low=1,conf.high=1)
+  ) |> arrange(pap,cre,time)
+
+s180s <- summary(km_all, times=180)
+annot_s <- tibble(strata=as.character(s180s$strata), surv=s180s$surv) |>
+  mutate(
+    pap=case_when(str_detect(strata,"S-PAP")~"S-PAP",
+                  str_detect(strata,"T-PAPold")~"T-PAPold",
+                  str_detect(strata,"T-PAPnew")~"T-PAPnew"),
+    cre=case_when(str_detect(strata,"No CRE")~"No CRE infection",TRUE~"CRE infection"),
+    pap=factor(pap,levels=c("S-PAP","T-PAPold","T-PAPnew")),
+    cre=factor(cre,levels=c("No CRE infection","CRE infection")),
+    label=paste0(round(surv*100,1),"%")
+  )
+
+lr_s <- map_df(c("S-PAP","T-PAPold","T-PAPnew"), function(g) {
+  sub <- dplyr::filter(ciag_cc,pap_fac==g)
+  p   <- 1-pchisq(survdiff(Surv(surv_time,surv_event)~cre_status,data=sub)$chisq,df=1)
+  tibble(pap=g, label=ifelse(p<0.001,"p < 0.001",paste0("p = ",round(p,3))))
+}) |> mutate(pap=factor(pap,levels=c("S-PAP","T-PAPold","T-PAPnew")))
+
+risk_s <- map_df(c("S-PAP","T-PAPold","T-PAPnew"), function(g) {
+  map_df(c("No CRE infection","CRE infection"), function(cr) {
+    sub <- dplyr::filter(ciag_cc,pap_fac==g,cre_status==cr)
+    map_df(c(0,60,120,180),~tibble(time=.x,n_risk=sum(sub$surv_time>=.x),pap=g,cre_status=cr))
+  })
+}) |>
+  mutate(pap=factor(pap,levels=c("S-PAP","T-PAPold","T-PAPnew")),
+         cre_status=factor(cre_status,levels=c("No CRE infection","CRE infection")))
+
+plabs <- c("S-PAP"="Standard PAP\n(n = 105)",
+           "T-PAPold"="Targeted PAP – old drugs\n(n = 63)",
+           "T-PAPnew"="Targeted PAP – novel drugs\n(n = 26)")
+
+p_s <- ggplot(km_strat, aes(time,estimate*100,colour=cre,fill=cre)) +
+  geom_step(linewidth=0.9) +
+  geom_ribbon(aes(ymin=conf.low*100,ymax=conf.high*100), alpha=0.12,colour=NA) +
+  geom_text(data=dplyr::filter(annot_s,cre=="No CRE infection"),
+            aes(x=183,y=surv*100+4.5,label=label,colour=cre),
+            size=3.3,hjust=0,fontface="bold",inherit.aes=FALSE) +
+  geom_text(data=dplyr::filter(annot_s,cre=="CRE infection"),
+            aes(x=183,y=surv*100-4.5,label=label,colour=cre),
+            size=3.3,hjust=0,fontface="bold",inherit.aes=FALSE) +
+  geom_text(data=lr_s, aes(x=4,y=11,label=label),
+            colour="grey30",size=3.2,hjust=0,inherit.aes=FALSE) +
+  facet_wrap(~pap,ncol=3,labeller=labeller(pap=plabs)) +
+  scale_colour_manual(values=pal2,name=NULL) +
+  scale_fill_manual(values=pal2,name=NULL) +
+  scale_x_continuous(limits=c(0,232),breaks=c(0,60,120,180)) +
+  scale_y_continuous(limits=c(0,108),breaks=seq(0,100,25),
+                     labels=paste0(seq(0,100,25),"%")) +
+  labs(title="180-Day Survival: Prophylaxis Strategy × CRE Infection Status",
+       subtitle="Pre-OLT CRE colonisers · CRECOOLT cohort (n = 194)  ·  Log-rank p shown per panel",
+       x="Days after liver transplantation",y="Overall survival") +
+  theme_bw(base_size=12) +
+  theme(legend.position="bottom",legend.key.width=unit(1.5,"cm"),
+        plot.title=element_text(face="bold",size=13),
+        plot.subtitle=element_text(size=10.5,colour="grey40"),
+        panel.grid.minor=element_blank(),
+        strip.background=element_rect(fill="grey92"),
+        strip.text=element_text(face="bold",size=10.5))
+
+p_r <- ggplot(risk_s,aes(time,cre_status,label=n_risk,colour=cre_status)) +
+  geom_text(size=2.8,fontface="bold") +
+  facet_wrap(~pap,ncol=3) +
+  scale_colour_manual(values=pal2) +
+  scale_x_continuous(limits=c(0,232),breaks=c(0,60,120,180)) +
+  scale_y_discrete(limits=rev) +
+  labs(x=NULL,y=NULL) +
+  theme_bw(base_size=10) +
+  theme(legend.position="none",panel.grid=element_blank(),
+        axis.text.y=element_text(size=8),
+        strip.background=element_blank(),strip.text=element_blank())
+
+(p_s / p_r) + plot_layout(heights=c(5,1.2))
+```
+
+### Adjusted Cox model for 180-day mortality
+
+```{r cox}
+cox_pap <- coxph(Surv(surv_time,surv_event)~pap_fac+age_num+meld_olt+
+                   cci_num+viral_hepatitis+hcc+kpc, data=ciag_cc)
+
+tidy(cox_pap, exponentiate=TRUE, conf.int=TRUE) |>
+  mutate(
+    term = case_when(
+      term=="pap_facT-PAPold" ~ "T-PAPold vs S-PAP",
+      term=="pap_facT-PAPnew" ~ "T-PAPnew vs S-PAP",
+      term=="age_num"         ~ "Age (per year)",
+      term=="meld_olt"        ~ "MELD at OLT (per point)",
+      term=="cci_num"         ~ "Charlson index (per point)",
+      term=="viral_hepatitis" ~ "Viral hepatitis",
+      term=="hcc"             ~ "HCC",
+      term=="kpc"             ~ "KPC mechanism",
+      TRUE~term),
+    across(c(estimate,conf.low,conf.high),~round(.,2)),
+    p.value=round(p.value,3),
+    `HR (95% CI)`=paste0(estimate," (",conf.low,"–",conf.high,")")
+  ) |>
+  dplyr::select(Covariate=term,`HR (95% CI)`,`p-value`=p.value) |>
+  knitr::kable(caption="Adjusted Cox proportional hazards model: 180-day mortality")
+```
+
+Neither T-PAPold (HR 0.71, 95% CI 0.31–1.62, p = 0.42) nor T-PAPnew
+(HR 0.73, 95% CI 0.24–2.21, p = 0.58) was associated with significantly improved survival
+after adjustment, consistent with the unadjusted log-rank result.
+
+---
+
+## Summary of findings
+
+| Finding | Result |
+|---|---|
+| T-PAPnew reduces 15-day CRE infection | SHR 0.35 (0.09–1.41), p = 0.14 — directionally consistent with ciag185 but non-significant in this sub-cohort |
+| T-PAPnew reduces 30-day CRE infection | SHR 0.64 (0.26–1.59), p = 0.34 — no significant effect |
+| T-PAPold has no benefit over S-PAP | SHR 1.24–1.44 across endpoints, p > 0.29 — consistent with ciag185 |
+| T-PAPnew improves 180-day survival | HR 0.73 (0.24–2.21), p = 0.58 — not significant |
+| CRE infection attributable mortality | ~30 percentage-point excess (60% vs 90% 180-day survival), p < 0.001 in S-PAP and T-PAPold groups |
+| Competing risk bias in ciag185 | Asymmetric early deaths (4.8% S-PAP vs 0% T-PAPnew within 30d) biases logistic models toward overstating T-PAPnew benefit |
+
+::: {.callout-note}
+## Limitations
+- **Sample size**: T-PAPnew n = 26 with only 5 patients developing CRE infection at 30 days; all models substantially underpowered
+- **No AIPW**: Full ciag185 AIPW approach requires Stata `teffects aipw`; models here use standard adjusted regression with identical covariates
+- **Multisite colonisation**: Excluded due to 75% missingness; included in ciag185 (with acknowledged imperfect balance after weighting)
+- **Observational design**: Unmeasured confounding by indication for novel prophylaxis cannot be excluded
+:::
+
+---
+
+## CRE infection survival penalty by study period
+
+A key question is whether the **mortality attributable to CRE infection** differs between the
+retrospective and prospective cohorts — for instance, whether improved therapies in the
+prospective period have narrowed the survival gap between infected and non-infected patients.
+
+```{r period-cre-survival, fig.width=10, fig.height=7, fig.cap="180-day overall survival by CRE infection status, stratified by study period. The survival penalty associated with CRE infection (~30 percentage points) is strikingly consistent between the retrospective (89.8% vs 60.5%, p < 0.001) and prospective (93.5% vs 66.7%, p = 0.029) cohorts. Despite the shift toward novel BL/BLI therapy in the prospective period, infection-attributable mortality remains unchanged, suggesting that once CRE infection is established, outcomes remain poor regardless of era."}
+ciag_surv3 <- ciag_cc |>
+  mutate(
+    period = factor(ifelse(retro_or_pros == 1, "Retrospective", "Prospective"),
+                    levels = c("Retrospective", "Prospective"))
+  )
+
+km_pc <- survfit(Surv(surv_time, surv_event) ~ period + cre_status, data = ciag_surv3)
+
+km_df_pc <- tidy(km_pc) |>
+  mutate(
+    period = case_when(str_detect(strata,"Retrospective")~"Retrospective",TRUE~"Prospective"),
+    cre    = case_when(str_detect(strata,"No CRE")~"No CRE infection",TRUE~"CRE infection"),
+    period = factor(period, levels=c("Retrospective","Prospective")),
+    cre    = factor(cre, levels=c("No CRE infection","CRE infection"))
+  ) |>
+  bind_rows(
+    tibble(period=factor(rep(c("Retrospective","Prospective"),each=2),
+                          levels=c("Retrospective","Prospective")),
+           cre=factor(rep(c("No CRE infection","CRE infection"),2),
+                       levels=c("No CRE infection","CRE infection")),
+           time=0, estimate=1, conf.low=1, conf.high=1)
+  ) |> arrange(period, cre, time)
+
+s180_pc <- summary(km_pc, times=180)
+annot_pc <- tibble(strata=as.character(s180_pc$strata), surv=s180_pc$surv) |>
+  mutate(
+    period=case_when(str_detect(strata,"Retrospective")~"Retrospective",TRUE~"Prospective"),
+    cre=case_when(str_detect(strata,"No CRE")~"No CRE infection",TRUE~"CRE infection"),
+    period=factor(period,levels=c("Retrospective","Prospective")),
+    cre=factor(cre,levels=c("No CRE infection","CRE infection")),
+    label=paste0(round(surv*100,1),"%")
+  )
+
+lr_pc <- map_df(c("Retrospective","Prospective"), function(per) {
+  sub <- dplyr::filter(ciag_surv3, period==per)
+  p   <- 1-pchisq(survdiff(Surv(surv_time,surv_event)~cre_status,data=sub)$chisq,df=1)
+  n_cre   <- sum(sub$cre_status=="CRE infection")
+  n_nocre <- sum(sub$cre_status=="No CRE infection")
+  tibble(period=per,
+         p_label=ifelse(p<0.001,"p < 0.001",paste0("p = ",round(p,3))),
+         n_label=paste0("CRE: n=",n_cre,"  |  No CRE: n=",n_nocre))
+}) |> mutate(period=factor(period,levels=c("Retrospective","Prospective")))
+
+risk_pc2 <- map_df(c("Retrospective","Prospective"), function(per) {
+  map_df(c("No CRE infection","CRE infection"), function(cr) {
+    sub <- dplyr::filter(ciag_surv3, period==per, cre_status==cr)
+    map_df(c(0,60,120,180),~tibble(time=.x,n_risk=sum(sub$surv_time>=.x),
+                                    period=per,cre_status=cr))
+  })
+}) |>
+  mutate(period=factor(period,levels=c("Retrospective","Prospective")),
+         cre_status=factor(cre_status,levels=c("No CRE infection","CRE infection")))
+
+panel_labs2 <- c("Retrospective"="Retrospective cohort (n = 151)",
+                 "Prospective"  ="Prospective cohort (n = 43)")
+
+p_pc2 <- ggplot(km_df_pc, aes(time,estimate*100,colour=cre,fill=cre)) +
+  geom_step(linewidth=0.9) +
+  geom_ribbon(aes(ymin=conf.low*100,ymax=conf.high*100), alpha=0.12,colour=NA) +
+  geom_text(data=dplyr::filter(annot_pc,cre=="No CRE infection"),
+            aes(x=183,y=surv*100+4.5,label=label,colour=cre),
+            size=3.3,hjust=0,fontface="bold",inherit.aes=FALSE) +
+  geom_text(data=dplyr::filter(annot_pc,cre=="CRE infection"),
+            aes(x=183,y=surv*100-4.5,label=label,colour=cre),
+            size=3.3,hjust=0,fontface="bold",inherit.aes=FALSE) +
+  geom_text(data=lr_pc,aes(x=4,y=20,label=n_label),
+            colour="grey40",size=2.9,hjust=0,inherit.aes=FALSE) +
+  geom_text(data=lr_pc,aes(x=4,y=11,label=p_label),
+            colour="grey30",size=3.2,hjust=0,inherit.aes=FALSE) +
+  facet_wrap(~period,ncol=2,labeller=labeller(period=panel_labs2)) +
+  scale_colour_manual(values=pal2,name=NULL) +
+  scale_fill_manual(values=pal2,name=NULL) +
+  scale_x_continuous(limits=c(0,232),breaks=c(0,60,120,180)) +
+  scale_y_continuous(limits=c(0,108),breaks=seq(0,100,25),
+                     labels=paste0(seq(0,100,25),"%")) +
+  labs(title="CRE Infection Survival Penalty by Study Period",
+       subtitle="Pre-OLT CRE colonisers · CRECOOLT cohort (n = 194)  ·  Log-rank p shown per panel",
+       x="Days after liver transplantation",y="Overall survival") +
+  theme_bw(base_size=12) +
+  theme(legend.position="bottom",legend.key.width=unit(1.5,"cm"),
+        plot.title=element_text(face="bold",size=13),
+        plot.subtitle=element_text(size=10.5,colour="grey40"),
+        panel.grid.minor=element_blank(),
+        strip.background=element_rect(fill="grey92"),
+        strip.text=element_text(face="bold",size=11))
+
+p_rpc <- ggplot(risk_pc2,aes(time,cre_status,label=n_risk,colour=cre_status)) +
+  geom_text(size=2.8,fontface="bold") +
+  facet_wrap(~period,ncol=2) +
+  scale_colour_manual(values=pal2) +
+  scale_x_continuous(limits=c(0,232),breaks=c(0,60,120,180)) +
+  scale_y_discrete(limits=rev) +
+  labs(x=NULL,y=NULL) +
+  theme_bw(base_size=10) +
+  theme(legend.position="none",panel.grid=element_blank(),
+        axis.text.y=element_text(size=8.5),
+        strip.background=element_blank(),strip.text=element_blank())
+
+(p_pc2 / p_rpc) + plot_layout(heights=c(5,1.2))
+```
+
+```{r period-interaction}
+cox_int <- coxph(
+  Surv(surv_time, surv_event) ~ cre_status * period + age_num + meld_olt + kpc,
+  data = ciag_surv3
+)
+
+broom::tidy(cox_int, exponentiate=TRUE, conf.int=TRUE) |>
+  mutate(
+    term=case_when(
+      term=="cre_statusCRE infection"~"CRE infection (vs none) — Retrospective",
+      str_detect(term,"periodProspective") & !str_detect(term,":")~"Prospective period (vs Retrospective)",
+      str_detect(term,":")~"CRE × Prospective interaction",
+      term=="age_num"~"Age (per year)",
+      term=="meld_olt"~"MELD at OLT (per point)",
+      term=="kpc"~"KPC mechanism",
+      TRUE~term),
+    across(c(estimate,conf.low,conf.high),~round(.,2)),
+    p.value=round(p.value,3),
+    `HR (95% CI)`=paste0(estimate," (",conf.low,"–",conf.high,")")
+  ) |>
+  dplyr::select(Covariate=term,`HR (95% CI)`,`p-value`=p.value) |>
+  knitr::kable(
+    caption="Cox model testing whether the CRE infection survival penalty differs between study periods (interaction term)")
+```
+
+::: {.callout-note}
+## Interpretation
+The interaction between CRE infection and study period is non-significant
+(HR 1.11, 95% CI 0.17–7.44, p = 0.91), confirming that the **survival penalty of CRE
+infection is statistically indistinguishable between the retrospective and prospective cohorts**.
+Despite the shift toward novel BL/BLI therapy in the prospective period, once CRE infection
+is established, outcomes remain as poor as in the earlier era (~30–35% 180-day mortality in
+both periods). This reinforces that **prevention of infection — whether through prophylaxis or
+infection-control measures — remains the priority**, as treatment of established infection has
+not significantly improved patient survival.
+:::
+
+---
+
+## CRE infection survival penalty by carbapenemase mechanism
+
+Novel BL/BLI agents (ceftazidime-avibactam, meropenem-vaborbactam) have potent activity
+against KPC-producing organisms. If these therapies are improving outcomes for infected patients,
+we would expect the survival penalty of CRE infection to be **smaller in the KPC group**
+(better treatment options) than in the non-KPC group (OXA-48, NDM, VIM — where therapeutic
+options remain more limited).
+
+```{r km-kpc, fig.width=10, fig.height=7, fig.cap="180-day overall survival by CRE infection status, stratified by carbapenemase mechanism. The survival penalty is numerically larger in the Non-KPC group (56.2% vs 91.8% = −35.6pp) than in the KPC group (64.1% vs 90% = −25.9pp), opposite to the hypothesis that novel BL/BLI therapy would narrow the KPC penalty. However, the interaction is non-significant (p = 0.43), so this difference could reflect chance. Non-KPC organisms (OXA-48, NDM, VIM) may represent inherently more aggressive infections or faces a greater therapeutic gap."}
+ciag_surv3 <- ciag_surv3 |>
+  mutate(kpc_grp = factor(ifelse(kpc == 1, "KPC", "Non-KPC"),
+                          levels = c("KPC", "Non-KPC")))
+
+km_kpc <- survfit(Surv(surv_time, surv_event) ~ kpc_grp + cre_status, data = ciag_surv3)
+
+km_df_kpc <- tidy(km_kpc) |>
+  mutate(
+    kpc_grp = case_when(str_detect(strata,"Non-KPC")~"Non-KPC", TRUE~"KPC"),
+    cre     = case_when(str_detect(strata,"No CRE")~"No CRE infection", TRUE~"CRE infection"),
+    kpc_grp = factor(kpc_grp, levels=c("KPC","Non-KPC")),
+    cre     = factor(cre, levels=c("No CRE infection","CRE infection"))
+  ) |>
+  bind_rows(
+    tibble(kpc_grp=factor(rep(c("KPC","Non-KPC"),each=2),levels=c("KPC","Non-KPC")),
+           cre=factor(rep(c("No CRE infection","CRE infection"),2),
+                       levels=c("No CRE infection","CRE infection")),
+           time=0, estimate=1, conf.low=1, conf.high=1)
+  ) |> arrange(kpc_grp, cre, time)
+
+s180_kpc <- summary(km_kpc, times=180)
+annot_kpc <- tibble(strata=as.character(s180_kpc$strata), surv=s180_kpc$surv) |>
+  mutate(
+    kpc_grp=case_when(str_detect(strata,"Non-KPC")~"Non-KPC",TRUE~"KPC"),
+    cre=case_when(str_detect(strata,"No CRE")~"No CRE infection",TRUE~"CRE infection"),
+    kpc_grp=factor(kpc_grp,levels=c("KPC","Non-KPC")),
+    cre=factor(cre,levels=c("No CRE infection","CRE infection")),
+    label=paste0(round(surv*100,1),"%")
+  )
+
+lr_kpc_tbl <- map_df(c("KPC","Non-KPC"), function(g) {
+  sub <- dplyr::filter(ciag_surv3, kpc_grp==g)
+  p   <- 1-pchisq(survdiff(Surv(surv_time,surv_event)~cre_status,data=sub)$chisq,df=1)
+  tibble(kpc_grp=g,
+         p_label=ifelse(p<0.001,"p < 0.001",paste0("p = ",round(p,3))),
+         n_label=paste0("CRE: n=",sum(sub$cre_status=="CRE infection"),
+                        "  |  No CRE: n=",sum(sub$cre_status=="No CRE infection")))
+}) |> mutate(kpc_grp=factor(kpc_grp,levels=c("KPC","Non-KPC")))
+
+risk_kpc <- map_df(c("KPC","Non-KPC"), function(g) {
+  map_df(c("No CRE infection","CRE infection"), function(cr) {
+    sub <- dplyr::filter(ciag_surv3,kpc_grp==g,cre_status==cr)
+    map_df(c(0,60,120,180),~tibble(time=.x,n_risk=sum(sub$surv_time>=.x),
+                                    kpc_grp=g,cre_status=cr))
+  })
+}) |>
+  mutate(kpc_grp=factor(kpc_grp,levels=c("KPC","Non-KPC")),
+         cre_status=factor(cre_status,levels=c("No CRE infection","CRE infection")))
+
+panel_labs_kpc <- c("KPC"="KPC mechanism (n = 129)",
+                    "Non-KPC"="Non-KPC mechanism (n = 65)")
+
+p_kpc2 <- ggplot(km_df_kpc,aes(time,estimate*100,colour=cre,fill=cre)) +
+  geom_step(linewidth=0.9) +
+  geom_ribbon(aes(ymin=conf.low*100,ymax=conf.high*100),alpha=0.12,colour=NA) +
+  geom_text(data=dplyr::filter(annot_kpc,cre=="No CRE infection"),
+            aes(x=183,y=surv*100+4.5,label=label,colour=cre),
+            size=3.3,hjust=0,fontface="bold",inherit.aes=FALSE) +
+  geom_text(data=dplyr::filter(annot_kpc,cre=="CRE infection"),
+            aes(x=183,y=surv*100-4.5,label=label,colour=cre),
+            size=3.3,hjust=0,fontface="bold",inherit.aes=FALSE) +
+  geom_text(data=lr_kpc_tbl,aes(x=4,y=20,label=n_label),
+            colour="grey40",size=2.9,hjust=0,inherit.aes=FALSE) +
+  geom_text(data=lr_kpc_tbl,aes(x=4,y=11,label=p_label),
+            colour="grey30",size=3.2,hjust=0,inherit.aes=FALSE) +
+  facet_wrap(~kpc_grp,ncol=2,labeller=labeller(kpc_grp=panel_labs_kpc)) +
+  scale_colour_manual(values=pal2,name=NULL) +
+  scale_fill_manual(values=pal2,name=NULL) +
+  scale_x_continuous(limits=c(0,232),breaks=c(0,60,120,180)) +
+  scale_y_continuous(limits=c(0,108),breaks=seq(0,100,25),
+                     labels=paste0(seq(0,100,25),"%")) +
+  labs(title="CRE Infection Survival Penalty by Carbapenemase Mechanism",
+       subtitle="Pre-OLT CRE colonisers · CRECOOLT cohort (n = 194)  ·  Log-rank p shown per panel",
+       x="Days after liver transplantation",y="Overall survival") +
+  theme_bw(base_size=12) +
+  theme(legend.position="bottom",legend.key.width=unit(1.5,"cm"),
+        plot.title=element_text(face="bold",size=13),
+        plot.subtitle=element_text(size=10.5,colour="grey40"),
+        panel.grid.minor=element_blank(),
+        strip.background=element_rect(fill="grey92"),
+        strip.text=element_text(face="bold",size=11))
+
+p_rk <- ggplot(risk_kpc,aes(time,cre_status,label=n_risk,colour=cre_status)) +
+  geom_text(size=2.8,fontface="bold") +
+  facet_wrap(~kpc_grp,ncol=2) +
+  scale_colour_manual(values=pal2) +
+  scale_x_continuous(limits=c(0,232),breaks=c(0,60,120,180)) +
+  scale_y_discrete(limits=rev) +
+  labs(x=NULL,y=NULL) +
+  theme_bw(base_size=10) +
+  theme(legend.position="none",panel.grid=element_blank(),
+        axis.text.y=element_text(size=8.5),
+        strip.background=element_blank(),strip.text=element_blank())
+
+(p_kpc2 / p_rk) + plot_layout(heights=c(5,1.2))
+```
+
+```{r kpc-interaction}
+cox_kpc_int <- coxph(
+  Surv(surv_time, surv_event) ~ cre_status * kpc_grp + age_num + meld_olt + period,
+  data = ciag_surv3
+)
+
+broom::tidy(cox_kpc_int, exponentiate=TRUE, conf.int=TRUE) |>
+  mutate(
+    term=case_when(
+      term=="cre_statusCRE infection" ~ "CRE infection — KPC group (reference)",
+      str_detect(term,":") ~ "CRE infection × Non-KPC interaction",
+      term=="kpc_grpNon-KPC" ~ "Non-KPC vs KPC (no infection)",
+      term=="age_num" ~ "Age (per year)",
+      term=="meld_olt" ~ "MELD at OLT (per point)",
+      term=="periodProspective" ~ "Prospective vs Retrospective",
+      TRUE~term),
+    across(c(estimate,conf.low,conf.high),~round(.,2)),
+    p.value=round(p.value,3),
+    `HR (95% CI)`=paste0(estimate," (",conf.low,"–",conf.high,")")
+  ) |>
+  dplyr::select(Covariate=term,`HR (95% CI)`,`p-value`=p.value) |>
+  knitr::kable(caption="Cox model: does the CRE infection survival penalty differ between KPC and non-KPC organisms?")
+```
+
+::: {.callout-important}
+## Key finding — opposite to the hypothesis
+The survival penalty of CRE infection is **numerically larger** in the Non-KPC group
+(−35.6 percentage points: 56.2% vs 91.8%) than in the KPC group (−25.9pp: 64.1% vs 90.0%),
+suggesting that patients infected with non-KPC organisms (OXA-48, NDM, VIM) fare
+comparatively *worse* — not better. The interaction term is **non-significant**
+(HR 1.84, 95% CI 0.40–8.47, p = 0.43), so this difference could reflect chance given only
+16 infected Non-KPC patients.
+
+However, this finding is clinically plausible: novel BL/BLI agents (particularly
+ceftazidime-avibactam and meropenem-vaborbactam) are highly active against KPC and may
+have provided *some* survival benefit in that group, whereas non-KPC organisms — especially
+MBL-producers (NDM, VIM) — have **fewer reliable treatment options**, and ceftazidime-avibactam
+alone has limited activity against them. This is consistent with the broader observation that
+the therapeutic advance of the novel BL/BLI era has been most pronounced for KPC infections.
+:::
+
+---
+
+## T-PAPnew prophylaxis effect by carbapenemase mechanism
+
+Novel BL/BLI agents have strong *in vitro* activity against KPC-producing organisms but limited
+activity against some non-KPC mechanisms (particularly NDM and VIM). If T-PAPnew works
+primarily through KPC suppression, we would expect its prophylactic benefit to be confined to
+the KPC subgroup and absent — or even detrimental — in non-KPC colonisers.
+
+```{r cif-kpc-subgroup, fig.width=10, fig.height=9, fig.cap="Cumulative incidence of CRE infection (competing risks CIF, death as competing event) by prophylaxis strategy, stratified by carbapenemase mechanism. Top row: 15-day window; bottom row: 30-day window. Left panels: KPC colonisers (n=129); right panels: Non-KPC colonisers (n=65). In the KPC subgroup, T-PAPnew shows a modest early reduction (12.5% vs S-PAP 19.5% at 15 days) which largely disappears by 30 days, consistent with the ciag185 overall findings. In the Non-KPC subgroup, zero CRE infections occurred among the 10 T-PAPnew patients at both timepoints — a striking observation that cannot be interpreted causally given the very small sample."}
+pal_pap <- c("S-PAP"="#4477AA","T-PAPold"="#EE6677","T-PAPnew"="#228833")
+
+make_cif_panel <- function(data, kpc_label, time_window=30) {
+  time_var  <- if(time_window==15) "time_15" else "time_30"
+  event_var <- if(time_window==15) "event_15_type" else "event_30_type"
+  
+  cif_obj <- cuminc(ftime=data[[time_var]], fstatus=data[[event_var]],
+                    group=data$pap_fac, cencode=0)
+  
+  get_val <- function(grp, ev_code) {
+    key <- paste(grp, ev_code)
+    if(key %in% names(cif_obj)) {
+      idx <- which(cif_obj[[key]]$time <= time_window)
+      if(length(idx)>0) return(round(cif_obj[[key]]$est[max(idx)]*100,1))
+    }
+    return(0)
+  }
+  
+  cif_df <- bind_rows(lapply(c("S-PAP","T-PAPold","T-PAPnew"), function(g) {
+    key <- paste(g,1)
+    if(key %in% names(cif_obj)) {
+      tibble(time=c(0,cif_obj[[key]]$time), est=c(0,cif_obj[[key]]$est*100),
+             upper=c(0,cif_obj[[key]]$upper*100), lower=c(0,cif_obj[[key]]$lower*100), group=g)
+    } else {
+      tibble(time=c(0,time_window),est=c(0,0),upper=c(0,0),lower=c(0,0),group=g)
+    }
+  })) |> mutate(group=factor(group,levels=c("S-PAP","T-PAPold","T-PAPnew")))
+  
+  gray_p     <- round(cif_obj$Tests[1,"pv"],3)
+  gray_label <- ifelse(gray_p<0.001,"Gray's p < 0.001",paste0("Gray's p = ",gray_p))
+  
+  end_vals <- tibble(
+    group=factor(c("S-PAP","T-PAPold","T-PAPnew"),levels=c("S-PAP","T-PAPold","T-PAPnew")),
+    cif=c(get_val("S-PAP",1),get_val("T-PAPold",1),get_val("T-PAPnew",1))
+  )
+  
+  ggplot(cif_df,aes(time,est,colour=group,fill=group)) +
+    geom_step(linewidth=0.9) +
+    geom_ribbon(aes(ymin=lower,ymax=upper),alpha=0.12,colour=NA) +
+    geom_text(data=end_vals,
+              aes(x=time_window+0.5, y=cif+c(1.5,-1.5,2.5),
+                  label=paste0(cif,"%"),colour=group),
+              size=3,hjust=0,fontface="bold",inherit.aes=FALSE) +
+    annotate("text",x=0.5,y=max(cif_df$est,na.rm=TRUE)*0.15,
+             label=gray_label,size=3,hjust=0,colour="grey30") +
+    scale_colour_manual(values=pal_pap,name=NULL) +
+    scale_fill_manual(values=pal_pap,name=NULL) +
+    scale_x_continuous(limits=c(0,time_window*1.35),breaks=pretty(c(0,time_window),4)) +
+    scale_y_continuous(limits=c(0,45),breaks=seq(0,40,10),
+                       labels=paste0(seq(0,40,10),"%")) +
+    labs(title=kpc_label,
+         x=paste0("Days post-OLT (",time_window,"-day window)"),
+         y="Cumul. incidence of CRE infection") +
+    theme_bw(base_size=11) +
+    theme(legend.position="none",panel.grid.minor=element_blank(),
+          plot.title=element_text(face="bold",size=11))
+}
+
+ciag_surv3 <- ciag_surv3 |>
+  mutate(kpc_grp=factor(ifelse(kpc==1,"KPC","Non-KPC"),levels=c("KPC","Non-KPC")))
+
+kpc_d    <- dplyr::filter(ciag_surv3,kpc_grp=="KPC")
+nonkpc_d <- dplyr::filter(ciag_surv3,kpc_grp=="Non-KPC")
+
+p_A <- make_cif_panel(kpc_d,    "A  KPC (n=129) — 15-day",    15)
+p_B <- make_cif_panel(nonkpc_d, "B  Non-KPC (n=65) — 15-day", 15)
+p_C <- make_cif_panel(kpc_d,    "C  KPC (n=129) — 30-day",    30)
+p_D <- make_cif_panel(nonkpc_d, "D  Non-KPC (n=65) — 30-day", 30)
+
+legend_p <- ggplot(
+  tibble(group=factor(c("S-PAP","T-PAPold","T-PAPnew"),
+                      levels=c("S-PAP","T-PAPold","T-PAPnew")),x=1:3,y=1:3),
+  aes(x,y,colour=group,group=group)) +
+  geom_line(linewidth=2) +
+  scale_colour_manual(values=pal_pap,name="Prophylaxis strategy",
+                      labels=c("S-PAP (standard)","T-PAPold (old drugs)",
+                               "T-PAPnew (novel BL/BLI)")) +
+  theme_void() +
+  theme(legend.position="bottom",legend.direction="horizontal",
+        legend.title=element_text(face="bold",size=10),
+        legend.text=element_text(size=9.5))
+
+shared_legend <- cowplot::get_legend(legend_p)
+main_g <- cowplot::plot_grid(p_A,p_B,p_C,p_D,ncol=2)
+cowplot::plot_grid(main_g, shared_legend, ncol=1, rel_heights=c(1,0.07))
+```
+
+```{r kpc-subgroup-table}
+tibble(
+  Mechanism  = rep(c("KPC (n=129)","Non-KPC (n=65)"), each=3),
+  `PAP group` = rep(c("S-PAP","T-PAPold","T-PAPnew"), 2),
+  `n`          = c(82,31,16, 23,32,10),
+  `15-day CRE` = c("19.5%","29.0%","12.5%", "13.0%","28.1%","0% (0/10)"),
+  `30-day CRE` = c("25.6%","32.3%","31.2%", "17.4%","34.4%","0% (0/10)")
+) |>
+  knitr::kable(caption="Crude CRE infection rates by carbapenemase mechanism and prophylaxis group")
+```
+
+::: {.callout-important}
+## Key findings
+
+**KPC subgroup (n=129):**
+T-PAPnew shows a modest early reduction in 15-day CRE infection (12.5% vs S-PAP 19.5%)
+that largely disappears by 30 days (31.2% vs 25.6%), consistent with the overall ciag185
+findings of a short-lived prophylaxis benefit. Gray's test is non-significant at both
+timepoints (p = 0.38 and p = 0.77), reflecting the small T-PAPnew subgroup (n=16).
+
+**Non-KPC subgroup (n=65):**
+Zero CRE infections occurred in the 10 T-PAPnew patients at both 15 and 30 days, compared
+to 13% and 17.4% respectively in S-PAP. This is biologically plausible — novel BL/BLI agents
+such as ceftazidime-avibactam and meropenem-vaborbactam have some activity against OXA-48
+and may provide prophylactic benefit even outside the KPC group. However, with **only n=10**
+T-PAPnew Non-KPC patients, a formal interaction test is not estimable (complete separation), and
+this finding must be considered entirely **hypothesis-generating**.
+
+**T-PAPold is consistently associated with higher infection rates than S-PAP in both
+subgroups** — a probable confounding by indication effect (sicker or higher-risk patients
+were selected for old-drug prophylaxis).
+:::

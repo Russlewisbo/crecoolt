@@ -1,0 +1,20 @@
+
+---
+title: |
+  Competing risks and the causal interpretation of targeted peri-operative prophylaxis
+  in CRE-colonised liver transplant recipients: a reanalysis of the CRECOOLT cohort
+format:
+  docx:
+    reference-doc: default
+    number-sections: false
+  html:
+    toc: false
+execute:
+  echo: false
+  message: false
+  warning: false
+---
+
+::: {.callout-note}
+This report was generated using AI under general human direction. At the time of generation, the contents have not been comprehensively reviewed by a human analyst.
+
