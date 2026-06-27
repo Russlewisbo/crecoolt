@@ -1,10 +1,22 @@
 project:
   type: website
+  render:
+    - index.qmd
+    - about.qmd
+    - validation.qmd
+    - intervention.qmd
+    - stewardship.qmd
+    - CRE_other.qmd
+    - diagnostics_treatment.qmd
+    - prophylaxis_competing_risks.qmd
+    - treatment_recurrence_resistance.qmd
 
 website:
   title: "crecoolt"
-  navbar:
-    left:
+  sidebar:
+    style: docked
+    search: true
+    contents:
       - href: index.qmd
         text: Home
       - about.qmd
@@ -15,6 +27,8 @@ website:
       - diagnostics_treatment.qmd
       - href: prophylaxis_competing_risks.qmd
         text: Prophylaxis & Competing Risks
+      - href: treatment_recurrence_resistance.qmd
+        text: Recurrence & Resistance
       
 
 format:

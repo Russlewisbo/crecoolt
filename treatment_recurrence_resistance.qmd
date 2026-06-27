@@ -1,0 +1,414 @@
+---
+title: "Novel vs. Older Regimens: Recurrence & Resistance"
+subtitle: "Within-era, IPTW-weighted competing-risks analysis; whole-cohort estimates are confounded by calendar era and differential ascertainment"
+date: today
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    code-fold: true
+    code-summary: "Show code"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
+library(tidyverse)
+library(haven)
+library(survival)
+library(gt)
+
+pal <- c("Old" = "#EE6677", "Novel" = "#228833")
+
+# Formatter for a hazard/subdistribution ratio from a (cox) model
+fmt_cox <- function(m, term = "regimenNovel") {
+  s <- summary(m); ci <- s$conf.int[term, c("exp(coef)", "lower .95", "upper .95")]
+  p <- s$coefficients[term, ncol(s$coefficients)]
+  sprintf("%.2f (%.2f–%.2f), p%s", ci[1], ci[2], ci[3],
+          ifelse(p < 0.001, "<0.001", paste0("=", formatC(p, format = "f", digits = 3))))
+}
+```
+
+## Key finding
+
+Among liver transplant recipients with CRE infection, crude rates of **recurrence** and
+**emergent resistance** look much higher with novel agents than with older regimens. That
+contrast does **not** survive proper analysis. Two structural problems make the whole-cohort
+comparison misleading — novel agents were unavailable before 2018 (a positivity violation), and
+these outcomes were incompletely recorded in the retrospective era. Restricting to the
+contemporaneous **2018–2025** era, where both regimens were used and documented identically, and
+applying inverse-probability-of-treatment weighting (IPTW) with death as a competing risk,
+**novel and older regimens show no detectable difference** in either endpoint.
+
+::: {.callout-note}
+## How to read this page
+
+The valid comparison — the **2018–2025 era IPTW analysis** — is presented first. The
+whole-cohort competing-risks models appear afterward as a **secondary, uncorrected** analysis,
+because they are confounded by calendar era and by differential outcome ascertainment (documented
+below). Death is treated as a competing event throughout.
+:::
+
+## Background
+
+Two distinct threats to validity apply to this question:
+
+1. **Survival bias / competing risk of death.** Patients on older regimens die earlier and more
+   often, so they have less opportunity to recur or develop resistance. Treating death as ordinary
+   censoring biases the comparison; the appropriate tools are **cause-specific Cox** and
+   **Fine–Gray subdistribution** models.
+2. **Calendar era — confounding and ascertainment.** Novel agents entered use only from 2018, so a
+   whole-cohort treatment contrast conflates *drug* with *time period*. As shown below, the two
+   eras also recorded these outcomes differently.
+
+::: {.callout-note}
+## Why death is treated as a competing risk
+
+Death is **not** the outcome here — recurrence and emergent resistance are. But both can only
+occur in a living patient: once someone dies, they can never subsequently recur or develop
+resistance. An event that makes the event of interest impossible is, by definition, a *competing
+risk*.
+
+Standard survival methods (Kaplan–Meier, ordinary Cox) treat death as ordinary **censoring**,
+which assumes the patient is still at risk and could experience the event later. For a patient who
+has died that assumption is false — their future probability of recurrence is zero, not unknown —
+so treating deaths as censored **overestimates** the incidence of recurrence and resistance. This
+matters acutely here because mortality is much higher in the older-regimen arm (≈48% vs ≈27% in
+the full cohort): censoring those deaths would inflate that arm's apparent event risk the most.
+Modeling death as a competing event (Fine–Gray for cumulative incidence; cause-specific Cox for
+the rate) is precisely the correction for the **survival bias** that motivated this analysis.
+
+*Note: the competing-risks correction alone does not overturn the crude imbalance — the era
+restriction and the ascertainment differences below are what explain it.*
+:::
+
+```{r load-data}
+raw <- read_sav("CRECOOLT_onlyinfections.sav")
+
+cr <- raw |>
+  transmute(
+    record_id,
+    regimen = factor(if_else(as.numeric(new_drug) == 1, "Novel", "Old"), levels = c("Old", "Novel")),
+    study_period = as.numeric(study_period),
+    inf_date    = as.Date(cre_infection_date),
+    death       = as.numeric(death),
+    death_date  = as.Date(death_date),
+    dischg_date = as.Date(discharge_date),
+    clear_date  = as.Date(clearence_date),
+    end_date    = as.Date(end_date),
+    rec   = as.numeric(cre_recurrence),
+    res   = as.numeric(resistance),
+    t_rec = as.numeric(CREinf_to_relapse),
+    t_res = as.numeric(CREinf_to_resistance),
+    age   = as.numeric(age),
+    meld  = as.numeric(meld_score),
+    multisite = as.numeric(multisite_colonization),
+    sofa  = as.numeric(sofa)
+  ) |>
+  mutate(
+    t_death  = as.numeric(death_date - inf_date),
+    # discard discharge dates recorded before infection (data-entry errors),
+    # fall back to the latest other valid contact date for censoring
+    fu_dischg = if_else(as.numeric(dischg_date - inf_date) >= 0, as.numeric(dischg_date - inf_date), NA_real_),
+    fu_clear  = if_else(as.numeric(clear_date  - inf_date) >= 0, as.numeric(clear_date  - inf_date), NA_real_),
+    fu_end    = if_else(as.numeric(end_date    - inf_date) >= 0, as.numeric(end_date    - inf_date), NA_real_),
+    last_valid = pmax(fu_dischg, fu_clear, fu_end, na.rm = TRUE),
+    last_valid = if_else(is.finite(last_valid), last_valid, NA_real_)
+  )
+
+# Build (time, status) for a competing-risks endpoint:
+#   status 1 = event of interest, 2 = death without event, 0 = censored
+make_cr <- function(d, evflag, evtime) {
+  d |>
+    mutate(
+      status = case_when(.data[[evflag]] == 1 ~ 1L, death == 1 ~ 2L, TRUE ~ 0L),
+      time = case_when(.data[[evflag]] == 1 ~ .data[[evtime]], death == 1 ~ t_death, TRUE ~ last_valid),
+      time = if_else(time == 0, 0.5, time)
+    ) |>
+    filter(!is.na(time), is.finite(time), time > 0)
+}
+
+d_rec <- make_cr(cr, "rec", "t_rec")
+d_res <- make_cr(cr, "res", "t_res")
+```
+
+The cohort comprises `r nrow(raw)` liver transplant recipients with CRE infection
+(`r sum(cr$regimen == "Old")` older regimen, `r sum(cr$regimen == "Novel")` novel). Event times
+come from the dataset's `CREinf_to_relapse` and `CREinf_to_resistance` fields; death timing from
+`death_date`. Discharge dates recorded before the infection date
+(`r sum(as.numeric(cr$dischg_date - cr$inf_date) < 0, na.rm = TRUE)` records) were treated as
+invalid, with censoring falling back to the latest valid contact date.
+
+## Why a whole-cohort comparison would mislead
+
+### Positivity: novel agents only exist from 2018
+
+```{r positivity}
+table(`Study period` = factor(cr$study_period, 1:2, c("2010–2017", "2018–2025")),
+      Regimen = cr$regimen) |>
+  as.data.frame.matrix() |>
+  rownames_to_column("Study period") |>
+  gt() |>
+  tab_header(title = "Treatment by study period",
+             subtitle = "Novel regimens appear only from 2018 — a structural non-overlap")
+```
+
+No patient before 2018 could receive a novel agent, so a whole-cohort contrast is partly a
+comparison of eras rather than of treatments. A causal comparison must restrict to the period
+where both regimens were genuinely used.
+
+### Differential outcome ascertainment {#sec-ascertainment}
+
+Before interpreting any cross-era difference, we ask whether recurrence and resistance were
+recorded *the same way* in both periods. They were not.
+
+```{r}
+#| label: tbl-ascertainment
+#| tbl-cap: "Outcome and follow-up documentation by study era. Recurrence and resistance flags carry no missing values in either era — retrospective patients are uniformly coded \"No\" — yet the supporting follow-up dates are almost entirely absent before 2018."
+
+era_lab <- function(x) factor(as.numeric(x), 1:2, c("2010–2017", "2018–2025"))
+
+raw |>
+  mutate(era = era_lab(study_period),
+         relapse_date = as.Date(relapse_date),
+         new_resistance_date = as.Date(new_resistance_date),
+         clear_date = as.Date(clearence_date)) |>
+  group_by(era) |>
+  summarise(
+    N = n(),
+    `Recurrence = Yes`      = sprintf("%d (%.1f%%)", sum(cre_recurrence == 1, na.rm = TRUE), 100 * mean(cre_recurrence == 1, na.rm = TRUE)),
+    `Resistance = Yes`      = sprintf("%d (%.1f%%)", sum(resistance == 1, na.rm = TRUE), 100 * mean(resistance == 1, na.rm = TRUE)),
+    `Flag missing (NA)`     = sum(is.na(cre_recurrence)) + sum(is.na(resistance)),
+    `Clearance date`        = sprintf("%d (%.0f%%)", sum(!is.na(clear_date)), 100 * mean(!is.na(clear_date))),
+    `Resistance date`       = sum(!is.na(new_resistance_date)),
+    .groups = "drop"
+  ) |>
+  gt(rowname_col = "era") |>
+  tab_source_note(md("*Counts of \"Yes\" outcomes and presence of follow-up dates. Percentages are within-era.*"))
+```
+
+Three features mark this as differential ascertainment rather than a true era effect:
+
+- **Implausible event rates.** Recorded recurrence is `r sprintf("%.1f%%", 100 * mean(raw$cre_recurrence[as.numeric(raw$study_period) == 1] == 1, na.rm = TRUE))`
+  retrospectively vs `r sprintf("%.1f%%", 100 * mean(raw$cre_recurrence[as.numeric(raw$study_period) == 2] == 1, na.rm = TRUE))` prospectively, and **zero** resistance
+  events were recorded among `r sum(as.numeric(raw$study_period) == 1)` retrospective patients.
+- **Uniform "No" coding, not missingness.** Neither flag has any `NA`; every retrospective
+  patient carries an explicit "No", the signature of a chart abstraction that defaulted absent
+  information to negative.
+- **Follow-up documentation collapses.** Not one retrospective patient has a recorded
+  microbiological clearance date — yet recurrence and resistance can only be detected through
+  repeat cultures and follow-up susceptibility testing.
+
+::: {.callout-important}
+## Consequence for interpretation
+
+The near-zero retrospective rates almost certainly reflect **incomplete outcome ascertainment**,
+not a genuine era difference. Older-regimen patients appear event-free partly because their
+events were not captured. Consequently the **whole-cohort crude rates and competing-risks models
+(shown later) are confounded by ascertainment** and should be read as uncorrected. The
+**2018–2025 within-era IPTW analysis** below is the only comparison in which both arms were
+documented identically.
+:::
+
+## Primary analysis — 2018–2025 era with IPTW
+
+### Propensity model and covariate balance
+
+```{r iptw}
+era2 <- cr |> filter(study_period == 2, !is.na(age)) |>
+  mutate(novel = as.integer(regimen == "Novel"))
+
+# Parsimonious propensity model (baseline severity)
+ps_fit <- glm(novel ~ age + meld + multisite + sofa, family = binomial, data = era2)
+era2$ps <- predict(ps_fit, type = "response")
+pT <- mean(era2$novel)
+era2$iptw <- ifelse(era2$novel == 1, pT / era2$ps, (1 - pT) / (1 - era2$ps))
+
+# Standardized mean differences before/after weighting
+smd <- function(x, g, w = rep(1, length(x))) {
+  m1 <- weighted.mean(x[g == 1], w[g == 1]); m0 <- weighted.mean(x[g == 0], w[g == 0])
+  v1 <- weighted.mean((x[g == 1] - m1)^2, w[g == 1]); v0 <- weighted.mean((x[g == 0] - m0)^2, w[g == 0])
+  (m1 - m0) / sqrt((v1 + v0) / 2)
+}
+covs <- c("age", "meld", "multisite", "sofa")
+tibble(Covariate = covs,
+       `SMD (unweighted)` = map_dbl(covs, ~smd(era2[[.x]], era2$novel)),
+       `SMD (IPTW)`       = map_dbl(covs, ~smd(era2[[.x]], era2$novel, era2$iptw))) |>
+  mutate(across(where(is.numeric), ~round(., 3))) |>
+  gt() |>
+  tab_header(title = "Covariate balance",
+             subtitle = "Stabilized IPTW; |SMD| < 0.1 indicates good balance")
+```
+
+The N in this era is `r nrow(era2)` (`r sum(era2$regimen == "Old")` older,
+`r sum(era2$regimen == "Novel")` novel). Stabilized weights are well-behaved (range
+`r sprintf("%.2f–%.2f", min(era2$iptw), max(era2$iptw))`) and propensity overlap is complete, so
+positivity holds within the era.
+
+### Weighted competing-risks estimates
+
+```{r era-models}
+era_fg <- function(d, label, weighted) {
+  d$ev <- factor(d$status, 0:2, c("censor", label, "death"))
+  fg <- finegray(Surv(time, ev) ~ ., data = d[, c("time", "ev", "regimen", "iptw", "record_id")],
+                 etype = label)
+  w <- if (weighted) fg$fgwt * fg$iptw else fg$fgwt
+  coxph(Surv(fgstart, fgstop, fgstatus) ~ regimen + cluster(record_id),
+        weights = w, data = fg, robust = TRUE)
+}
+e_rec   <- make_cr(era2, "rec", "t_rec")
+e_res   <- make_cr(era2, "res", "t_res")
+er_recU <- era_fg(e_rec, "recurrence", FALSE)
+er_recW <- era_fg(e_rec, "recurrence", TRUE)
+er_resU <- era_fg(e_res, "resistance", FALSE)
+er_resW <- era_fg(e_res, "resistance", TRUE)
+```
+
+Within the contemporaneous era, the IPTW-weighted Fine–Gray subdistribution hazard ratio
+(novel vs. older) is **`r fmt_cox(er_recW)`** for CRE recurrence and **`r fmt_cox(er_resW)`** for
+resistance emergence — neither significant. Weighting changes the estimates only marginally from
+the unweighted era models (recurrence `r fmt_cox(er_recU)`; resistance `r fmt_cox(er_resU)`),
+because the arms are already well balanced within the era. The decisive correction is the era
+restriction, not the weighting.
+
+### Weighted cumulative incidence {#sec-cif}
+
+```{r}
+#| label: fig-cif
+#| fig-cap: "IPTW-weighted cumulative incidence of CRE recurrence and resistance emergence within the 2018–2025 era, with death as a competing risk. Shaded bands are 95% confidence intervals; markers show the 90-day estimate with its 95% CI."
+#| fig-width: 9
+#| fig-height: 4.5
+
+grid <- 0:120
+wcif_band <- function(d, label, nice) {
+  d$ev <- factor(d$status, 0:2, c("censor", label, "death"))
+  sf <- survfit(Surv(time, ev) ~ regimen, data = d, weights = iptw)
+  k <- which(sf$states == label)
+  s <- summary(sf, times = grid, extend = TRUE)
+  tibble(time = s$time, est = s$pstate[, k], lower = s$lower[, k], upper = s$upper[, k],
+         regimen = sub("regimen=", "", as.character(s$strata)), endpoint = nice)
+}
+band <- bind_rows(
+  wcif_band(e_rec, "recurrence", "CRE recurrence"),
+  wcif_band(e_res, "resistance", "Resistance emergence")
+) |> mutate(regimen = factor(regimen, levels = c("Old", "Novel")))
+pt90 <- band |> filter(time == 90)
+
+ggplot(band, aes(time, est, color = regimen, fill = regimen)) +
+  geom_ribbon(aes(ymin = lower, ymax = upper), alpha = 0.15, colour = NA) +
+  geom_line(linewidth = 0.9) +
+  geom_vline(xintercept = 90, linetype = "dashed", colour = "grey60", linewidth = 0.3) +
+  geom_errorbar(data = pt90, aes(ymin = lower, ymax = upper), width = 4,
+                position = position_nudge(x = rep(c(-1.5, 1.5), length.out = nrow(pt90)))) +
+  geom_point(data = pt90, size = 2.2,
+             position = position_nudge(x = rep(c(-1.5, 1.5), length.out = nrow(pt90)))) +
+  facet_wrap(~ endpoint) +
+  scale_color_manual(values = pal) + scale_fill_manual(values = pal) +
+  scale_y_continuous(labels = scales::percent_format(accuracy = 1)) +
+  scale_x_continuous(breaks = c(0, 30, 60, 90, 120)) +
+  labs(x = "Days from CRE infection", y = "Cumulative incidence",
+       color = "Regimen", fill = "Regimen") +
+  theme_minimal(base_size = 12) + theme(legend.position = "top")
+```
+
+The weighted curves overlap for both endpoints, consistent with the null subdistribution hazard
+ratios. Late-time steps rest on few patients still at risk and should not be over-interpreted.
+
+## Secondary analysis — full cohort (uncorrected)
+
+::: {.callout-warning}
+## These estimates are confounded
+
+The models in this section pool 2010–2025. They are reported for transparency only. Because novel
+agents did not exist before 2018 and recurrence/resistance were incompletely ascertained in the
+retrospective era, the large apparent excess with novel regimens is substantially an artifact of
+era and ascertainment, **not** evidence of harm.
+:::
+
+```{r crude}
+bind_rows(
+  d_rec |> count(regimen, status) |> mutate(endpoint = "CRE recurrence"),
+  d_res |> count(regimen, status) |> mutate(endpoint = "Resistance emergence")
+) |>
+  mutate(status = factor(status, 0:2, c("Censored", "Event", "Death (competing)"))) |>
+  pivot_wider(names_from = status, values_from = n, values_fill = 0) |>
+  select(endpoint, regimen, Event, `Death (competing)`, Censored) |>
+  gt(groupname_col = "endpoint", rowname_col = "regimen") |>
+  tab_header(title = "Crude competing-risks event counts by regimen (full cohort)")
+```
+
+```{r full-models}
+# Cause-specific Cox: death treated as censoring
+cs_rec <- coxph(Surv(time, status == 1) ~ regimen, data = d_rec)
+cs_res <- coxph(Surv(time, status == 1) ~ regimen, data = d_res)
+
+# Fine-Gray (unadjusted and multisite-adjusted) via finegray + weighted Cox
+fg_fit <- function(d, label, adjust = FALSE) {
+  d$ev <- factor(d$status, 0:2, c("censor", label, "death"))
+  d$multisite <- factor(if_else(d$multisite == 1, "Yes", "No"), levels = c("No", "Yes"))
+  rhs <- if (adjust) c("regimen", "multisite") else "regimen"
+  fg <- finegray(reformulate(".", response = "Surv(time, ev)"),
+                 data = d[, c("time", "ev", rhs)], etype = label)
+  coxph(reformulate(rhs, response = "Surv(fgstart, fgstop, fgstatus)"),
+        weights = fgwt, data = fg)
+}
+fg_rec  <- fg_fit(d_rec, "recurrence")
+fg_res  <- fg_fit(d_res, "resistance")
+fg_recA <- fg_fit(d_rec, "recurrence", adjust = TRUE)
+fg_resA <- fg_fit(d_res, "resistance", adjust = TRUE)
+```
+
+In the pooled cohort the Fine–Gray SHR is `r fmt_cox(fg_rec)` for recurrence and
+`r fmt_cox(fg_res)` for resistance, and adjustment for multisite colonization barely changes them
+(`r fmt_cox(fg_recA)` and `r fmt_cox(fg_resA)`). These large "effects" disappear within the
+contemporaneous era, identifying them as era/ascertainment artifacts.
+
+## All model variants {#sec-summary}
+
+```{r}
+#| label: tbl-models
+#| tbl-cap: "Effect of novel vs. older regimens on CRE recurrence and resistance emergence across model specifications. Reference = older regimen. The 2018–2025 era rows are the valid comparison; full-cohort rows are confounded by era and ascertainment."
+
+tribble(
+  ~Cohort, ~Model, ~`CRE recurrence`, ~`Resistance emergence`,
+  "2018–2025 era (valid)", "Fine–Gray SHR, IPTW-weighted", fmt_cox(er_recW), fmt_cox(er_resW),
+  "2018–2025 era (valid)", "Fine–Gray SHR, unadjusted",    fmt_cox(er_recU), fmt_cox(er_resU),
+  "Full cohort (confounded)", "Fine–Gray SHR, unadjusted",   fmt_cox(fg_rec),  fmt_cox(fg_res),
+  "Full cohort (confounded)", "Fine–Gray SHR, + multisite",  fmt_cox(fg_recA), fmt_cox(fg_resA),
+  "Full cohort (confounded)", "Cause-specific Cox HR",       fmt_cox(cs_rec),  fmt_cox(cs_res)
+) |>
+  gt(groupname_col = "Cohort", rowname_col = "Model") |>
+  cols_label(`CRE recurrence` = md("**CRE recurrence**<br>Novel vs Old"),
+             `Resistance emergence` = md("**Resistance emergence**<br>Novel vs Old")) |>
+  tab_footnote("Stabilized IPTW from a propensity model (age, MELD, multisite colonization, SOFA); robust standard errors.",
+               locations = cells_stub(rows = "Fine–Gray SHR, IPTW-weighted")) |>
+  tab_footnote("Cause-specific Cox treats death as censoring (effect on the event-specific hazard).",
+               locations = cells_stub(rows = "Cause-specific Cox HR")) |>
+  tab_source_note(md("*SHR, subdistribution hazard ratio; HR, hazard ratio.*"))
+```
+
+## Interpretation
+
+After accounting for death as a competing risk and restricting to the contemporaneous era with
+IPTW, novel agents show **no detectable increase** in CRE recurrence or resistance. The crude and
+whole-cohort excess is most consistent with cross-era differences — including demonstrable
+**differential outcome ascertainment** in 2010–2017 — rather than a causal effect of the newer
+drugs.
+
+::: {.callout-warning}
+## Caveats
+
+- The within-era older-regimen arm is small (events: `r sum(e_rec$status == 1 & e_rec$regimen == "Old")`
+  recurrence, `r sum(e_res$status == 1 & e_res$regimen == "Old")` resistance), so the null findings
+  carry wide confidence intervals — evidence against a large harmful effect, not proof of equivalence.
+- IPTW addresses *measured* confounding only; residual confounding by indication cannot be excluded.
+- The ascertainment asymmetry should be confirmed with the study team (were retrospective
+  follow-up cultures and repeat susceptibility testing systematically performed?).
+:::
+
+**Bottom line.** Lead with the 2018–2025 IPTW analysis: novel and older regimens are
+indistinguishable for recurrence and resistance once death, calendar era, and ascertainment are
+handled. The headline crude imbalance is an artifact.
+
+```{r session, include=FALSE}
+sessionInfo()
+```
