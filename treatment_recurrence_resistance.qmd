@@ -17,7 +17,7 @@ library(haven)
 library(survival)
 library(gt)
 
-pal <- c("Old" = "#EE6677", "Novel" = "#228833")
+pal <- c("Old" = "#8C8C8C", "Novel" = "#00468B")   # JAMA grey / blue (matches manuscript figures)
 
 # Formatter for a hazard/subdistribution ratio from a (cox) model
 fmt_cox <- function(m, term = "regimenNovel") {
@@ -237,6 +237,27 @@ tibble(Covariate = covs,
   gt() |>
   tab_header(title = "Covariate balance",
              subtitle = "Stabilized IPTW; |SMD| < 0.1 indicates good balance")
+```
+
+```{r}
+#| label: fig-love
+#| fig-cap: "Standardized mean differences before and after IPTW within the 2018–2025 era. After weighting, all covariates fall within the |SMD| < 0.1 threshold (dashed lines)."
+#| fig-width: 7
+#| fig-height: 2.8
+tibble(Covariate = c("Age", "MELD", "Multisite colonisation", "SOFA"),
+       Before = map_dbl(covs, ~smd(era2[[.x]], era2$novel)),
+       After  = map_dbl(covs, ~smd(era2[[.x]], era2$novel, era2$iptw))) |>
+  pivot_longer(c(Before, After), names_to = "phase", values_to = "smd") |>
+  mutate(Covariate = fct_reorder(Covariate, abs(smd) * (phase == "Before")),
+         phase = factor(phase, levels = c("Before", "After"))) |>
+  ggplot(aes(smd, Covariate, color = phase, shape = phase)) +
+  geom_vline(xintercept = 0, color = "grey70", linewidth = 0.3) +
+  geom_vline(xintercept = c(-0.1, 0.1), linetype = "dashed", color = "grey60", linewidth = 0.3) +
+  geom_point(size = 3) +
+  scale_color_manual(NULL, values = c(Before = "#8C8C8C", After = "#00468B")) +
+  scale_shape_manual(NULL, values = c(Before = 16, After = 17)) +
+  labs(x = "Standardized mean difference", y = NULL) +
+  theme_minimal(base_size = 12) + theme(legend.position = "top")
 ```
 
 The N in this era is `r nrow(era2)` (`r sum(era2$regimen == "Old")` older,
