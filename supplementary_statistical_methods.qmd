@@ -1,0 +1,108 @@
+---
+title: "Supplementary Statistical Methods"
+subtitle: "Novel vs. older regimens for CRE infection in liver transplant recipients (CRECOOLT)"
+date: today
+format:
+  typst:
+    papersize: us-letter
+    margin: { x: 2cm, y: 2cm }
+    fontsize: 10pt
+---
+
+# Study sample and endpoints
+
+Analyses included the `r 405` liver transplant recipients with a documented CRE infection within
+90 days of transplantation (one record per patient). The **primary endpoint** was all-cause
+mortality within 90 days; **secondary endpoints** were CRE infection recurrence and emergence of
+resistance to the administered regimen. Treatment was classified as *novel* (ceftazidime–avibactam,
+meropenem–vaborbactam, or cefiderocol) versus *older* (high-dose carbapenem-based) regimens.
+
+# Time origin, follow-up, and censoring
+
+The time origin for all time-to-event analyses was the **date of CRE infection**. Event times were
+taken from the recorded dates of death, recurrence (relapse), and resistance emergence. Patients
+without an event were censored at their last valid contact date (the latest of hospital discharge,
+microbiological clearance, or end-of-therapy dates), and follow-up was administratively censored at
+90 days.
+
+**Data-quality handling.** Discharge dates recorded *before* the infection date (n = 54) were
+treated as invalid; for these records, censoring fell back to the latest remaining valid contact
+date. The competing-event (death) time was computed from the raw dates
+(`death_date − infection_date`) to provide a single, transparent source of timing.
+
+# Positivity and the era restriction
+
+Novel agents were unavailable before 2018, so treatment assignment was perfectly separated by
+calendar era in the full cohort: no patient treated in 2010–2017 could have received a novel
+regimen. This is a structural violation of the **positivity (overlap) assumption**, under which a
+covariate that perfectly predicts treatment cannot be balanced by weighting. Accordingly, **all
+weighted analyses were restricted to the contemporaneous 2018–2025 era (n = 182)**, in which both
+regimens were used and outcome surveillance was concurrent. Full-cohort weighted estimates are not
+reported as primary because they conflate treatment with calendar era.
+
+# Propensity score and weighting
+
+A propensity score (PS) for receipt of a novel regimen was estimated within the 2018–2025 cohort by
+logistic regression (`stats::glm`, binomial link) on four baseline covariates: **age, MELD at
+transplantation, multisite colonization, and SOFA score**. Stabilized inverse-probability-of-
+treatment weights (IPTW) targeting the average treatment effect were computed as
+$w = \hat{p}/\hat{e}$ for novel-treated patients and $w = (1-\hat{p})/(1-\hat{e})$ for older-regimen
+patients, where $\hat{e}$ is the estimated PS and $\hat{p}$ the marginal probability of novel
+treatment. Covariate balance was assessed by standardized mean differences (SMD), with |SMD| < 0.10
+indicating adequate balance; after weighting, the maximum |SMD| was 0.017 (Supplementary Figure 1).
+
+# Primary endpoint: 90-day mortality
+
+The weighted treatment effect on 90-day mortality was estimated with a **weighted Cox
+proportional-hazards model** (`survival::coxph`, `weights = IPTW`, `robust = TRUE`), reported as a
+hazard ratio (HR) with robust 95% CI. The adjusted cumulative-mortality curve (Figure 1) is the
+complement of the weighted Kaplan–Meier estimate (`survival::survfit`), with 95% confidence bands
+from the robust variance. Because all-cause death is a terminal event with **no competing risk**, a
+subdistribution model is not applicable to mortality and was not used for this endpoint.
+
+**Subgroups.** Consistency of the mortality effect was examined across pre-specified subgroups
+(carbapenemase status, infection source, SOFA score, therapy type) by fitting the weighted Cox model
+within each stratum and testing treatment-by-subgroup interactions (Supplementary Figure, forest
+plot). Subgroup sizes within the era are small; confidence intervals are correspondingly wide and
+interaction tests are of limited power.
+
+# Secondary endpoints: recurrence and resistance (competing risks)
+
+Recurrence and resistance cannot occur after death, so death is a genuine **competing event**. Each
+patient was assigned a status of event of interest, death without the event, or censored. Weighted
+**Fine–Gray subdistribution hazard models** were fitted using `survival::finegray` to construct the
+subdistribution risk set, followed by `survival::coxph` with the product of the Fine–Gray censoring
+weights and the IPTW, and cluster-robust standard errors (`cluster(record_id)`). Effects are reported
+as subdistribution hazard ratios (sHR) with 95% CI. Cumulative incidence functions (Supplementary
+Figure 2) were estimated by weighted multi-state `survfit` (Aalen–Johansen), with death as the
+competing state.
+
+# Outcome ascertainment (interpretive caveat)
+
+Recurrence and resistance require repeat cultures and susceptibility testing to be detected. In the
+2010–2017 records these outcomes were rarely recorded (no resistance events; few recurrences; almost
+no microbiological clearance dates), consistent with less systematic retrospective follow-up.
+Crude, era-spanning rates of these endpoints are therefore susceptible to differential detection;
+the competing-risks comparison was based on the 2018–2025 era, in which surveillance was concurrent.
+
+# Software
+
+All analyses were performed in **R version `r as.character(getRversion())`** (R Foundation for
+Statistical Computing). Analyses are fully reproducible from a single script (`analysis.R`).
+
+| Package | Version | Role |
+|---------|---------|------|
+| survival | 3.8.9 | Cox models, `finegray`, weighted `survfit` (competing risks, CIF) |
+| WeightIt | 1.7.0 | Propensity-score weighting (verification) |
+| cobalt | 4.6.3 | Covariate-balance diagnostics / Love plots |
+| ggplot2 | 4.0.3 | Figures |
+| patchwork | 1.3.2 | Multi-panel figure composition |
+| gt | 1.3.0 | Formatted tables |
+| haven | 2.5.5 | Import of SPSS (`.sav`) data |
+| tidyverse (dplyr) | 2.0.0 (1.2.1) | Data management |
+| scales | 1.4.0 | Axis formatting |
+| svglite | 2.2.2 | Vector (SVG) figure export |
+
+: Statistical software and R packages used. {tbl-colwidths="[22,12,66]"}
+
+All statistical tests were two-sided; p < 0.05 was considered statistically significant.

@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 <meta name="author" content="Data Analysis Report">
-<meta name="dcterms.date" content="2026-07-08">
+<meta name="dcterms.date" content="2026-07-20">
 
 <title>Diagnostics and Treatment by Study Period – crecoolt</title>
 <style>
@@ -202,6 +202,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
  <span class="menu-text">Recurrence &amp; Resistance</span></a>
   </div>
 </li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./mortality_iptw.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Mortality (IPTW)</span></a>
+  </div>
+</li>
     </ul>
     </div>
 </nav>
@@ -266,7 +272,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">July 8, 2026</p>
+      <p class="date">July 20, 2026</p>
     </div>
   </div>
   
@@ -2154,42 +2160,42 @@ Note
 <td style="text-align: right;">1.373</td>
 <td style="text-align: right;">1</td>
 <td style="text-align: right;">0.241</td>
-<td style="text-align: left;">✅ Satisfied |</td>
+<td style="text-align: left;">✅ Satisfied</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">Prospective vs Retrospective</td>
 <td style="text-align: right;">0.475</td>
 <td style="text-align: right;">1</td>
 <td style="text-align: right;">0.491</td>
-<td style="text-align: left;">✅ Satisfied |</td>
+<td style="text-align: left;">✅ Satisfied</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">MELD score (per SD)</td>
 <td style="text-align: right;">1.669</td>
 <td style="text-align: right;">1</td>
 <td style="text-align: right;">0.196</td>
-<td style="text-align: left;">✅ Satisfied |</td>
+<td style="text-align: left;">✅ Satisfied</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">Age (per SD)</td>
 <td style="text-align: right;">0.004</td>
 <td style="text-align: right;">1</td>
 <td style="text-align: right;">0.949</td>
-<td style="text-align: left;">✅ Satisfied |</td>
+<td style="text-align: left;">✅ Satisfied</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">Infection source</td>
 <td style="text-align: right;">8.374</td>
 <td style="text-align: right;">4</td>
 <td style="text-align: right;">0.079</td>
-<td style="text-align: left;">✅ Satisfied |</td>
+<td style="text-align: left;">✅ Satisfied</td>
 </tr>
 <tr class="even">
 <td style="text-align: left; font-weight: bold;">GLOBAL</td>
 <td style="text-align: right; font-weight: bold;">10.945</td>
 <td style="text-align: right; font-weight: bold;">8</td>
 <td style="text-align: right; font-weight: bold;">0.205</td>
-<td style="text-align: left; font-weight: bold;">✅ Satisfied |</td>
+<td style="text-align: left; font-weight: bold;">✅ Satisfied</td>
 </tr>
 </tbody>
 </table>
@@ -2280,7 +2286,7 @@ Note
 <li>Combination therapy proportions are patient-level (first record per patient)</li>
 </ul>
 <p><strong>Software:</strong> R version 4.5.1, with tidyverse and patchwork packages</p>
-<p><strong>Report Generated:</strong> July 08, 2026</p>
+<p><strong>Report Generated:</strong> July 20, 2026</p>
 
 
 </section>
@@ -2359,7 +2365,7 @@ Note
     }
       var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
       var mailtoRegex = new RegExp(/^mailto:/);
-        var filterRegex = new RegExp("https:\/\/crecoolt\.org");
+        var filterRegex = new RegExp('/' + window.location.host + '/');
       var isInternal = (href) => {
           return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
       }

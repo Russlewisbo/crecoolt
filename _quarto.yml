@@ -10,6 +10,7 @@ project:
     - diagnostics_treatment.qmd
     - prophylaxis_competing_risks.qmd
     - treatment_recurrence_resistance.qmd
+    - mortality_iptw.qmd
 
 website:
   title: "crecoolt"
@@ -29,6 +30,8 @@ website:
         text: Prophylaxis & Competing Risks
       - href: treatment_recurrence_resistance.qmd
         text: Recurrence & Resistance
+      - href: mortality_iptw.qmd
+        text: Mortality (IPTW)
       
 
 format:

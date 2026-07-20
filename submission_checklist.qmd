@@ -1,0 +1,67 @@
+---
+title: "CRECOOLT Manuscript — Pre-Submission Fix Checklist"
+subtitle: "Novel vs. older regimens for CRE infection in liver transplant recipients"
+date: today
+format:
+  typst:
+    papersize: us-letter
+    margin: { x: 2cm, y: 2cm }
+    fontsize: 10pt
+---
+
+Items to resolve before submitting to CID / CMI, from the statistical reproduction and review
+(line numbers refer to the manuscript draft; see `STATUS.md` for full detail).
+
+# Major — must fix
+
+- ☐ **Mortality HR precision.** Reported 0.58 (95% CI 0.39–0.86, p=0.007) is the *full-cohort
+  9-covariate* value. The described **era-restricted** model (N=182, 4-covariate PS) gives
+  **0.58 (95% CI 0.34–0.99, p=0.044)**. Report the era-restricted CI/p. *(Abstract L70–71, L82;
+  Results L162.)* Figure 1 has been updated to match.
+- ☐ **Crude mortality comparator is cross-era.** "45.6% vs 31.2%" pairs full-cohort old (mostly
+  pre-2018) with the post-2018 novel arm. Use the within-era crude (**35.6% vs 31.2%**) or drop the
+  crude comparator for the within-era HR. *(Abstract L69–70, L81–82; Results L154–155.)*
+- ☐ **CID abstract percentages are wrong.** "15.6% vs 31.8%" are the **30-day** figures under a
+  90-day mortality claim (and disagree with the CMI abstract). Correct to the 90-day within-era
+  values. *(L81–82.)*
+- ☐ **"Reducing mortality by 50%" overstates the effect.** HR 0.58 ≈ 42% relative reduction, and
+  borderline (p=0.044) in the analysis as described. Soften. *(Discussion L168–169.)*
+- ☐ **Supplementary Figure 1 (Love plot).** Regenerate to show the 4 covariates actually used
+  (age, MELD, multisite colonisation, SOFA), era-restricted — not the old 9-covariate full-cohort
+  version. *(L156–159; use `loveplot_era`.)*
+
+# Moderate
+
+- ☐ **Unsupported subgroup claim.** Discussion states "no significant interactions across
+  subgroups," but no subgroup analysis appears in Methods/Results. Add the forest plot as a
+  supplementary figure (`figure_forest_90d`) or delete the sentence. *(L180–181.)*
+- ☐ **Add the ascertainment limitation.** Pre-2018 records show 0 resistance events, ~0 recurrence,
+  no clearance dates, and outcomes coded "No" rather than missing — so the crude cross-era
+  recurrence/resistance rates cited (L188–192) are partly artifactual. State this. *(Limitations
+  L196–202.)*
+- ☐ **"N=182 events" → "N=182 patients."** 182 is the era cohort size; 90-day deaths = 59. *(L161.)*
+- ☐ **Complete the statistics-software sentence** (currently "…performed using ………"): e.g., R
+  v4.5.1 with `survival` and `tidyverse`. *(L142.)*
+
+# Minor / typographical
+
+- ☐ "0.52-2-05" → "0.52-2.05" *(L72, L83, L166).*
+- ☐ "2018-2015 cohort" → "2018-2025" *(L137).*
+- ☐ "resistance emerge" → "resistance emergence" *(L71, L76, L122, L164).*
+- ☐ Label the secondary estimates as **subdistribution HR (sHR)**, not HR *(Abstract L71–72;
+  Results L165).*
+
+# Journal formatting
+
+- ☐ **Word count 2656** exceeds CID (1500) and CMI (1400) limits — substantial trimming required.
+- ☐ **CID abstract** exceeds the 50-word limit; choose the target journal and format accordingly.
+- ☐ **Figure legends.** Ensure legends exist for Figure 1 (mortality), Suppl. Fig 1 (era Love plot),
+  Suppl. Fig 2 (recurrence/resistance CIF); confirm the old prophylaxis-paper Figure 1 legend is gone.
+- ☐ Fill in **Keywords** (L44) and **corresponding author** (L47).
+
+# Verified correct — no action needed
+
+- Recurrence/resistance subdistribution HRs (1.03 and 1.45) reproduce; comparable between groups.
+- Fine–Gray correctly reserved for the secondary endpoints (not applied to all-cause mortality,
+  where nothing competes with death).
+- Positivity / era-restriction rationale is well stated *(L135–137, L199–202).*

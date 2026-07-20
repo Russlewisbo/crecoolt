@@ -166,6 +166,12 @@ ul.task-list li input[type="checkbox"] {
  <span class="menu-text">Recurrence &amp; Resistance</span></a>
   </div>
 </li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./mortality_iptw.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Mortality (IPTW)</span></a>
+  </div>
+</li>
     </ul>
     </div>
 </nav>
@@ -297,8 +303,8 @@ ul.task-list li input[type="checkbox"] {
 </thead>
 <tbody>
 <tr class="odd">
-<td style="text-align: left; font-weight: bold; color: white !important; background-color: rgba(244, 67, 54, 255) !important;">High-risk patients NOT receiving therapy</td>
-<td style="text-align: left; font-weight: bold; color: white !important; background-color: rgba(244, 67, 54, 255) !important;">36</td>
+<td style="text-align: left; font-weight: bold; color: white !important; background-color: rgba(244, 67, 54, 1) !important;">High-risk patients NOT receiving therapy</td>
+<td style="text-align: left; font-weight: bold; color: white !important; background-color: rgba(244, 67, 54, 1) !important;">36</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">Total high-risk patients</td>
@@ -352,12 +358,12 @@ ul.task-list li input[type="checkbox"] {
 <td style="text-align: right;">26.1</td>
 </tr>
 <tr class="odd">
-<td style="text-align: left; font-weight: bold; background-color: rgba(255, 235, 238, 255) !important;">High Risk (&gt;20)</td>
-<td style="text-align: right; font-weight: bold; background-color: rgba(255, 235, 238, 255) !important;">64</td>
-<td style="text-align: right; font-weight: bold; background-color: rgba(255, 235, 238, 255) !important;">28</td>
-<td style="text-align: right; font-weight: bold; background-color: rgba(255, 235, 238, 255) !important;">43.8</td>
-<td style="text-align: right; font-weight: bold; background-color: rgba(255, 235, 238, 255) !important;">30</td>
-<td style="text-align: right; font-weight: bold; background-color: rgba(255, 235, 238, 255) !important;">46.9</td>
+<td style="text-align: left; font-weight: bold; background-color: rgba(255, 235, 238, 1) !important;">High Risk (&gt;20)</td>
+<td style="text-align: right; font-weight: bold; background-color: rgba(255, 235, 238, 1) !important;">64</td>
+<td style="text-align: right; font-weight: bold; background-color: rgba(255, 235, 238, 1) !important;">28</td>
+<td style="text-align: right; font-weight: bold; background-color: rgba(255, 235, 238, 1) !important;">43.8</td>
+<td style="text-align: right; font-weight: bold; background-color: rgba(255, 235, 238, 1) !important;">30</td>
+<td style="text-align: right; font-weight: bold; background-color: rgba(255, 235, 238, 1) !important;">46.9</td>
 </tr>
 </tbody>
 </table>
@@ -622,7 +628,7 @@ APPROPRIATENESS:</code></pre>
     }
       var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
       var mailtoRegex = new RegExp(/^mailto:/);
-        var filterRegex = new RegExp("https:\/\/crecoolt\.org");
+        var filterRegex = new RegExp('/' + window.location.host + '/');
       var isInternal = (href) => {
           return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
       }

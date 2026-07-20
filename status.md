@@ -62,6 +62,17 @@ Load: `new <- haven::read_sav("CRECOOLT_onlyinfections.sav")`
 - [ ] Confirm with authors: retrospective follow-up culture practice (ascertainment); 8 `resistance=0` records that carry a resistance date; source Stata script to reconcile 0.37.
 - [ ] Optional: recover data-collection variable to restore forest study-period stratum; add figures to the qmd page; update combined legend already set to 0.58.
 
+## Reproducible script
+- **`analysis.R`** — single self-contained script. `source("analysis.R")` reloads the data,
+  rebuilds every cohort/model, prints the key estimates, and regenerates all six figures
+  (Figure 1, 3-panel, both Love plots, forest, and the model table). This is the fastest way to
+  resume after closing the IDE.
+
+## Website pages
+- `treatment_recurrence_resistance.qmd` → "Recurrence & Resistance" (competing-risks + IPTW + ascertainment).
+- `mortality_iptw.qmd` → "Mortality (IPTW)" (finalized mortality figures, forest, Love plots, reproduction notes).
+- Both are registered in `_quarto.yml` (sidebar + `render:` list) and published via `quarto publish netlify`.
+
 ## To resume in R
 Key reproducible objects (regenerate by re-running the executeCode cells, or):
 `new` (data), `d2`/`fdat` (mortality analysis frame + 9-cov PS weights `w`), `cr`/`era2`/`e_rec`/`e_res`
