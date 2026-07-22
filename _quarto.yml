@@ -11,6 +11,7 @@ project:
     - prophylaxis_competing_risks.qmd
     - treatment_recurrence_resistance.qmd
     - mortality_iptw.qmd
+    - cohort_2018_2025.qmd
 
 website:
   title: "crecoolt"
@@ -32,6 +33,8 @@ website:
         text: Recurrence & Resistance
       - href: mortality_iptw.qmd
         text: Mortality (IPTW)
+      - href: cohort_2018_2025.qmd
+        text: 2018–2025 Cohort
       
 
 format:

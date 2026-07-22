@@ -1,6 +1,6 @@
 # CRECOOLT — Novel vs. Older Regimens Analysis — Status
 
-_Last updated: 2026-07-08_
+_Last updated: 2026-07-22 (redesigned to 2018–2024 cohort; 30-day mortality primary)_
 
 ## Project
 
@@ -26,30 +26,29 @@ Load: `new <- haven::read_sav("CRECOOLT_onlyinfections.sav")`
 - PS covariates (9): `study_period`, `age`, `meld_score`, `sofa`, `mec_of_carbapenem_resi___1` (KPC), `infection_source___1` (BSI), `multisite_colonization`, `post_olt_compli___4` (PGNF), `post_olt_compli___2` (CRRT).
 - Subgroup extra: `combination_treat`.
 
-## Analysis decisions (agreed)
-- Time origin = date of CRE infection.
-- Novel = ceftazidime-avibactam, mero/vaborbactam, imipenem/relebactam, cefiderocol.
-- Competing risk = death, for recurrence/resistance only (NOT mortality — see findings).
-- IPTW: full-cohort for mortality; recurrence/resistance restricted to **2018–2025 era** (positivity).
-- 54 discharge dates precede infection date → treated invalid; censoring falls back to latest valid contact date.
+## Analysis decisions (CURRENT — 2018–2024 redesign, agreed with Matteo & Maddalena)
+- **Cohort: 2018–2025 era ONLY (N=182)** — resolves positivity (novel only post-2018) and the differential ascertainment of 2010–2017. Full-cohort analyses abandoned.
+- Time origin = date of CRE infection. Novel = ceftazidime-avibactam, mero/vaborbactam, imipenem/relebactam, cefiderocol.
+- **PRIMARY endpoint: 30-day all-cause mortality** (IPTW-weighted Cox).
+- **SECONDARY: 90-day CRE recurrence & resistance emergence** (IPTW Fine–Gray, death competing).
+- **PS covariates (5): age, SOFA, BSI, multisite colonization, MELD**; stabilized ATE IPTW. Treatment-pathway variables (combination therapy, time-to-treatment) EXCLUDED as mediators.
+- Death time = date-derived (`death_date − cre_infection_date`). 54 invalid discharge dates → censoring falls back to latest valid contact date.
 
-## Key findings
-1. **Mortality benefit is real** (~40–50% reduction). Reproducible **90-day IPTW HR = 0.58 (0.39–0.86, p≈0.007)**.
-2. **Reported HR 0.37 is NOT reproducible** — it's a 30-day estimate; our specs gave 0.49–0.58 (30-day ATT 0.52, p=0.068, non-significant).
-3. **Fine–Gray is invalid for all-cause mortality** — nothing competes with death; Cox HR and sHR both 0.50 (identical) confirms it adds nothing. Reserve Fine–Gray for recurrence/resistance.
-4. **Recurrence/resistance: crude excess with novel is an era/ascertainment artifact, NOT survival bias.**
-   - Full-cohort competing-risks: recurrence sHR 4.58, resistance 7.12 (excess persists → not survival bias).
-   - Within-era (2018–2025) IPTW: recurrence sHR **1.03 (0.52–2.05)**, resistance **1.45 (0.38–5.55)** → null.
-   - 2010–2017 ascertainment: 0 resistance events, 1.4% recurrence (vs 19.7%), zero clearance dates, outcomes coded "No" not NA.
-5. **Supplementary Figure 1 balance requires ATT, not the stated ATE.** Study period cannot be balanced full-cohort (perfect separation, novel only post-2018). ATT drives pre-2018 old weights to ~0 = effectively era restriction. Balance IS achievable within the 2018–2025 era (max |SMD| 0.032).
+## Key findings (current design)
+1. **PRIMARY — 30-day mortality:** IPTW Cox **HR 0.49 (0.25–0.95), p=0.035** — ~51% reduction, significant. Crude old 32.9% vs novel 15.6%. (At 30 days "halving mortality" is accurate; the 90-day effect is weaker/borderline: 0.58, 0.34–0.99.)
+2. **SECONDARY — recurrence:** IPTW Fine–Gray **sHR 0.98 (0.48–2.01), p=0.97** — comparable.
+3. **SECONDARY — resistance:** IPTW Fine–Gray **sHR 1.79 (0.46–6.98), p=0.40** — comparable (11 events, wide CI).
+4. **Subgroups (30-day):** effect consistent; all interaction p non-significant.
+5. **Fine–Gray is invalid for all-cause mortality** (nothing competes with death) → Cox for mortality, Fine–Gray for recurrence/resistance only.
 
-## Figures produced (project root; PNG + PDF + SVG each), JAMA grey/blue palette
-- `figure1_mortality_iptw.*` — cumulative mortality, HR 0.58, 95% CI bands, number-at-risk.
-- `figure_3panel.*` — A mortality / B recurrence / C resistance (sHRs, death competing, 0–90d).
-- `loveplot_iptw.*` — full cohort (study period unbalanceable).
-- `loveplot_era.*` — 2018–2025 era (all balanced, max |SMD| 0.032).
-- `figure_forest_90d.*` — 90-day IPTW subgroup forest, overall HR 0.58; subgroups KPC/BSI/SOFA/therapy-type, all interactions n.s. (study-period stratum omitted — data-collection variable absent).
-- `competing_risks_model_table.*` — all model variants table.
+Rationale for the redesign (background): the full-cohort comparison was confounded by calendar era and by differential ascertainment in 2010–2017 (0 resistance events, ~0 recurrence, no clearance dates, outcomes coded "No"); positivity was violated because novel agents were used only from 2018.
+
+## Figures produced (project root; PNG + PDF + SVG each), JAMA grey/blue, all 2018–2025 era
+- `figure1_mortality_iptw.*` — 30-day cumulative mortality, HR 0.49, 95% CI bands, number-at-risk.
+- `figure2_recurrence_resistance.*` — 90-day recurrence & resistance CIF, sHRs, death competing.
+- `loveplot_era.*` — 5-covariate PS balance (age, SOFA, BSI, multisite, MELD).
+- `figure_forest_30d.*` — 30-day mortality subgroup forest.
+- STALE (prior 90-day / full-cohort design; delete before submission): `figure_3panel.*`, `figure_forest_90d.*`, `loveplot_iptw.*`, `competing_risks_model_table.*`.
 
 ## Website
 - Quarto site publishes to **https://crecoolt.org** via `quarto publish netlify` (password: bolognacre).
@@ -63,10 +62,10 @@ Load: `new <- haven::read_sav("CRECOOLT_onlyinfections.sav")`
 - [ ] Optional: recover data-collection variable to restore forest study-period stratum; add figures to the qmd page; update combined legend already set to 0.58.
 
 ## Reproducible script
-- **`analysis.R`** — single self-contained script. `source("analysis.R")` reloads the data,
-  rebuilds every cohort/model, prints the key estimates, and regenerates all six figures
-  (Figure 1, 3-panel, both Love plots, forest, and the model table). This is the fastest way to
-  resume after closing the IDE.
+- **`analysis.R`** — single self-contained script for the 2018–2024 / 30-day design.
+  `source("analysis.R")` reloads the data, rebuilds the era cohort, PS/IPTW, and all models,
+  prints the key estimates, and regenerates the four figures (30-day mortality Figure 1,
+  recurrence/resistance, era Love plot, 30-day forest). Fastest way to resume after closing the IDE.
 
 ## Website pages
 - `treatment_recurrence_resistance.qmd` → "Recurrence & Resistance" (competing-risks + IPTW + ascertainment).
